@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#090b10">
+  <meta name="description"
+    content="Forge mobile music prompt workstation">
+  <title>Forge</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">MUSIC PROMPT WORKSTATION</p>
+        <h1>FORGE</h1>
+      </div>
+
+      <div class="header-actions">
+        <span id="statusBadge"
+          class="status-badge">Ready</span>
+
+        <button id="randomizeBtn"
+          class="icon-button"
+          type="button"
+          aria-label="Randomize">🎲</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card hero">
+        <div>
+          <p class="eyebrow">BUILD A TRACK</p>
+          <h2>Shape the sound. Forge the prompt.</h2>
+          <p class="muted">
+            Fast, local-first, and built for mobile.
+          </p>
+        </div>
+
+        <button id="generateBtn"
+          class="primary-button"
+          type="button">Forge Prompt</button>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">QUICK START</p>
+            <h2>Recipes</h2>
+          </div>
+
+          <button id="clearSelectionsBtn"
+            class="text-button"
+            type="button">Clear</button>
+        </div>
+
+        <div id="recipeGrid"
+          class="recipe-grid"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SOUND PALETTE</p>
+            <h2>Tags</h2>
+          </div>
+
+          <span id="selectedCount"
+            class="count-badge">0 selected</span>
+        </div>
+
+        <label class="search-field">
+          <span>🔎</span>
+
+          <input id="tagSearch"
+            type="search"
+            placeholder="Search genres, moods, vocals..."
+            autocomplete="off">
+        </label>
+
+        <div id="categoryList"
+          class="category-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="control-group">
+          <div class="control-label-row">
+            <label for="bpmRange">Tempo</label>
+            <output id="bpmValue">120 BPM</output>
+          </div>
+
+          <input id="bpmRange"
+            type="range"
+            min="50"
+            max="220"
+            value="120">
+        </div>
+
+        <div class="control-grid">
+          <label class="field">
+            <span>Length</span>
+
+            <select id="lengthSelect">
+              <option value="short">Short</option>
+              <option value="standard" selected>
+                Standard
+              </option>
+              <option value="extended">Extended</option>
+              <option value="epic">Epic</option>
+            </select>
+          </label>
+                    <label class="field">
+            <span>Energy</span>
+
+            <select id="energySelect">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="explosive">Explosive</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ARRANGEMENT</p>
+            <h2>Structure</h2>
+          </div>
+
+          <button id="addStructureBtn"
+            class="text-button"
+            type="button">Add</button>
+        </div>
+
+        <div id="structureList"
+          class="structure-list"></div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">WRITING ROOM</p>
+            <h2>Lyrics & Direction</h2>
+          </div>
+
+          <button id="clearLyricsBtn"
+            class="text-button"
+            type="button">Clear</button>
+        </div>
+
+        <label class="field">
+          <span>Song idea</span>
+
+          <input id="songIdea"
+            type="text"
+            placeholder="A drifter outrunning the past...">
+        </label>
+
+        <label class="field">
+          <span>Lyrics, notes, or cues</span>
+
+          <textarea id="lyricsInput"
+            rows="9"
+            placeholder="[Verse 1]&#10;Write lyrics or direction here..."></textarea>
+        </label>
+      </section>
+
+      <section class="card output-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">FINAL OUTPUT</p>
+            <h2>Generated Prompt</h2>
+          </div>
+
+          <button id="copyPromptBtn"
+            class="text-button"
+            type="button">Copy</button>
+        </div>
+
+        <textarea id="promptOutput"
+          rows="13"
+          readonly
+          placeholder="Your forged prompt appears here."></textarea>
+
+        <div class="action-grid">
+          <button id="sharePromptBtn"
+            type="button">Share</button>
+
+          <button id="favoriteBtn"
+            type="button">Favorite</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SAVED WORK</p>
+            <h2>Presets & History</h2>
+          </div>
+
+          <button id="clearHistoryBtn"
+            class="text-button"
+            type="button">Clear History</button>
+        </div>
+
+        <div class="preset-tools">
+          <input id="presetName"
+            type="text"
+            placeholder="Preset name">
+
+          <button id="savePresetBtn"
+            type="button">Save Preset</button>
+        </div>
+
+        <div class="action-grid">
+          <button id="exportBtn"
+            type="button">Export</button>
+
+          <label class="file-button">
+            Import
+            <input id="importInput"
+              type="file"
+              accept=".json">
+          </label>
+        </div>
+
+        <div id="presetList"
+          class="saved-list"></div>
+
+        <div id="historyList"
+          class="saved-list"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-bar">
+      <button id="undoBtn" type="button">Undo</button>
+      <button id="redoBtn" type="button">Redo</button>
+      <button id="resetBtn" type="button">Reset All</button>
+    </nav>
+  </div>
+
+  <div id="errorPanel"
+    class="error-panel hidden">
+
+    <div class="section-heading">
+      <h2>Error Report</h2>
+      <button id="closeErrorBtn" type="button">×</button>
+    </div>
+
+    <pre id="errorOutput"></pre>
+
+    <button id="copyErrorBtn"
+      type="button">Copy Error</button>
+  </div>
+
+  <div id="toast"
+    class="toast"
+    role="status"
+    aria-live="polite"></div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const capturedErrors = [];
+
+  function capture(message, source, line, column, details) {
+    capturedErrors.push({
+      message: message || "Unknown error",
+      source: source || "Unknown file",
+      line: line || "?",
+      column: column || "?",
+      details: details || ""
+    });
+  }
+
+  window.addEventListener("error", function (event) {
+    if (event.target && event.target !== window) {
+      capture(
+        "File failed to load",
+        event.target.src || event.target.href,
+        "?",
+        "?",
+        event.target.tagName
+      );
+    } else {
+      capture(
+        event.message,
+        event.filename,
+        event.lineno,
+        event.colno,
+        event.error && event.error.stack
+      );
+    }
+
+    setTimeout(runForgeDiagnostic, 50);
+  }, true);
+
+  window.addEventListener("unhandledrejection", function (event) {
+    const reason = event.reason;
+
+    capture(
+      reason && reason.message
+        ? reason.message
+        : String(reason),
+      "Promise",
+      "?",
+      "?",
+      reason && reason.stack
+    );
+
+    setTimeout(runForgeDiagnostic, 50);
+  });
+
+  function runForgeDiagnostic() {
+    const results = [];
+
+    function check(name, passed, details) {
+      results.push(
+        `${passed ? "PASS" : "FAIL"}: ${name}` +
+        `${details ? "\n  " + details : ""}`
+      );
+    }
+
+    try {
+      check(
+        "data.js loaded",
+        typeof DATA !== "undefined",
+        typeof DATA === "undefined"
+          ? "DATA does not exist"
+          : `Version: ${DATA.version || "unknown"}`
+      );
+
+      if (typeof DATA !== "undefined") {
+        const categoryCount =
+          DATA.categories &&
+          Object.keys(DATA.categories).length;
+
+        const tagCount =
+          DATA.categories
+            ? Object.values(DATA.categories).flat().length
+            : 0;
+
+        check(
+          "Categories available",
+          categoryCount > 0,
+          `${categoryCount || 0} categories, ${tagCount} tags`
+        );
+
+        check(
+          "Recipes available",
+          Array.isArray(DATA.recipes) &&
+          DATA.recipes.length > 0,
+          `${DATA.recipes ? DATA.recipes.length : 0} recipes`
+        );
+
+        check(
+          "Default structure available",
+          Array.isArray(DATA.defaultStructure) &&
+          DATA.defaultStructure.length > 0,
+          `${DATA.defaultStructure
+            ? DATA.defaultStructure.length
+            : 0} sections`
+        );
+      }
+
+      const requiredIds = [
+        "recipeGrid",
+        "categoryList",
+        "structureList",
+        "generateBtn",
+        "randomizeBtn",
+        "promptOutput"
+      ];
+
+      const missingIds = requiredIds.filter(
+        id => !document.getElementById(id)
+      );
+
+      check(
+        "Required HTML elements",
+        missingIds.length === 0,
+        missingIds.length
+          ? `Missing: ${missingIds.join(", ")}`
+          : "All found"
+      );
+
+      check(
+        "Recipes rendered",
+        document.querySelectorAll(".recipe-button").length > 0,
+        `${document.querySelectorAll(".recipe-button").length} buttons`
+      );
+
+      check(
+        "Tags rendered",
+        document.querySelectorAll(".tag-button").length > 0,
+        `${document.querySelectorAll(".tag-button").length} buttons`
+      );
+
+      check(
+        "Structure rendered",
+        document.querySelectorAll(".structure-row").length > 0,
+        `${document.querySelectorAll(".structure-row").length} rows`
+      );
+    } catch (error) {
+      capture(
+        error.message,
+        "Diagnostic",
+        "?",
+        "?",
+        error.stack
+      );
+    }
+
+    const report = [
+      "FORGE AUTOMATIC ERROR REPORT",
+      `Time: ${new Date().toLocaleString()}`,
+      "",
+      ...results,
+      "",
+      "CAPTURED ERRORS:"
+    ];
+
+    if (capturedErrors.length === 0) {
+      report.push("No JavaScript errors captured.");
+    } else {
+      capturedErrors.forEach((error, index) => {
+        report.push(
+          "",
+          `${index + 1}. ${error.message}`,
+          `File: ${error.source}`,
+          `Line: ${error.line}`,
+          `Column: ${error.column}`,
+          error.details || ""
+        );
+      });
+    }
+const hasProblem =
+  results.some((result) => result.startsWith("FAIL:")) ||
+  capturedErrors.length > 0;
+
+if (!hasProblem) {
+  const oldPanel =
+    document.getElementById("forgeDiagnostic");
+
+  if (oldPanel) {
+    oldPanel.remove();
+  }
+
+  return;
+}
+    let panel = document.getElementById("forgeDiagnostic");
+
+    if (!panel) {
+      panel = document.createElement("div");
+      panel.id = "forgeDiagnostic";
+
+      panel.style.cssText =
+        "position:fixed;inset:12px;z-index:99999;" +
+        "overflow:auto;padding:16px;border:2px solid #ff5d68;" +
+        "border-radius:14px;background:#090b10;color:#fff;" +
+        "font-family:monospace;white-space:pre-wrap;";
+
+      document.body.appendChild(panel);
+    }
+
+    panel.textContent = report.join("\n");
+
+    const copyButton = document.createElement("button");
+    copyButton.textContent = "Copy Error Report";
+
+    copyButton.style.cssText =
+      "position:sticky;bottom:0;width:100%;margin-top:16px;" +
+      "padding:14px;background:#ff7a18;color:#111;" +
+      "border:0;border-radius:10px;font-weight:bold;";
+
+    copyButton.onclick = function () {
+      navigator.clipboard.writeText(report.join("\n"));
+    };
+
+    panel.appendChild(copyButton);
+  }
+
+  window.runForgeDiagnostic = runForgeDiagnostic;
+})();
+</script>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+
+<script>
+window.addEventListener("load", function () {
+  setTimeout(window.runForgeDiagnostic, 700);
+});
+</script>
+</body>
+</html>
