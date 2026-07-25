@@ -8,6 +8,7 @@ const LEGACY_HISTORY_KEY = "forgeHistoryV2";
 const LEGACY_PRESET_KEY = "forgePresetsV2";
 const MAX_HISTORY = 60;
 const MAX_UNDO = 80;
+const TOTAL_TAGS = new Set(Object.values(DATA.categories).flat()).size;
 
 const $ = (id) => document.getElementById(id);
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -103,6 +104,7 @@ let toastTimer = null;
 let saveTimer = null;
 let isGenerating = false;
 let installPromptEvent = null;
+const collapsedCategories = new Set(Object.keys(DATA.categories));
 
 function loadJSON(key, fallback) {
   try {
@@ -256,46 +258,61 @@ function renderSelectedTags() {
     chip.addEventListener("click", () => toggleTag(tag));
     els.selectedTags.appendChild(chip);
   });
-  els.selectedCount.textContent = `${state.selectedTags.length} selected`;
+  els.selectedCount.textContent = `${state.selectedTags.length} selected · ${TOTAL_TAGS} tags`;
 }
 
 function renderCategories(filter = "") {
   const query = filter.trim().toLowerCase();
   els.categoryList.innerHTML = "";
+  let visibleCategories = 0;
 
   Object.entries(DATA.categories).forEach(([name, tags]) => {
-    const matches = tags.filter((tag) => tag.toLowerCase().includes(query));
+    const categoryMatch = name.toLowerCase().includes(query);
+    const matches = categoryMatch || !query
+      ? tags
+      : tags.filter((tag) => tag.toLowerCase().includes(query));
     if (query && matches.length === 0) return;
 
+    visibleCategories += 1;
+    const selectedCount = tags.filter((tag) => state.selectedTags.includes(tag)).length;
+    const isCollapsed = !query && collapsedCategories.has(name);
     const section = document.createElement("section");
-    section.className = "category";
+    section.className = `category${isCollapsed ? " collapsed" : ""}`;
 
     const header = document.createElement("button");
     header.type = "button";
     header.className = "category-header";
-    header.innerHTML = `<strong>${escapeHtml(name)}</strong><span>${matches.length}</span>`;
-    header.setAttribute("aria-expanded", "true");
+    const countText = selectedCount ? `${selectedCount} selected · ${tags.length}` : String(tags.length);
+    header.innerHTML = `<strong>${escapeHtml(name)}</strong><span>${escapeHtml(countText)}</span>`;
+    header.setAttribute("aria-expanded", String(!isCollapsed));
     header.addEventListener("click", () => {
-      section.classList.toggle("collapsed");
-      header.setAttribute("aria-expanded", String(!section.classList.contains("collapsed")));
+      if (collapsedCategories.has(name)) collapsedCategories.delete(name);
+      else collapsedCategories.add(name);
+      renderCategories(els.tagSearch.value);
     });
 
     const content = document.createElement("div");
     content.className = "category-content";
 
-    matches.forEach((tag) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "tag-button";
-      button.classList.toggle("selected", state.selectedTags.includes(tag));
-      button.textContent = tag;
-      button.addEventListener("click", () => toggleTag(tag));
-      content.appendChild(button);
-    });
+    if (!isCollapsed || query) {
+      matches.forEach((tag) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "tag-button";
+        button.classList.toggle("selected", state.selectedTags.includes(tag));
+        button.textContent = tag;
+        button.addEventListener("click", () => toggleTag(tag));
+        content.appendChild(button);
+      });
+    }
 
     section.append(header, content);
     els.categoryList.appendChild(section);
   });
+
+  if (!visibleCategories) {
+    els.categoryList.innerHTML = '<div class="empty-state">No tags match that search.</div>';
+  }
 }
 
 function getWordCount(text) {

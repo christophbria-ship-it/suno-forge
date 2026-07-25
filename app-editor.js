@@ -1,3 +1,36 @@
+const SAFE_OFFLINE_DETAILS = [
+  "a motel key beside a chipped porcelain sink",
+  "faded room numbers above a peeling door",
+  "rainwater carrying cigarette ash into the gutter",
+  "a work shirt drying over a wooden chair",
+  "two quarters and a receipt in the cup holder",
+  "the neighbor's sprinkler clicking before dawn",
+  "a dog barking behind a chain-link fence",
+  "cold fries in a paper bag on the passenger seat",
+  "a pharmacy receipt folded into a wallet",
+  "bleach and burnt toast in the apartment hallway",
+  "a chipped coffee mug beside a folded road map",
+  "a cracked porch step beneath a package with the wrong name",
+  "a bus transfer soft from being held too long",
+  "a key that sticks halfway in the apartment lock",
+  "a grocery list stained by laundromat soap",
+  "a pawn ticket tucked behind a driver's license",
+  "mud drying on a pair of boots by the back door",
+  "a motel towel hanging from the shower rod",
+  "a courthouse envelope creased inside a coat pocket",
+  "a bent spoon beside a bowl of cold soup"
+];
+
+const RESTRICTED_OFFLINE_IDEA_PATTERN = /\b(?:song|songs|music|musical|melody|melodies|rhythm|rhythms|tune|tunes|sing|sings|sang|sung|singing|singer|singers|lyric|lyrics|guitar|guitars|piano|pianos|drum|drums|banjo|mandolin|fiddle|violin|cello|saxophone|trumpet|trombone|harmonica|flute|clarinet|synth|synthesizer|orchestra|choir|microphone|mic|studio|recording|headphones|earbuds|amplifier|vocoder|turntable|phone|cellphone|smartphone|screen|computer|laptop|browser|modem|router|internet|online|wi-?fi|wire|cable|charger|charging|battery|radio|television|tv|tablet|email|voicemail|notification|digital|electronic|electronics|electricity|electrical|electric|outlet|plug|socket|app|website|webpage|keyboard|mouse|monitor|printer|camera|refrigerator|fridge|microwave|circuit|voltage|signal)\b/i;
+
+function safeOfflineIdea(value) {
+  const idea = String(value || "").trim();
+  if (!idea || RESTRICTED_OFFLINE_IDEA_PATTERN.test(idea)) {
+    return "Someone decides whether to leave before sunrise";
+  }
+  return idea;
+}
+
 function renderStructure() {
   els.structureList.innerHTML = "";
 
@@ -188,8 +221,14 @@ function syncControls(renderLists = true) {
 }
 
 function toggleTag(tag) {
+  const isSelected = state.selectedTags.includes(tag);
+  if (!isSelected && state.selectedTags.length >= 100) {
+    showToast("100-tag selection limit reached");
+    return;
+  }
+
   snapshot();
-  state.selectedTags = state.selectedTags.includes(tag)
+  state.selectedTags = isSelected
     ? state.selectedTags.filter((item) => item !== tag)
     : [...state.selectedTags, tag];
   state.output = "";
@@ -296,20 +335,18 @@ function buildPrompt() {
 }
 
 function buildOfflineLyrics(action = "generate") {
-  const idea = state.songIdea.trim() || "someone deciding whether to leave before sunrise";
-  const mood = state.selectedTags.find((tag) => DATA.categories.Mood.includes(tag)) || "restless";
-  const genre = state.selectedTags.find((tag) => DATA.categories.Genre.includes(tag)) || "indie rock";
-  const details = shuffle(DATA.offlineDetails).slice(0, 8);
-  const hooks = [
-    "I keep the porch light off but the hallway knows my name",
+  const idea = safeOfflineIdea(state.songIdea);
+  const details = shuffle(SAFE_OFFLINE_DETAILS).slice(0, 8);
+  const options = [
+    "I leave the porch chain loose but the hallway knows my name",
     "Nothing changed except the lock and the weather",
-    "I said I was leaving; the engine said maybe",
+    "I said I would leave before the first bus came",
     "We make a promise every time the floorboards shake",
-    "The truth sounds smaller when the refrigerator kicks on"
+    "The truth feels smaller when the pipes go still"
   ];
 
   if (action === "hooks") {
-    return hooks.map((hook, index) => `[Hook ${index + 1}]\n${hook}`).join("\n\n");
+    return options.map((option, index) => `[Option ${index + 1}]\n${option}`).join("\n\n");
   }
 
   if (action === "continue") {
@@ -321,7 +358,9 @@ function buildOfflineLyrics(action = "generate") {
   let detailIndex = alternate ? 3 : 0;
 
   return state.structure.map((section) => {
-    if (section === "Intro") return `[Intro]\n(${mood.toLowerCase()} ${genre.toLowerCase()} texture; close room sound)`;
+    if (section === "Intro") {
+      return "[Intro]\nThe hallway holds its breath before sunrise\nDust turns slowly in the window";
+    }
     if (section === "Verse") {
       verse += 1;
       const first = details[detailIndex % details.length];
@@ -330,16 +369,18 @@ function buildOfflineLyrics(action = "generate") {
       return `[Verse ${verse}]\n${idea}\nThere is ${first}\nAnd ${second}\nNobody calls it a sign; it is just what stayed behind`;
     }
     if (section === "Pre-Chorus") {
-      return `[Pre-Chorus]\nThe room goes quiet when the pipes stop\nI can hear the decision before I make it`;
+      return "[Pre-Chorus]\nThe room goes quiet when the pipes stop\nI know the decision before I make it";
     }
     if (section === "Chorus" || section === "Final Chorus") {
-      return `[${section}]\n${randomItem(hooks)}\nThe key is warm inside my hand\nSome decisions do not arrive like thunder\nThey sound like tires crossing wet pavement`;
+      return `[${section}]\n${randomItem(options)}\nThe key is warm inside my hand\nSome decisions do not arrive like thunder\nThey come like tires crossing wet pavement`;
     }
     if (section === "Bridge") {
-      return `[Bridge]\nYour last message is still unsent\nThree words and a blinking cursor underneath\nI delete it when the sun hits the glass\nThen pull out slow enough to change my mind`;
+      return "[Bridge]\nYour last apology is folded in my coat\nThree words pressed hard into the paper\nI tear it once when the sun hits the glass\nThen pull out slow enough to change my mind";
     }
-    if (section === "Outro") return `[Outro]\n(road noise, loose motif, unresolved ending)`;
-    return `[${section}]\n(${mood.toLowerCase()} instrumental or vocal variation)`;
+    if (section === "Outro") {
+      return "[Outro]\nThe road bends past the county line\nI leave the question where the gravel ends";
+    }
+    return `[${section}]\nThe room shifts when nobody speaks\nA chair leg drags across the floor\nWe both look toward the door\nNeither one of us moves`;
   }).join("\n\n");
 }
 

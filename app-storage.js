@@ -103,7 +103,7 @@ function clearLyrics() {
 function validateState() {
   state = { ...clone(defaultState), ...state };
   state.selectedTags = Array.isArray(state.selectedTags)
-    ? unique(state.selectedTags.filter((tag) => typeof tag === "string")).slice(0, 30)
+    ? unique(state.selectedTags.filter((tag) => typeof tag === "string")).slice(0, 100)
     : [];
   state.structure = Array.isArray(state.structure) && state.structure.length
     ? state.structure.filter((part) => DATA.structureOptions.includes(part)).slice(0, 24)
