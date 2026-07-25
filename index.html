@@ -27,9 +27,9 @@
     <main>
       <section class="card hero">
         <div>
-          <p class="eyebrow">FORGE STUDIO V3</p>
+          <p class="eyebrow">FORGE STUDIO V3.1</p>
           <h2>Build the sound. Direct the writing. Finish the prompt.</h2>
-          <p class="muted">AI drafting, rewriting, hook ideas, offline fallback, presets, history, and mobile-first editing.</p>
+          <p class="muted">Massive tag library, advanced vocal arrangements, AI drafting, safe lyric content, presets, history, and mobile-first editing.</p>
         </div>
         <button id="forgePromptBtn" class="primary-button" type="button">Forge Prompt</button>
       </section>
@@ -55,7 +55,7 @@
         </div>
         <label class="search-field">
           <span aria-hidden="true">⌕</span>
-          <input id="tagSearch" type="search" placeholder="Search genre, mood, vocals, production..." autocomplete="off">
+          <input id="tagSearch" type="search" placeholder="Search genres, instruments, vocal styles, arrangements..." autocomplete="off">
         </label>
         <div id="selectedTags" class="selected-tags" aria-live="polite"></div>
         <div id="categoryList" class="category-list"></div>
@@ -143,7 +143,7 @@
 
         <label class="field">
           <span>Extra AI direction <small>(optional)</small></span>
-          <textarea id="customInstructions" rows="3" maxlength="1200" placeholder="Examples: keep the chorus blunt, avoid perfect rhyme, mention a specific object, end unresolved..."></textarea>
+          <textarea id="customInstructions" rows="3" maxlength="1200" placeholder="Examples: keep the chorus blunt, avoid perfect rhyme, mention a specific physical object, end unresolved..."></textarea>
         </label>
 
         <div class="ai-action-grid">
@@ -154,7 +154,7 @@
           <button id="hookIdeasBtn" type="button">Hook Ideas</button>
         </div>
 
-        <p id="lyricsStatus" class="helper-text">AI uses the full brief and structure. Offline fallback remains available.</p>
+        <p id="lyricsStatus" class="helper-text">Tags guide the style invisibly. Generated lyric lines exclude music-making and electronic references.</p>
 
         <div class="stats-row" aria-live="polite">
           <span id="sectionStat">0 sections</span>
