@@ -1,16 +1,15 @@
 name: Unpack Forge v2
 
 on:
-  push:
-    branches: [forge-v2-rebuild]
-    paths:
-      - ".forge-payload/UNPACK"
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   unpack:
+    if: github.head_ref == 'forge-v2-rebuild'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
