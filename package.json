@@ -1,6 +1,6 @@
 {
   "name": "suno-forge",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "scripts": {
     "test": "node --check data.js && node --check app-core.js && node --check app-editor.js && node --check app-actions.js && node --check app-storage.js && node --check api/generate-lyrics.js"
