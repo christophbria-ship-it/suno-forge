@@ -3,6 +3,11 @@ const RATE_LIMIT = 12;
 const requests = new Map();
 const ALLOWED_ACTIONS = new Set(["generate", "regenerate", "polish", "continue", "hooks"]);
 
+const FORBIDDEN_REFERENCE_PATTERNS = [
+  /\b(?:song|songs|music|musical|melody|melodies|rhythm|rhythms|tune|tunes|sing|sings|sang|sung|singing|singer|singers|lyric|lyrics|guitar|guitars|piano|pianos|drum|drums|drummer|banjo|mandolin|fiddle|violin|violins|cello|saxophone|sax|trumpet|trombone|harmonica|flute|clarinet|synth|synthesizer|orchestra|choir|microphone|microphones|mic|studio|recording|recordings|headphones|earbuds|amplifier|amplifiers|vocoder|turntable|turntables)\b/i,
+  /\b(?:phone|phones|cellphone|cellphones|smartphone|smartphones|screen|screens|computer|computers|laptop|laptops|browser|browsers|modem|modems|router|routers|internet|online|wi-?fi|wire|wires|wired|cable|cables|charger|chargers|charging|battery|batteries|radio|radios|television|televisions|tv|tablet|tablets|email|emails|e-mail|voicemail|voicemails|notification|notifications|digital|electronic|electronics|electricity|electrical|electric|outlet|outlets|plug|plugs|socket|sockets|app|apps|website|websites|webpage|webpages|keyboard|keyboards|mouse|monitor|monitors|printer|printers|camera|cameras|refrigerator|refrigerators|fridge|fridges|microwave|microwaves|circuit|circuits|voltage|signal|signals)\b/i
+];
+
 function json(res, status, body) {
   res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -51,13 +56,27 @@ function extractOutputText(data) {
   return "";
 }
 
+function lyricBodyOnly(text) {
+  return String(text || "").replace(/^\s*\[[^\]]+\]\s*$/gm, "");
+}
+
+function findForbiddenReferences(text) {
+  const body = lyricBodyOnly(text);
+  const hits = [];
+  FORBIDDEN_REFERENCE_PATTERNS.forEach((pattern) => {
+    const match = body.match(pattern);
+    if (match?.[0]) hits.push(match[0].toLowerCase());
+  });
+  return [...new Set(hits)];
+}
+
 function taskForAction(action, previousLyrics) {
   if (action === "regenerate") {
-    return `Write a complete new draft that is substantially different in scenes, hook language, line shapes, and phrasing from the previous draft. Preserve only the core brief and requested structure.\n\nPREVIOUS DRAFT:\n${previousLyrics || "None"}`;
+    return `Write a complete new draft that is substantially different in scenes, central phrases, line shapes, and wording from the previous draft. Preserve only the core brief and requested structure.\n\nPREVIOUS DRAFT:\n${previousLyrics || "None"}`;
   }
 
   if (action === "polish") {
-    return `Return a complete polished version of the current lyrics. Preserve the core story, strongest images, section order, and emotional intent. Improve specificity, flow, singability, and line economy. Remove filler and clichés.\n\nCURRENT LYRICS:\n${previousLyrics || "None"}`;
+    return `Return a complete polished version of the current lyrics. Preserve the core story, strongest images, section order, and emotional intent. Improve specificity, flow, natural phrasing, and line economy. Remove filler and clichés.\n\nCURRENT LYRICS:\n${previousLyrics || "None"}`;
   }
 
   if (action === "continue") {
@@ -65,10 +84,37 @@ function taskForAction(action, previousLyrics) {
   }
 
   if (action === "hooks") {
-    return `Write exactly five distinct hook options for this song. Label them [Hook 1] through [Hook 5]. Each hook should be 2-4 singable lines, concrete, memorable, and clearly different from the others. Do not rewrite the full song.\n\nCURRENT LYRICS FOR CONTEXT:\n${previousLyrics || "None"}`;
+    return `Write exactly five distinct central-phrase options for this piece. Label them [Option 1] through [Option 5]. Each option should be 2-4 concise lines, concrete, memorable, and clearly different from the others. Do not rewrite the full piece.\n\nCURRENT LYRICS FOR CONTEXT:\n${previousLyrics || "None"}`;
   }
 
   return "Write a complete original lyric draft that follows the requested structure exactly.";
+}
+
+async function callOpenAI(input, maxOutputTokens) {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || "gpt-5-mini",
+      instructions: "Write disciplined, specific, human lyrics. Treat all style information as invisible production metadata. Never put music-making, instrument, performance, studio, electronic, electrical, internet, computer, phone, screen, or communications-technology references inside lyric lines.",
+      input,
+      max_output_tokens: maxOutputTokens,
+      store: false
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    const message = data?.error?.message || `OpenAI request failed (${response.status}).`;
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+
+  return extractOutputText(data);
 }
 
 export default async function handler(req, res) {
@@ -96,7 +142,7 @@ export default async function handler(req, res) {
   const action = ALLOWED_ACTIONS.has(body.action) ? body.action : "generate";
   const songIdea = cleanString(body.songIdea, 700);
   const customInstructions = cleanString(body.customInstructions, 1200);
-  const selectedTags = cleanArray(body.selectedTags, 30, 70);
+  const selectedTags = cleanArray(body.selectedTags, 100, 70);
   const structure = cleanArray(body.structure, 24, 40);
   const previousLyrics = cleanString(body.previousLyrics, 16000);
   const bpm = Math.min(220, Math.max(50, Number(body.bpm) || 120));
@@ -117,8 +163,8 @@ ACTION: ${action}
 TASK: ${taskForAction(action, previousLyrics)}
 
 CREATIVE BRIEF
-Song idea: ${songIdea || "Create a grounded story from the selected style."}
-Style tags: ${selectedTags.join(", ") || "No specific tags"}
+Song idea: ${songIdea || "Create a grounded human story from the selected emotional direction."}
+Style and production metadata: ${selectedTags.join(", ") || "No specific tags"}
 Tempo: ${bpm} BPM
 Energy: ${energy}
 Length: ${length}
@@ -129,44 +175,49 @@ Lyric density: ${density}
 Required structure: ${structure.join(" -> ") || "Verse -> Chorus -> Verse -> Chorus -> Bridge -> Final Chorus"}
 Extra direction: ${customInstructions || "None"}
 
-NON-NEGOTIABLE RULES
-- Use the requested language.
-- Follow the requested perspective unless the brief explicitly calls for a shift.
-- Use concrete, believable details: objects, rooms, streets, weather, work, money, bodies, sounds, and consequences.
+NON-NEGOTIABLE LYRIC RULES
+- Use the requested language and perspective.
+- Style tags are invisible production metadata only. Never repeat, name, or describe genres, instruments, vocals, arrangements, performing, recording, studios, songs, singing, melodies, rhythms, or music-making inside lyric lines.
+- Never mention electronics, electricity, wires, cables, browsers, modems, routers, internet services, phones, screens, computers, radios, televisions, appliances, digital devices, notifications, signals, or related technology inside lyric lines.
+- These exclusions override the song idea, previous draft, selected tags, and extra direction. Translate any excluded subject into human actions, physical places, weather, clothing, food, work, money, paper objects, buildings, roads, or natural details.
+- Square-bracket section headings are allowed as structural metadata; the lines beneath them must obey the exclusions.
+- Use concrete, believable details: rooms, streets, weather, work, money, bodies, physical objects, overheard speech, and consequences.
 - Avoid vague cosmic imagery, generic inspirational language, stock heartbreak phrases, and filler.
 - Avoid phrases such as "fire in my veins," "broken wings," "rise above," "chasing dreams," and "lost in the night."
-- Do not imitate, mention, or closely evoke any living artist or copyrighted song.
-- Keep choruses memorable without repeating the song idea word-for-word in every line.
+- Do not imitate, mention, or closely evoke any living artist or copyrighted work.
+- Keep repeated sections memorable without repeating the song idea word-for-word in every line.
 - Vary line length naturally. Rhyme only as requested and only when it feels earned.
-- Use square-bracket section labels.
-- Output only the requested lyrics or hooks. No explanation, analysis, markdown fence, or title unless a title is part of a lyric line.`;
+- Output only the requested lyrics or options. No explanation, analysis, markdown fence, or title unless a title is part of a lyric line.`;
+
+  const maxOutputTokens = action === "hooks" ? 1200 : 3200;
 
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5-mini",
-        instructions: "Write disciplined, specific, human lyrics. Obey the requested action and output format exactly.",
-        input: prompt,
-        max_output_tokens: action === "hooks" ? 1200 : 3200,
-        store: false
-      })
-    });
+    let lyrics = await callOpenAI(prompt, maxOutputTokens);
+    if (!lyrics) return json(res, 502, { error: "The model returned an empty result." });
 
-    const data = await response.json();
-    if (!response.ok) {
-      const message = data?.error?.message || `OpenAI request failed (${response.status}).`;
-      return json(res, response.status, { error: message });
+    let forbidden = findForbiddenReferences(lyrics);
+    if (forbidden.length) {
+      const cleanupPrompt = `Rewrite the text below while preserving its section headings, story, perspective, emotional meaning, and approximate length.
+
+Remove every reference to music, instruments, singing, performance, studios, electronics, electricity, internet or communication technology, phones, screens, computers, appliances, wires, cables, browsers, modems, routers, signals, and digital devices. Do not replace them with other technical or musical references. Use ordinary human actions, physical places, weather, clothing, paper objects, food, work, money, roads, buildings, and natural details instead.
+
+Detected forbidden references: ${forbidden.join(", ")}
+
+TEXT TO REWRITE:
+${lyrics}
+
+Output only the rewritten text.`;
+
+      lyrics = await callOpenAI(cleanupPrompt, maxOutputTokens);
+      forbidden = findForbiddenReferences(lyrics);
     }
 
-    const lyrics = extractOutputText(data);
-    if (!lyrics) return json(res, 502, { error: "The model returned an empty result." });
+    if (!lyrics || forbidden.length) {
+      return json(res, 422, { error: "The draft contained prohibited music or electronics references. Forge will use its safe offline writer instead." });
+    }
+
     return json(res, 200, { lyrics, action });
   } catch (error) {
-    return json(res, 500, { error: error?.message || "Unexpected server error." });
+    return json(res, error?.status || 500, { error: error?.message || "Unexpected server error." });
   }
 }
