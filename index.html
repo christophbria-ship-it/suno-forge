@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0c11">
-  <meta name="description" content="Forge Studio — mobile-first music prompt and AI lyrics workstation">
+  <meta name="theme-color" content="#090b10">
+  <meta name="description" content="Forge Studio — mobile-first AI songwriting and music prompt workstation">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
   <title>Forge Studio</title>
@@ -12,12 +12,14 @@
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div>
+      <div class="brand-block">
         <p class="eyebrow">MUSIC PROMPT WORKSTATION</p>
         <h1>FORGE</h1>
       </div>
       <div class="header-actions">
+        <span id="saveBadge" class="save-badge">Saved</span>
         <span id="statusBadge" class="status-badge">Starting</span>
+        <button id="installBtn" class="icon-button hidden" type="button" aria-label="Install Forge">↓</button>
         <button id="randomizeBtn" class="icon-button" type="button" aria-label="Randomize track settings">🎲</button>
       </div>
     </header>
@@ -25,9 +27,9 @@
     <main>
       <section class="card hero">
         <div>
-          <p class="eyebrow">FORGE STUDIO</p>
-          <h2>Build the sound, write the song, copy the result.</h2>
-          <p class="muted">Everything works locally. AI lyrics activate when the secure backend is connected.</p>
+          <p class="eyebrow">FORGE STUDIO V3</p>
+          <h2>Build the sound. Direct the writing. Finish the prompt.</h2>
+          <p class="muted">AI drafting, rewriting, hook ideas, offline fallback, presets, history, and mobile-first editing.</p>
         </div>
         <button id="forgePromptBtn" class="primary-button" type="button">Forge Prompt</button>
       </section>
@@ -53,13 +55,20 @@
         </div>
         <label class="search-field">
           <span aria-hidden="true">⌕</span>
-          <input id="tagSearch" type="search" placeholder="Search genre, mood, vocals, writing..." autocomplete="off">
+          <input id="tagSearch" type="search" placeholder="Search genre, mood, vocals, production..." autocomplete="off">
         </label>
         <div id="selectedTags" class="selected-tags" aria-live="polite"></div>
         <div id="categoryList" class="category-list"></div>
       </section>
 
       <section class="card">
+        <div class="section-heading compact-heading">
+          <div>
+            <p class="eyebrow">TRACK DNA</p>
+            <h2>Sound & Writing Controls</h2>
+          </div>
+        </div>
+
         <div class="control-group">
           <div class="control-label-row">
             <label for="bpmRange">Tempo</label>
@@ -67,6 +76,7 @@
           </div>
           <input id="bpmRange" type="range" min="50" max="220" value="120">
         </div>
+
         <div class="control-grid">
           <label class="field">
             <span>Length</span>
@@ -86,6 +96,22 @@
               <option value="explosive">Explosive</option>
             </select>
           </label>
+          <label class="field">
+            <span>Perspective</span>
+            <select id="perspectiveSelect"></select>
+          </label>
+          <label class="field">
+            <span>Rhyme Style</span>
+            <select id="rhymeSelect"></select>
+          </label>
+          <label class="field">
+            <span>Lyric Density</span>
+            <select id="densitySelect"></select>
+          </label>
+          <label class="field">
+            <span>Language</span>
+            <select id="languageSelect"></select>
+          </label>
         </div>
       </section>
 
@@ -97,6 +123,7 @@
           </div>
           <button id="addStructureBtn" class="text-button" type="button">Add Section</button>
         </div>
+        <p class="helper-text no-min-height">Move, duplicate, rename, or remove sections. AI follows this order.</p>
         <div id="structureList" class="structure-list"></div>
       </section>
 
@@ -111,19 +138,34 @@
 
         <label class="field">
           <span>Song idea</span>
-          <input id="songIdea" type="text" maxlength="500" placeholder="Specific situation, character, place, conflict...">
+          <textarea id="songIdea" rows="3" maxlength="700" placeholder="Specific situation, character, place, conflict, or emotional turn..."></textarea>
         </label>
 
-        <div class="lyrics-actions">
-          <button id="generateLyricsBtn" class="secondary-button" type="button">Generate Lyrics</button>
+        <label class="field">
+          <span>Extra AI direction <small>(optional)</small></span>
+          <textarea id="customInstructions" rows="3" maxlength="1200" placeholder="Examples: keep the chorus blunt, avoid perfect rhyme, mention a specific object, end unresolved..."></textarea>
+        </label>
+
+        <div class="ai-action-grid">
+          <button id="generateLyricsBtn" class="secondary-button" type="button">Generate</button>
           <button id="regenerateLyricsBtn" type="button">Regenerate</button>
+          <button id="polishLyricsBtn" type="button">Polish</button>
+          <button id="continueLyricsBtn" type="button">Continue</button>
+          <button id="hookIdeasBtn" type="button">Hook Ideas</button>
         </div>
 
-        <p id="lyricsStatus" class="helper-text">AI uses the selected tags and structure. Offline fallback stays available.</p>
+        <p id="lyricsStatus" class="helper-text">AI uses the full brief and structure. Offline fallback remains available.</p>
+
+        <div class="stats-row" aria-live="polite">
+          <span id="sectionStat">0 sections</span>
+          <span id="lineStat">0 lines</span>
+          <span id="wordStat">0 words</span>
+          <span id="durationStat">~0:00</span>
+        </div>
 
         <label class="field">
           <span>Editable lyrics, notes, or cues</span>
-          <textarea id="lyricsInput" rows="15" maxlength="12000" spellcheck="true" placeholder="Write your own lyrics or generate a draft."></textarea>
+          <textarea id="lyricsInput" rows="18" maxlength="16000" spellcheck="true" placeholder="Write your own lyrics or generate a draft."></textarea>
         </label>
       </section>
 
@@ -133,10 +175,18 @@
             <p class="eyebrow">FINAL OUTPUT</p>
             <h2>Generated Prompt</h2>
           </div>
-          <button id="copyPromptBtn" class="text-button" type="button">Copy</button>
+          <button id="copyPromptBtn" class="text-button" type="button">Copy Prompt</button>
         </div>
-        <textarea id="promptOutput" rows="16" readonly placeholder="Your forged prompt appears here."></textarea>
-        <div class="action-grid">
+
+        <label class="field prompt-format-field">
+          <span>Prompt Format</span>
+          <select id="promptFormatSelect"></select>
+        </label>
+
+        <textarea id="promptOutput" rows="18" readonly placeholder="Your forged prompt appears here."></textarea>
+
+        <div class="action-grid three-actions">
+          <button id="copyLyricsBtn" type="button">Copy Lyrics</button>
           <button id="sharePromptBtn" type="button">Share</button>
           <button id="favoriteBtn" type="button">Favorite</button>
         </div>
@@ -159,6 +209,11 @@
         <div class="action-grid">
           <button id="exportBtn" type="button">Export Backup</button>
           <label class="file-button">Import Backup<input id="importInput" type="file" accept="application/json,.json"></label>
+        </div>
+
+        <div class="history-tools">
+          <input id="historySearch" type="search" placeholder="Search saved work">
+          <label class="toggle-field"><input id="favoritesOnly" type="checkbox"> Favorites only</label>
         </div>
 
         <h3>Presets</h3>

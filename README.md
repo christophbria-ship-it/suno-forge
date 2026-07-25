@@ -1,29 +1,31 @@
 # Forge Studio
 
-Mobile-first music prompt and lyric workstation built for Android, Acode, and modern browsers.
+Mobile-first AI songwriting and music prompt workstation built for Android, Acode, and modern browsers.
 
-## What changed in v2
+## Forge Studio v3
 
-- Separate **Generate Lyrics**, **Regenerate**, and **Forge Prompt** actions.
-- Lyrics textarea is always editable.
-- Clear reliably removes the song idea, lyrics, and generated output.
-- AI lyric generation uses a secure server-side route; the API key never enters browser code.
-- Varied offline lyric fallback when the backend is unavailable.
-- Improved tags, selected-tag chips, songwriting styles, mobile layout, presets, history, favorites, undo/redo, import/export, copy, and share.
-- Diagnostics only open when a real error occurs.
+- Five AI writing actions: **Generate**, **Regenerate**, **Polish**, **Continue**, and **Hook Ideas**.
+- Advanced controls for perspective, rhyme style, lyric density, language, tempo, energy, and length.
+- Mobile structure editor with move, duplicate, rename, and remove controls.
+- Live lyric statistics for sections, lines, words, and estimated performance duration.
+- Detailed, compact, and lyrics-only prompt formats.
+- Searchable history, favorites filtering, preset updating, and duplicate-history prevention.
+- Debounced autosave with visible save status.
+- Offline fallback writer, installable PWA support, undo/redo, import/export, copy, and share.
+- Secure server-side OpenAI route with validation and rate limiting.
 
 ## Local Acode use
 
-Open `index.html` with Acode Preview. All manual features and the offline lyric generator work locally. The secure AI route requires deployment because a browser must never contain `OPENAI_API_KEY`.
+Open `index.html` with Acode Preview. Manual tools and offline lyric generation work locally. Live AI requires deployment because `OPENAI_API_KEY` must never be placed in browser code.
 
 ## Deploy on Vercel
 
 1. Import this GitHub repository into Vercel.
-2. Add the environment variable `OPENAI_API_KEY` in the Vercel project settings.
+2. Add `OPENAI_API_KEY` under Project Settings → Environment Variables.
 3. Optionally add `OPENAI_MODEL`. It defaults to `gpt-5-mini`.
-4. Deploy.
+4. Redeploy after changing environment variables.
 
-Required environment variable:
+Required:
 
 ```text
 OPENAI_API_KEY=your secret OpenAI API key
@@ -43,4 +45,4 @@ Never commit a real API key. `.env` files are ignored.
 npm test
 ```
 
-This performs JavaScript syntax checks on the frontend data, application logic, and serverless API route.
+The test command performs JavaScript syntax checks on the frontend modules and serverless API route.

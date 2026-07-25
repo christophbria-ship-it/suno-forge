@@ -1,16 +1,21 @@
 "use strict";
 
-const STORAGE_KEY = "forgeStateV2";
-const HISTORY_KEY = "forgeHistoryV2";
-const PRESET_KEY = "forgePresetsV2";
-const MAX_HISTORY = 30;
-const MAX_UNDO = 50;
+const STORAGE_KEY = "forgeStateV3";
+const HISTORY_KEY = "forgeHistoryV3";
+const PRESET_KEY = "forgePresetsV3";
+const LEGACY_STORAGE_KEY = "forgeStateV2";
+const LEGACY_HISTORY_KEY = "forgeHistoryV2";
+const LEGACY_PRESET_KEY = "forgePresetsV2";
+const MAX_HISTORY = 60;
+const MAX_UNDO = 80;
 
 const $ = (id) => document.getElementById(id);
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const els = {
   statusBadge: $("statusBadge"),
+  saveBadge: $("saveBadge"),
+  installBtn: $("installBtn"),
   randomizeBtn: $("randomizeBtn"),
   forgePromptBtn: $("forgePromptBtn"),
   clearSelectionsBtn: $("clearSelectionsBtn"),
@@ -23,22 +28,38 @@ const els = {
   bpmValue: $("bpmValue"),
   lengthSelect: $("lengthSelect"),
   energySelect: $("energySelect"),
+  perspectiveSelect: $("perspectiveSelect"),
+  rhymeSelect: $("rhymeSelect"),
+  densitySelect: $("densitySelect"),
+  languageSelect: $("languageSelect"),
   addStructureBtn: $("addStructureBtn"),
   structureList: $("structureList"),
   songIdea: $("songIdea"),
+  customInstructions: $("customInstructions"),
   generateLyricsBtn: $("generateLyricsBtn"),
   regenerateLyricsBtn: $("regenerateLyricsBtn"),
+  polishLyricsBtn: $("polishLyricsBtn"),
+  continueLyricsBtn: $("continueLyricsBtn"),
+  hookIdeasBtn: $("hookIdeasBtn"),
   clearLyricsBtn: $("clearLyricsBtn"),
   lyricsStatus: $("lyricsStatus"),
   lyricsInput: $("lyricsInput"),
+  sectionStat: $("sectionStat"),
+  lineStat: $("lineStat"),
+  wordStat: $("wordStat"),
+  durationStat: $("durationStat"),
+  promptFormatSelect: $("promptFormatSelect"),
   promptOutput: $("promptOutput"),
   copyPromptBtn: $("copyPromptBtn"),
+  copyLyricsBtn: $("copyLyricsBtn"),
   sharePromptBtn: $("sharePromptBtn"),
   favoriteBtn: $("favoriteBtn"),
   presetName: $("presetName"),
   savePresetBtn: $("savePresetBtn"),
   exportBtn: $("exportBtn"),
   importInput: $("importInput"),
+  historySearch: $("historySearch"),
+  favoritesOnly: $("favoritesOnly"),
   presetList: $("presetList"),
   historyList: $("historyList"),
   clearHistoryBtn: $("clearHistoryBtn"),
@@ -57,21 +78,31 @@ const defaultState = {
   bpm: DATA.defaults.bpm,
   length: DATA.defaults.length,
   energy: DATA.defaults.energy,
+  perspective: DATA.defaults.perspective,
+  rhymeMode: DATA.defaults.rhymeMode,
+  density: DATA.defaults.density,
+  language: DATA.defaults.language,
+  promptFormat: DATA.defaults.promptFormat,
+  customInstructions: DATA.defaults.customInstructions,
   songIdea: DATA.defaults.songIdea,
   lyrics: DATA.defaults.lyrics,
   structure: clone(DATA.defaultStructure),
   output: "",
   favorite: false,
-  lastGeneratedLyrics: ""
+  lastGeneratedLyrics: "",
+  lastAiAction: "",
+  updatedAt: new Date().toISOString()
 };
 
-let state = loadJSON(STORAGE_KEY, clone(defaultState));
-let history = loadJSON(HISTORY_KEY, []);
-let presets = loadJSON(PRESET_KEY, []);
+let state = loadInitialState();
+let history = loadInitialCollection(HISTORY_KEY, LEGACY_HISTORY_KEY);
+let presets = loadInitialCollection(PRESET_KEY, LEGACY_PRESET_KEY);
 let undoStack = [];
 let redoStack = [];
 let toastTimer = null;
+let saveTimer = null;
 let isGenerating = false;
+let installPromptEvent = null;
 
 function loadJSON(key, fallback) {
   try {
@@ -82,10 +113,40 @@ function loadJSON(key, fallback) {
   }
 }
 
-function saveAll() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+function loadInitialState() {
+  const current = loadJSON(STORAGE_KEY, null);
+  if (current) return current;
+  const legacy = loadJSON(LEGACY_STORAGE_KEY, null);
+  return legacy ? { ...clone(defaultState), ...legacy } : clone(defaultState);
+}
+
+function loadInitialCollection(currentKey, legacyKey) {
+  const current = loadJSON(currentKey, null);
+  if (Array.isArray(current)) return current;
+  const legacy = loadJSON(legacyKey, []);
+  return Array.isArray(legacy) ? legacy : [];
+}
+
+function markDirty() {
+  els.saveBadge.textContent = "Saving";
+  els.saveBadge.classList.add("dirty");
+}
+
+function saveAll({ immediate = false } = {}) {
+  markDirty();
+  clearTimeout(saveTimer);
+
+  const write = () => {
+    state.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    localStorage.setItem(PRESET_KEY, JSON.stringify(presets));
+    els.saveBadge.textContent = "Saved";
+    els.saveBadge.classList.remove("dirty");
+  };
+
+  if (immediate) write();
+  else saveTimer = setTimeout(write, 180);
 }
 
 function snapshot() {
@@ -114,7 +175,7 @@ function showToast(message) {
   clearTimeout(toastTimer);
   els.toast.textContent = message;
   els.toast.classList.add("show");
-  toastTimer = setTimeout(() => els.toast.classList.remove("show"), 1900);
+  toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2100);
 }
 
 function reportError(error, context = "Forge") {
@@ -122,6 +183,7 @@ function reportError(error, context = "Forge") {
   const stack = error?.stack || "No stack trace available.";
   const report = [
     "FORGE ERROR REPORT",
+    `Version: ${DATA.version}`,
     `Time: ${new Date().toLocaleString()}`,
     `Context: ${context}`,
     `Message: ${message}`,
@@ -136,6 +198,10 @@ function reportError(error, context = "Forge") {
 
 function randomItem(list) {
   return list[Math.floor(Math.random() * list.length)];
+}
+
+function shuffle(list) {
+  return [...list].sort(() => Math.random() - 0.5);
 }
 
 function unique(list) {
@@ -153,6 +219,19 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function populateSelect(select, options, selectedValue) {
+  select.innerHTML = "";
+  options.forEach((option) => {
+    const item = document.createElement("option");
+    const value = typeof option === "string" ? option : option.value;
+    const label = typeof option === "string" ? option : option.label;
+    item.value = value;
+    item.textContent = label;
+    item.selected = value === selectedValue;
+    select.appendChild(item);
+  });
 }
 
 function renderRecipes() {
@@ -195,7 +274,11 @@ function renderCategories(filter = "") {
     header.type = "button";
     header.className = "category-header";
     header.innerHTML = `<strong>${escapeHtml(name)}</strong><span>${matches.length}</span>`;
-    header.addEventListener("click", () => section.classList.toggle("collapsed"));
+    header.setAttribute("aria-expanded", "true");
+    header.addEventListener("click", () => {
+      section.classList.toggle("collapsed");
+      header.setAttribute("aria-expanded", String(!section.classList.contains("collapsed")));
+    });
 
     const content = document.createElement("div");
     content.className = "category-content";
@@ -215,3 +298,21 @@ function renderCategories(filter = "") {
   });
 }
 
+function getWordCount(text) {
+  return text.trim() ? text.trim().split(/\s+/).length : 0;
+}
+
+function updateStats() {
+  const text = state.lyrics || "";
+  const nonEmptyLines = text.split(/\r?\n/).filter((line) => line.trim()).length;
+  const sections = (text.match(/^\s*\[[^\]]+\]/gm) || []).length;
+  const words = getWordCount(text);
+  const estimatedSeconds = words ? Math.max(30, Math.round((words / 95) * 60)) : 0;
+  const minutes = Math.floor(estimatedSeconds / 60);
+  const seconds = String(estimatedSeconds % 60).padStart(2, "0");
+
+  els.sectionStat.textContent = `${sections} section${sections === 1 ? "" : "s"}`;
+  els.lineStat.textContent = `${nonEmptyLines} line${nonEmptyLines === 1 ? "" : "s"}`;
+  els.wordStat.textContent = `${words} word${words === 1 ? "" : "s"}`;
+  els.durationStat.textContent = `~${minutes}:${seconds}`;
+}

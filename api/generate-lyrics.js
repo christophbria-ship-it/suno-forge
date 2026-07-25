@@ -1,6 +1,7 @@
 const RATE_WINDOW_MS = 60_000;
-const RATE_LIMIT = 8;
+const RATE_LIMIT = 12;
 const requests = new Map();
+const ALLOWED_ACTIONS = new Set(["generate", "regenerate", "polish", "continue", "hooks"]);
 
 function json(res, status, body) {
   res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
@@ -50,6 +51,26 @@ function extractOutputText(data) {
   return "";
 }
 
+function taskForAction(action, previousLyrics) {
+  if (action === "regenerate") {
+    return `Write a complete new draft that is substantially different in scenes, hook language, line shapes, and phrasing from the previous draft. Preserve only the core brief and requested structure.\n\nPREVIOUS DRAFT:\n${previousLyrics || "None"}`;
+  }
+
+  if (action === "polish") {
+    return `Return a complete polished version of the current lyrics. Preserve the core story, strongest images, section order, and emotional intent. Improve specificity, flow, singability, and line economy. Remove filler and clichés.\n\nCURRENT LYRICS:\n${previousLyrics || "None"}`;
+  }
+
+  if (action === "continue") {
+    return `Continue the current lyrics without repeating existing lines. Output continuation only, beginning with an appropriate section label. Resolve or deepen the existing story while matching its voice.\n\nCURRENT LYRICS:\n${previousLyrics || "None"}`;
+  }
+
+  if (action === "hooks") {
+    return `Write exactly five distinct hook options for this song. Label them [Hook 1] through [Hook 5]. Each hook should be 2-4 singable lines, concrete, memorable, and clearly different from the others. Do not rewrite the full song.\n\nCURRENT LYRICS FOR CONTEXT:\n${previousLyrics || "None"}`;
+  }
+
+  return "Write a complete original lyric draft that follows the requested structure exactly.";
+}
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -62,7 +83,7 @@ export default async function handler(req, res) {
 
   const ip = getIp(req);
   if (rateLimited(ip)) {
-    return json(res, 429, { error: "Too many lyric requests. Wait one minute and try again." });
+    return json(res, 429, { error: "Too many AI requests. Wait one minute and try again." });
   }
 
   let body;
@@ -72,33 +93,53 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "Request body must be valid JSON." });
   }
 
-  const songIdea = cleanString(body.songIdea, 500);
-  const selectedTags = cleanArray(body.selectedTags, 24, 60);
-  const structure = cleanArray(body.structure, 20, 40);
-  const previousLyrics = cleanString(body.previousLyrics, 6000);
+  const action = ALLOWED_ACTIONS.has(body.action) ? body.action : "generate";
+  const songIdea = cleanString(body.songIdea, 700);
+  const customInstructions = cleanString(body.customInstructions, 1200);
+  const selectedTags = cleanArray(body.selectedTags, 30, 70);
+  const structure = cleanArray(body.structure, 24, 40);
+  const previousLyrics = cleanString(body.previousLyrics, 16000);
   const bpm = Math.min(220, Math.max(50, Number(body.bpm) || 120));
   const energy = cleanString(body.energy, 30) || "medium";
   const length = cleanString(body.length, 30) || "standard";
+  const perspective = cleanString(body.perspective, 40) || "first-person";
+  const rhymeMode = cleanString(body.rhymeMode, 30) || "natural";
+  const density = cleanString(body.density, 30) || "balanced";
+  const language = cleanString(body.language, 40) || "English";
 
-  const prompt = `Write a complete original song lyric draft for a mobile songwriting app.
+  if (["polish", "continue"].includes(action) && !previousLyrics) {
+    return json(res, 400, { error: "This action requires lyrics in the editor." });
+  }
 
+  const prompt = `You are writing for Forge Studio, a professional mobile songwriting workstation.
+
+ACTION: ${action}
+TASK: ${taskForAction(action, previousLyrics)}
+
+CREATIVE BRIEF
 Song idea: ${songIdea || "Create a grounded story from the selected style."}
 Style tags: ${selectedTags.join(", ") || "No specific tags"}
 Tempo: ${bpm} BPM
 Energy: ${energy}
 Length: ${length}
-Required structure: ${structure.join(" -> ") || "Verse -> Chorus -> Verse -> Chorus -> Bridge -> Chorus"}
+Language: ${language}
+Perspective: ${perspective}
+Rhyme approach: ${rhymeMode}
+Lyric density: ${density}
+Required structure: ${structure.join(" -> ") || "Verse -> Chorus -> Verse -> Chorus -> Bridge -> Final Chorus"}
+Extra direction: ${customInstructions || "None"}
 
-Rules:
-- Follow the structure exactly and label each section in square brackets.
-- Use concrete, believable details: objects, places, actions, overheard phrases, physical consequences.
-- Avoid generic motivational language, vague cosmic imagery, "fire in my veins," "broken wings," "rise above," and other stock clichés.
-- Do not imitate or mention any living artist or copyrighted song.
-- Match the language tag if one is selected; otherwise write in English.
-- Keep choruses memorable without repeating the song idea word-for-word every line.
-- Vary line length naturally. Rhyme only when it feels earned.
-- Output lyrics only, with no explanation or markdown fence.
-${previousLyrics ? `- Make this substantially different from the previous draft below:\n${previousLyrics}` : ""}`;
+NON-NEGOTIABLE RULES
+- Use the requested language.
+- Follow the requested perspective unless the brief explicitly calls for a shift.
+- Use concrete, believable details: objects, rooms, streets, weather, work, money, bodies, sounds, and consequences.
+- Avoid vague cosmic imagery, generic inspirational language, stock heartbreak phrases, and filler.
+- Avoid phrases such as "fire in my veins," "broken wings," "rise above," "chasing dreams," and "lost in the night."
+- Do not imitate, mention, or closely evoke any living artist or copyrighted song.
+- Keep choruses memorable without repeating the song idea word-for-word in every line.
+- Vary line length naturally. Rhyme only as requested and only when it feels earned.
+- Use square-bracket section labels.
+- Output only the requested lyrics or hooks. No explanation, analysis, markdown fence, or title unless a title is part of a lyric line.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -109,9 +150,9 @@ ${previousLyrics ? `- Make this substantially different from the previous draft 
       },
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || "gpt-5-mini",
-        instructions: "You are a disciplined songwriter. Produce specific, human, non-cliché lyrics that obey the requested structure.",
+        instructions: "Write disciplined, specific, human lyrics. Obey the requested action and output format exactly.",
         input: prompt,
-        max_output_tokens: 2200,
+        max_output_tokens: action === "hooks" ? 1200 : 3200,
         store: false
       })
     });
@@ -123,8 +164,8 @@ ${previousLyrics ? `- Make this substantially different from the previous draft 
     }
 
     const lyrics = extractOutputText(data);
-    if (!lyrics) return json(res, 502, { error: "The model returned an empty lyric draft." });
-    return json(res, 200, { lyrics });
+    if (!lyrics) return json(res, 502, { error: "The model returned an empty result." });
+    return json(res, 200, { lyrics, action });
   } catch (error) {
     return json(res, 500, { error: error?.message || "Unexpected server error." });
   }
