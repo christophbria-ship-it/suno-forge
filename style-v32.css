@@ -1,0 +1,228 @@
+/* Forge Studio v3.2 — mobile tag studio */
+
+.tag-help {
+  margin-bottom: 0.75rem;
+}
+
+.category-shortcuts {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  padding: 0.15rem 0 0.85rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.category-shortcut {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 8.5rem;
+  padding: 0.7rem 0.8rem;
+  text-align: left;
+  border-radius: 0.8rem;
+}
+
+.category-shortcut strong {
+  font-size: 0.82rem;
+}
+
+.category-shortcut span {
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+.direct-tag-results {
+  margin-top: 0.75rem;
+  margin-bottom: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.9rem;
+  background: rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.tag-search-hint,
+.tag-result-summary {
+  padding: 0.75rem 0.85rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  opacity: 0.78;
+}
+
+.tag-result-summary {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.direct-tag-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  max-height: 24rem;
+  overflow-y: auto;
+  padding: 0.65rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.direct-tag-result {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+  padding: 0.65rem 0.7rem;
+  text-align: left;
+  border-radius: 0.75rem;
+}
+
+.direct-tag-result strong {
+  overflow: hidden;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+}
+
+.direct-tag-result small {
+  overflow: hidden;
+  font-size: 0.65rem;
+  opacity: 0.65;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.direct-tag-result.selected {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+}
+
+.hybrid-lab {
+  scroll-margin-top: 5rem;
+}
+
+.hybrid-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.hybrid-action-row {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.35fr) 1fr;
+  gap: 0.65rem;
+  margin-top: 0.75rem;
+}
+
+.hybrid-add-button {
+  width: 100%;
+}
+
+.hybrid-status {
+  min-height: 1.25rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.78rem;
+  opacity: 0.8;
+}
+
+.baroque-lab-heading {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mini-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.baroque-recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-top: 0.75rem;
+}
+
+.baroque-recipe-button {
+  display: grid;
+  gap: 0.3rem;
+  min-height: 5.2rem;
+  padding: 0.75rem;
+  text-align: left;
+  border-radius: 0.8rem;
+}
+
+.baroque-recipe-button strong {
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.baroque-recipe-button span {
+  font-size: 0.7rem;
+  line-height: 1.35;
+  opacity: 0.7;
+}
+
+.style-direction-card {
+  scroll-margin-top: 5rem;
+}
+
+.style-direction-card textarea {
+  min-height: 9.5rem;
+}
+
+.style-preset-row {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.style-preset-button {
+  flex: 0 0 13rem;
+  min-height: 4.4rem;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  border-radius: 0.75rem;
+}
+
+.prompt-helper {
+  margin-bottom: 0.7rem;
+}
+
+.forge-copy-button {
+  width: 100%;
+  margin: 0.25rem 0 0.85rem;
+}
+
+@media (max-width: 430px) {
+  .direct-tag-grid,
+  .baroque-recipe-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hybrid-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .category-shortcut {
+    min-width: 7.8rem;
+  }
+
+  .style-preset-button {
+    flex-basis: 11.5rem;
+  }
+}
+
+@media (min-width: 700px) {
+  .direct-tag-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .baroque-recipe-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
