@@ -1,5 +1,6 @@
 function renderStructure() {
   els.structureList.innerHTML = "";
+
   state.structure.forEach((part, index) => {
     const row = document.createElement("div");
     row.className = "structure-row";
@@ -21,6 +22,29 @@ function renderStructure() {
       syncControls(false);
     });
 
+    const actions = document.createElement("div");
+    actions.className = "structure-actions";
+
+    const up = document.createElement("button");
+    up.type = "button";
+    up.textContent = "↑";
+    up.disabled = index === 0;
+    up.setAttribute("aria-label", `Move ${part} up`);
+    up.addEventListener("click", () => moveStructure(index, -1));
+
+    const down = document.createElement("button");
+    down.type = "button";
+    down.textContent = "↓";
+    down.disabled = index === state.structure.length - 1;
+    down.setAttribute("aria-label", `Move ${part} down`);
+    down.addEventListener("click", () => moveStructure(index, 1));
+
+    const duplicate = document.createElement("button");
+    duplicate.type = "button";
+    duplicate.textContent = "⧉";
+    duplicate.setAttribute("aria-label", `Duplicate ${part}`);
+    duplicate.addEventListener("click", () => duplicateStructure(index));
+
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "remove-button";
@@ -28,19 +52,20 @@ function renderStructure() {
     remove.setAttribute("aria-label", `Remove ${part}`);
     remove.addEventListener("click", () => removeStructure(index));
 
-    row.append(select, remove);
+    actions.append(up, down, duplicate, remove);
+    row.append(select, actions);
     els.structureList.appendChild(row);
   });
 }
 
-function createSavedItem(title, meta, onLoad, onDelete) {
+function createSavedItem(title, meta, favorite, onLoad, onDelete, onToggleFavorite) {
   const item = document.createElement("div");
   item.className = "saved-item";
 
   const content = document.createElement("div");
   content.className = "saved-item-content";
   content.innerHTML = '<div class="saved-item-title"></div><div class="saved-item-meta"></div>';
-  content.children[0].textContent = title;
+  content.children[0].textContent = favorite ? `★ ${title}` : title;
   content.children[1].textContent = meta;
 
   const actions = document.createElement("div");
@@ -50,6 +75,15 @@ function createSavedItem(title, meta, onLoad, onDelete) {
   load.type = "button";
   load.textContent = "Load";
   load.addEventListener("click", onLoad);
+
+  if (onToggleFavorite) {
+    const star = document.createElement("button");
+    star.type = "button";
+    star.textContent = favorite ? "★" : "☆";
+    star.setAttribute("aria-label", favorite ? `Unfavorite ${title}` : `Favorite ${title}`);
+    star.addEventListener("click", onToggleFavorite);
+    actions.appendChild(star);
+  }
 
   const remove = document.createElement("button");
   remove.type = "button";
@@ -63,12 +97,26 @@ function createSavedItem(title, meta, onLoad, onDelete) {
   return item;
 }
 
+function getSavedFilter() {
+  return {
+    query: els.historySearch.value.trim().toLowerCase(),
+    favoritesOnly: els.favoritesOnly.checked
+  };
+}
+
 function renderPresetList() {
-  els.presetList.innerHTML = presets.length ? "" : '<div class="empty-state">No presets saved.</div>';
-  presets.forEach((preset) => {
+  const { query } = getSavedFilter();
+  const filtered = presets.filter((preset) => {
+    const haystack = `${preset.name} ${preset.state?.selectedTags?.join(" ") || ""}`.toLowerCase();
+    return !query || haystack.includes(query);
+  });
+
+  els.presetList.innerHTML = filtered.length ? "" : '<div class="empty-state">No matching presets.</div>';
+  filtered.forEach((preset) => {
     els.presetList.appendChild(createSavedItem(
       preset.name,
-      `${preset.state.selectedTags.length} tags · ${preset.state.bpm} BPM`,
+      `${preset.state.selectedTags.length} tags · ${preset.state.bpm} BPM · ${preset.state.language || "English"}`,
+      false,
       () => loadPreset(preset.id),
       () => deletePreset(preset.id)
     ));
@@ -76,13 +124,27 @@ function renderPresetList() {
 }
 
 function renderHistoryList() {
-  els.historyList.innerHTML = history.length ? "" : '<div class="empty-state">No prompt history.</div>';
-  history.forEach((item) => {
+  const { query, favoritesOnly } = getSavedFilter();
+  const filtered = history.filter((item) => {
+    if (favoritesOnly && !item.favorite) return false;
+    const haystack = [
+      item.title,
+      item.state?.songIdea,
+      item.state?.selectedTags?.join(" "),
+      item.state?.lyrics
+    ].filter(Boolean).join(" ").toLowerCase();
+    return !query || haystack.includes(query);
+  });
+
+  els.historyList.innerHTML = filtered.length ? "" : '<div class="empty-state">No matching history.</div>';
+  filtered.forEach((item) => {
     els.historyList.appendChild(createSavedItem(
-      item.favorite ? `★ ${item.title}` : item.title,
-      new Date(item.createdAt).toLocaleString(),
+      item.title,
+      `${new Date(item.createdAt).toLocaleString()} · ${item.state?.bpm || 120} BPM`,
+      Boolean(item.favorite),
       () => loadHistory(item.id),
-      () => deleteHistory(item.id)
+      () => deleteHistory(item.id),
+      () => toggleHistoryFavorite(item.id)
     ));
   });
 }
@@ -97,16 +159,30 @@ function syncControls(renderLists = true) {
   els.bpmValue.textContent = `${state.bpm} BPM`;
   els.lengthSelect.value = state.length;
   els.energySelect.value = state.energy;
+  els.perspectiveSelect.value = state.perspective;
+  els.rhymeSelect.value = state.rhymeMode;
+  els.densitySelect.value = state.density;
+  els.languageSelect.value = state.language;
+  els.promptFormatSelect.value = state.promptFormat;
   els.songIdea.value = state.songIdea;
+  els.customInstructions.value = state.customInstructions;
   els.lyricsInput.value = state.lyrics;
   els.promptOutput.value = state.output;
   els.favoriteBtn.textContent = state.favorite ? "★ Favorited" : "Favorite";
-  els.regenerateLyricsBtn.disabled = !state.lyrics.trim() || isGenerating;
+
+  const hasLyrics = Boolean(state.lyrics.trim());
+  els.regenerateLyricsBtn.disabled = !hasLyrics || isGenerating;
+  els.polishLyricsBtn.disabled = !hasLyrics || isGenerating;
+  els.continueLyricsBtn.disabled = !hasLyrics || isGenerating;
+  els.hookIdeasBtn.disabled = isGenerating;
   els.generateLyricsBtn.disabled = isGenerating;
   els.forgePromptBtn.disabled = isGenerating;
+  els.copyLyricsBtn.disabled = !hasLyrics;
+
   renderSelectedTags();
   renderCategories(els.tagSearch.value);
   renderStructure();
+  updateStats();
   updateUndoButtons();
   if (renderLists) renderSaved();
 }
@@ -126,6 +202,9 @@ function applyRecipe(recipe) {
   state.selectedTags = unique(recipe.tags);
   state.bpm = recipe.bpm;
   state.energy = recipe.energy;
+  state.perspective = recipe.perspective || state.perspective;
+  state.rhymeMode = recipe.rhymeMode || state.rhymeMode;
+  state.density = recipe.density || state.density;
   state.output = "";
   state.favorite = false;
   saveAll();
@@ -136,6 +215,28 @@ function applyRecipe(recipe) {
 function addStructure() {
   snapshot();
   state.structure.push("Verse");
+  state.output = "";
+  saveAll();
+  syncControls(false);
+}
+
+function moveStructure(index, direction) {
+  const target = index + direction;
+  if (target < 0 || target >= state.structure.length) return;
+  snapshot();
+  [state.structure[index], state.structure[target]] = [state.structure[target], state.structure[index]];
+  state.output = "";
+  saveAll();
+  syncControls(false);
+}
+
+function duplicateStructure(index) {
+  if (state.structure.length >= 24) {
+    showToast("Structure limit reached");
+    return;
+  }
+  snapshot();
+  state.structure.splice(index + 1, 0, state.structure[index]);
   state.output = "";
   saveAll();
   syncControls(false);
@@ -157,74 +258,105 @@ function buildPrompt() {
   const tags = state.selectedTags.length
     ? state.selectedTags.join(", ")
     : "Open genre and production direction";
+  const lyrics = state.lyrics.trim();
+
+  if (state.promptFormat === "lyrics") return lyrics;
+
+  if (state.promptFormat === "compact") {
+    const brief = [
+      tags,
+      `${state.bpm} BPM`,
+      `${state.energy} energy`,
+      state.length,
+      state.language,
+      state.perspective.replaceAll("-", " "),
+      `${state.rhymeMode} rhyme`,
+      `${state.density} lyrics`,
+      `structure: ${state.structure.join(" → ")}`
+    ].join(", ");
+    return `${brief}.${state.songIdea.trim() ? ` Song idea: ${state.songIdea.trim()}.` : ""}${lyrics ? `\n\n${lyrics}` : ""}`;
+  }
+
   const sections = [
     `STYLE: ${tags}`,
     `TEMPO: ${state.bpm} BPM`,
     `ENERGY: ${state.energy}`,
     `LENGTH: ${state.length}`,
+    `LANGUAGE: ${state.language}`,
+    `PERSPECTIVE: ${state.perspective.replaceAll("-", " ")}`,
+    `RHYME: ${state.rhymeMode}`,
+    `LYRIC DENSITY: ${state.density}`,
     `STRUCTURE: ${state.structure.join(" → ")}`
   ];
 
   if (state.songIdea.trim()) sections.push(`SONG IDEA: ${state.songIdea.trim()}`);
-  if (state.lyrics.trim()) sections.push(`LYRICS / DIRECTION:\n${state.lyrics.trim()}`);
+  if (state.customInstructions.trim()) sections.push(`EXTRA DIRECTION: ${state.customInstructions.trim()}`);
+  if (lyrics) sections.push(`LYRICS / DIRECTION:\n${lyrics}`);
   return sections.join("\n\n");
 }
 
-function buildOfflineLyrics() {
+function buildOfflineLyrics(action = "generate") {
   const idea = state.songIdea.trim() || "someone deciding whether to leave before sunrise";
   const mood = state.selectedTags.find((tag) => DATA.categories.Mood.includes(tag)) || "restless";
   const genre = state.selectedTags.find((tag) => DATA.categories.Genre.includes(tag)) || "indie rock";
-  const details = [
-    "a cracked phone charging beside the motel sink",
-    "the red numbers on a microwave clock",
-    "rainwater dragging cigarette ash into the gutter",
-    "a work shirt hanging from the passenger window",
-    "two quarters and a receipt in the cup holder",
-    "the neighbor's sprinkler clicking at 4 a.m.",
-    "a dog barking behind a chain-link fence",
-    "cold fries in a paper bag on the dashboard"
+  const details = shuffle(DATA.offlineDetails).slice(0, 8);
+  const hooks = [
+    "I keep the porch light off but the hallway knows my name",
+    "Nothing changed except the lock and the weather",
+    "I said I was leaving; the engine said maybe",
+    "We make a promise every time the floorboards shake",
+    "The truth sounds smaller when the refrigerator kicks on"
   ];
-  const picked = unique([...details].sort(() => Math.random() - 0.5)).slice(0, 4);
+
+  if (action === "hooks") {
+    return hooks.map((hook, index) => `[Hook ${index + 1}]\n${hook}`).join("\n\n");
+  }
+
+  if (action === "continue") {
+    return `[Continuation]\nBy daylight ${details[0]} is still where I left it\n${details[1]} turns ordinary in the sun\nI take the long way past the same three houses\nAnd let the last unfinished sentence ride`;
+  }
+
+  const alternate = action === "regenerate" || action === "polish";
   let verse = 0;
+  let detailIndex = alternate ? 3 : 0;
 
   return state.structure.map((section) => {
-    if (section === "Intro") return `[Intro]\n(${mood.toLowerCase()} ${genre.toLowerCase()} texture; no vocal)`;
+    if (section === "Intro") return `[Intro]\n(${mood.toLowerCase()} ${genre.toLowerCase()} texture; close room sound)`;
     if (section === "Verse") {
       verse += 1;
-      const lines = verse === 1
-        ? [
-            `The night clerk watches ${idea.toLowerCase()}`,
-            `There's ${picked[0]} and ${picked[1]}`,
-            "I tell him one more hour, maybe two",
-            "He nods like he's heard that answer before"
-          ]
-        : [
-            `By morning, ${picked[2]} is all that's moving`,
-            `I count out change beside ${picked[3]}`,
-            "No revelation, no clean break",
-            "Just the engine catching on the second try"
-          ];
-      return `[Verse ${verse}]\n${lines.join("\n")}`;
+      const first = details[detailIndex % details.length];
+      const second = details[(detailIndex + 1) % details.length];
+      detailIndex += 2;
+      return `[Verse ${verse}]\n${idea}\nThere is ${first}\nAnd ${second}\nNobody calls it a sign; it is just what stayed behind`;
+    }
+    if (section === "Pre-Chorus") {
+      return `[Pre-Chorus]\nThe room goes quiet when the pipes stop\nI can hear the decision before I make it`;
     }
     if (section === "Chorus" || section === "Final Chorus") {
-      return `[${section}]\nI said I'd leave before the traffic starts\nBut the key is warm inside my hand\nSome decisions don't arrive like thunder\nThey sound like tires crossing wet pavement`;
+      return `[${section}]\n${randomItem(hooks)}\nThe key is warm inside my hand\nSome decisions do not arrive like thunder\nThey sound like tires crossing wet pavement`;
     }
     if (section === "Bridge") {
-      return `[Bridge]\nYour last message is still unsent\nThree words, then nothing underneath\nI delete it when the sun hits the glass\nAnd pull out slow enough to change my mind`;
+      return `[Bridge]\nYour last message is still unsent\nThree words and a blinking cursor underneath\nI delete it when the sun hits the glass\nThen pull out slow enough to change my mind`;
     }
-    if (section === "Outro") return `[Outro]\n(road noise, loose guitar figure, unresolved ending)`;
-    return `[${section}]\n(${mood.toLowerCase()} instrumental passage)`;
+    if (section === "Outro") return `[Outro]\n(road noise, loose motif, unresolved ending)`;
+    return `[${section}]\n(${mood.toLowerCase()} instrumental or vocal variation)`;
   }).join("\n\n");
 }
 
-function buildGenerationPayload() {
+function buildGenerationPayload(action) {
   return {
+    action,
     songIdea: state.songIdea.trim(),
+    customInstructions: state.customInstructions.trim(),
     selectedTags: state.selectedTags,
     bpm: state.bpm,
     energy: state.energy,
     length: state.length,
+    perspective: state.perspective,
+    rhymeMode: state.rhymeMode,
+    density: state.density,
+    language: state.language,
     structure: state.structure,
-    previousLyrics: state.lastGeneratedLyrics || state.lyrics.trim()
+    previousLyrics: state.lyrics.trim() || state.lastGeneratedLyrics
   };
 }

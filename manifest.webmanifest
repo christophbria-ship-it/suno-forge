@@ -1,9 +1,9 @@
 {
   "name": "Forge Studio",
   "short_name": "Forge",
-  "description": "Mobile-first music prompt and lyric workstation",
+  "description": "Mobile-first AI songwriting and music prompt workstation",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#090b10",
+  "background_color": "#080a0f",
   "theme_color": "#090b10"
 }

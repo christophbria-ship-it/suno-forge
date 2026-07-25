@@ -1,13 +1,15 @@
-async function requestLyrics() {
+async function requestLyrics(action) {
   const response = await fetch("/api/generate-lyrics", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildGenerationPayload())
+    body: JSON.stringify(buildGenerationPayload(action))
   });
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(data.error || `Lyrics request failed (${response.status})`);
+    const error = new Error(data.error || `Lyrics request failed (${response.status})`);
+    error.status = response.status;
+    throw error;
   }
   if (!data.lyrics || typeof data.lyrics !== "string") {
     throw new Error("The server returned no lyrics.");
@@ -15,42 +17,79 @@ async function requestLyrics() {
   return data.lyrics.trim();
 }
 
-async function generateLyrics({ force = false } = {}) {
+function actionLabel(action) {
+  return {
+    generate: "Generating a complete draft…",
+    regenerate: "Writing a substantially different draft…",
+    polish: "Polishing the current lyrics…",
+    continue: "Continuing from the current draft…",
+    hooks: "Building hook options…"
+  }[action] || "Writing…";
+}
+
+function shouldConfirmReplacement(action, existing) {
+  if (!existing) return false;
+  if (!["generate", "regenerate", "polish"].includes(action)) return false;
+  const looksGenerated = existing === state.lastGeneratedLyrics;
+  if (action === "regenerate" && looksGenerated) return false;
+  return true;
+}
+
+async function runAiAction(action) {
   if (isGenerating) return;
+
   const existing = els.lyricsInput.value.trim();
-  if (existing && !force) {
-    const confirmed = window.confirm("Replace the lyrics currently in the editor?");
+  if (shouldConfirmReplacement(action, existing)) {
+    const confirmed = window.confirm("Replace the lyrics currently in the editor? Your current draft remains available through Undo.");
     if (!confirmed) return;
   }
 
   snapshot();
   state.songIdea = els.songIdea.value.trim();
+  state.customInstructions = els.customInstructions.value.trim();
   state.lyrics = existing;
   isGenerating = true;
   setStatus("Writing", "busy");
-  setLyricsStatus("Generating a new draft…");
+  setLyricsStatus(actionLabel(action));
   syncControls(false);
 
   try {
-    let lyrics;
+    let result;
+    let usedFallback = false;
+
     try {
-      lyrics = await requestLyrics();
-      setLyricsStatus("AI draft generated. Edit anything you want.", "success");
+      result = await requestLyrics(action);
     } catch (apiError) {
-      lyrics = buildOfflineLyrics();
-      setLyricsStatus("Backend unavailable. A varied offline draft was generated instead.", "error");
+      usedFallback = true;
+      result = buildOfflineLyrics(action);
       console.warn(apiError);
     }
 
-    state.lyrics = lyrics;
-    state.lastGeneratedLyrics = lyrics;
+    if (action === "continue") {
+      state.lyrics = [existing, result].filter(Boolean).join("\n\n");
+    } else if (action === "hooks") {
+      state.lyrics = [existing, result].filter(Boolean).join("\n\n");
+    } else {
+      state.lyrics = result;
+      state.lastGeneratedLyrics = result;
+    }
+
+    state.lastAiAction = action;
     state.output = "";
     state.favorite = false;
-    saveAll();
-    showToast("Lyrics generated");
-    setStatus("Ready", "success");
+    saveAll({ immediate: true });
+
+    if (usedFallback) {
+      setLyricsStatus("AI backend was unavailable. Forge used the varied offline writer instead.", "error");
+      setStatus("Offline", "error");
+    } else {
+      setLyricsStatus("AI result added. Edit anything you want.", "success");
+      setStatus("Ready", "success");
+    }
+
+    showToast(action === "hooks" ? "Hook ideas added" : "Lyrics updated");
   } catch (error) {
-    reportError(error, "Generate Lyrics");
+    reportError(error, `AI ${action}`);
   } finally {
     isGenerating = false;
     syncControls(false);
@@ -60,24 +99,30 @@ async function generateLyrics({ force = false } = {}) {
 function forgePrompt() {
   snapshot();
   state.songIdea = els.songIdea.value.trim();
+  state.customInstructions = els.customInstructions.value.trim();
   state.lyrics = els.lyricsInput.value;
   state.output = buildPrompt();
   state.favorite = false;
 
   const title = state.songIdea || state.selectedTags.slice(0, 3).join(" · ") || "Untitled Prompt";
-  history.unshift({
-    id: makeId(),
-    title,
-    createdAt: new Date().toISOString(),
-    favorite: false,
-    state: clone(state)
-  });
-  history = history.slice(0, MAX_HISTORY);
+  const previous = history[0];
+  const duplicate = previous && previous.state?.output === state.output;
 
-  saveAll();
+  if (!duplicate) {
+    history.unshift({
+      id: makeId(),
+      title,
+      createdAt: new Date().toISOString(),
+      favorite: false,
+      state: clone(state)
+    });
+    history = history.slice(0, MAX_HISTORY);
+  }
+
+  saveAll({ immediate: true });
   syncControls();
   setStatus("Forged", "success");
-  showToast("Prompt forged");
+  showToast(duplicate ? "Prompt refreshed" : "Prompt forged");
 }
 
 function randomize() {
@@ -85,12 +130,16 @@ function randomize() {
   const categories = Object.values(DATA.categories);
   const picked = [];
   categories.forEach((tags) => {
-    if (Math.random() > 0.35) picked.push(randomItem(tags));
+    if (Math.random() > 0.42) picked.push(randomItem(tags));
   });
-  state.selectedTags = unique(picked).slice(0, 9);
-  state.bpm = 70 + Math.floor(Math.random() * 91);
+
+  state.selectedTags = unique(picked).slice(0, 12);
+  state.bpm = 68 + Math.floor(Math.random() * 95);
   state.energy = randomItem(["low", "medium", "high", "explosive"]);
   state.length = randomItem(["short", "standard", "extended", "epic"]);
+  state.perspective = randomItem(DATA.perspectives).value;
+  state.rhymeMode = randomItem(DATA.rhymeModes).value;
+  state.density = randomItem(DATA.densities).value;
   state.output = "";
   state.favorite = false;
   saveAll();
@@ -99,10 +148,11 @@ function randomize() {
 }
 
 async function copyText(text, successMessage) {
-  if (!text.trim()) {
+  if (!String(text || "").trim()) {
     showToast("Nothing to copy");
     return;
   }
+
   try {
     await navigator.clipboard.writeText(text);
   } catch {
@@ -112,9 +162,11 @@ async function copyText(text, successMessage) {
     box.style.opacity = "0";
     document.body.appendChild(box);
     box.select();
-    document.execCommand("copy");
+    const copied = document.execCommand("copy");
     box.remove();
+    if (!copied) throw new Error("Clipboard copy failed.");
   }
+
   showToast(successMessage);
 }
 
@@ -123,6 +175,7 @@ async function sharePrompt() {
     showToast("Forge a prompt first");
     return;
   }
+
   if (navigator.share) {
     try {
       await navigator.share({ title: "Forge Prompt", text: state.output });
@@ -131,6 +184,7 @@ async function sharePrompt() {
       if (error?.name === "AbortError") return;
     }
   }
+
   await copyText(state.output, "Prompt copied for sharing");
 }
 
@@ -139,12 +193,23 @@ function toggleFavorite() {
     showToast("Forge a prompt first");
     return;
   }
+
   snapshot();
   state.favorite = !state.favorite;
-  const match = history.find((item) => item.state.output === state.output);
+  const match = history.find((item) => item.state?.output === state.output);
   if (match) match.favorite = state.favorite;
-  saveAll();
+  saveAll({ immediate: true });
   syncControls();
+  showToast(state.favorite ? "Added to favorites" : "Removed from favorites");
+}
+
+function toggleHistoryFavorite(id) {
+  const item = history.find((entry) => entry.id === id);
+  if (!item) return;
+  item.favorite = !item.favorite;
+  if (item.state?.output === state.output) state.favorite = item.favorite;
+  saveAll({ immediate: true });
+  renderHistoryList();
 }
 
 function savePreset() {
@@ -153,26 +218,37 @@ function savePreset() {
     showToast("Enter a preset name");
     return;
   }
-  presets.unshift({ id: makeId(), name, state: clone(state) });
+
+  const existing = presets.find((preset) => preset.name.toLowerCase() === name.toLowerCase());
+  if (existing) {
+    existing.state = clone(state);
+    existing.updatedAt = new Date().toISOString();
+    showToast("Preset updated");
+  } else {
+    presets.unshift({ id: makeId(), name, state: clone(state), updatedAt: new Date().toISOString() });
+    showToast("Preset saved");
+  }
+
   els.presetName.value = "";
-  saveAll();
+  saveAll({ immediate: true });
   renderPresetList();
-  showToast("Preset saved");
 }
 
 function loadPreset(id) {
   const preset = presets.find((item) => item.id === id);
   if (!preset) return;
   snapshot();
-  state = { ...clone(defaultState), ...clone(preset.state) };
-  saveAll();
+  state = { ...clone(defaultState), ...clone(preset.state), favorite: false };
+  state.output = "";
+  validateState();
+  saveAll({ immediate: true });
   syncControls();
   showToast("Preset loaded");
 }
 
 function deletePreset(id) {
   presets = presets.filter((item) => item.id !== id);
-  saveAll();
+  saveAll({ immediate: true });
   renderPresetList();
 }
 
@@ -181,21 +257,22 @@ function loadHistory(id) {
   if (!item) return;
   snapshot();
   state = { ...clone(defaultState), ...clone(item.state), favorite: item.favorite };
-  saveAll();
+  validateState();
+  saveAll({ immediate: true });
   syncControls();
   showToast("History item loaded");
 }
 
 function deleteHistory(id) {
   history = history.filter((item) => item.id !== id);
-  saveAll();
+  saveAll({ immediate: true });
   renderHistoryList();
 }
 
 function clearHistory() {
-  if (history.length && !window.confirm("Delete all prompt history?")) return;
+  if (history.length && !window.confirm("Delete all prompt history? Presets will remain.")) return;
   history = [];
-  saveAll();
+  saveAll({ immediate: true });
   renderHistoryList();
   showToast("History cleared");
 }
