@@ -2,8 +2,10 @@
 
 Mobile-first AI songwriting and music prompt workstation built for Android, Acode, and modern browsers.
 
-## Forge Studio v3
+## Forge Studio v3.1
 
+- Massive searchable tag library focused on genres, subgenres, instruments, vocal character, vocal delivery, vocal range, and vocal arrangements.
+- Up to 100 selected tags in one project, with collapsed mobile categories and selected counts.
 - Five AI writing actions: **Generate**, **Regenerate**, **Polish**, **Continue**, and **Hook Ideas**.
 - Advanced controls for perspective, rhyme style, lyric density, language, tempo, energy, and length.
 - Mobile structure editor with move, duplicate, rename, and remove controls.
@@ -12,7 +14,8 @@ Mobile-first AI songwriting and music prompt workstation built for Android, Acod
 - Searchable history, favorites filtering, preset updating, and duplicate-history prevention.
 - Debounced autosave with visible save status.
 - Offline fallback writer, installable PWA support, undo/redo, import/export, copy, and share.
-- Secure server-side OpenAI route with validation and rate limiting.
+- Secure server-side OpenAI route with validation, rate limiting, and automatic lyric-content enforcement.
+- Music-production tags guide the style but are not repeated inside lyric lines. AI and offline drafts exclude music-making, instrument, studio, electronic, electrical, internet, phone, screen, computer, wire, browser, modem, and similar technology references.
 
 ## Local Acode use
 
