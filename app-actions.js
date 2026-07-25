@@ -14,7 +14,10 @@ async function requestLyrics(action) {
   if (!data.lyrics || typeof data.lyrics !== "string") {
     throw new Error("The server returned no lyrics.");
   }
-  return data.lyrics.trim();
+  return {
+    lyrics: data.lyrics.trim(),
+    tagCount: Number.isFinite(Number(data.tagCount)) ? Number(data.tagCount) : 0
+  };
 }
 
 function actionLabel(action) {
@@ -55,12 +58,15 @@ async function runAiAction(action) {
 
   try {
     let result;
-    let usedFallback = false;
+    let tagCount = 0;
+    let fallbackError = null;
 
     try {
-      result = await requestLyrics(action);
+      const response = await requestLyrics(action);
+      result = response.lyrics;
+      tagCount = response.tagCount;
     } catch (apiError) {
-      usedFallback = true;
+      fallbackError = apiError;
       result = buildOfflineLyrics(action);
       console.warn(apiError);
     }
@@ -79,15 +85,22 @@ async function runAiAction(action) {
     state.favorite = false;
     saveAll({ immediate: true });
 
-    if (usedFallback) {
-      setLyricsStatus("AI backend was unavailable. Forge used the varied offline writer instead.", "error");
-      setStatus("Offline", "error");
+    if (fallbackError) {
+      const connected = navigator.onLine;
+      const reason = fallbackError.status === 504
+        ? "The AI request took too long, so Forge used its safe local writer."
+        : "The AI request could not finish, so Forge used its safe local writer.";
+      setLyricsStatus(reason, "error");
+      setStatus(connected ? "Local Draft" : "Offline", "error");
+      showToast(connected ? "Local fallback used" : "Offline draft created");
     } else {
-      setLyricsStatus("AI result added. Edit anything you want.", "success");
+      const tagMessage = tagCount
+        ? ` AI received all ${tagCount} selected tags.`
+        : "";
+      setLyricsStatus(`AI result added.${tagMessage} Edit anything you want.`, "success");
       setStatus("Ready", "success");
+      showToast(action === "hooks" ? "Hook ideas added" : "Lyrics updated");
     }
-
-    showToast(action === "hooks" ? "Hook ideas added" : "Lyrics updated");
   } catch (error) {
     reportError(error, `AI ${action}`);
   } finally {

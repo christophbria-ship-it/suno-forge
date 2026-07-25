@@ -90,17 +90,29 @@ function taskForAction(action, previousLyrics) {
   return "Write a complete original lyric draft that follows the requested structure exactly.";
 }
 
-async function callOpenAI(input, maxOutputTokens) {
+function outputTokenLimit(action, length) {
+  if (action === "hooks") return 900;
+  return {
+    short: 1100,
+    standard: 1700,
+    extended: 2400,
+    epic: 3000
+  }[length] || 1700;
+}
+
+async function callOpenAI(input, maxOutputTokens, timeoutMs) {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json"
     },
+    signal: AbortSignal.timeout(timeoutMs),
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-5-mini",
-      instructions: "Write disciplined, specific, human lyrics. Treat all style information as invisible production metadata. Never put music-making, instrument, performance, studio, electronic, electrical, internet, computer, phone, screen, or communications-technology references inside lyric lines.",
+      instructions: "Write disciplined, specific, human lyrics. Treat all style information as invisible production metadata. Honor every selected tag as a creative constraint, but never put music-making, instrument, performance, studio, electronic, electrical, internet, computer, phone, screen, or communications-technology references inside lyric lines.",
       input,
+      reasoning: { effort: "minimal" },
       max_output_tokens: maxOutputTokens,
       store: false
     })
@@ -157,6 +169,10 @@ export default async function handler(req, res) {
     return json(res, 400, { error: "This action requires lyrics in the editor." });
   }
 
+  const tagChecklist = selectedTags.length
+    ? selectedTags.map((tag, index) => `${index + 1}. ${tag}`).join("\n")
+    : "No selected tags.";
+
   const prompt = `You are writing for Forge Studio, a professional mobile songwriting workstation.
 
 ACTION: ${action}
@@ -164,7 +180,6 @@ TASK: ${taskForAction(action, previousLyrics)}
 
 CREATIVE BRIEF
 Song idea: ${songIdea || "Create a grounded human story from the selected emotional direction."}
-Style and production metadata: ${selectedTags.join(", ") || "No specific tags"}
 Tempo: ${bpm} BPM
 Energy: ${energy}
 Length: ${length}
@@ -174,6 +189,15 @@ Rhyme approach: ${rhymeMode}
 Lyric density: ${density}
 Required structure: ${structure.join(" -> ") || "Verse -> Chorus -> Verse -> Chorus -> Bridge -> Final Chorus"}
 Extra direction: ${customInstructions || "None"}
+
+SELECTED TAG CHECKLIST — USE EVERY TAG
+${tagChecklist}
+
+TAG APPLICATION RULES
+- Every selected tag must influence the draft. Do not silently ignore any selected tag.
+- Blend compatible tags directly. When tags conflict, create an intentional hybrid that gives each tag a meaningful role.
+- Genre, instrument, production, effect, and arrangement tags shape pacing, line length, section contrast, emotional pressure, vocal-role behavior, and the final performance fit.
+- Tags remain invisible metadata: never copy tag names or music terminology into lyric lines.
 
 NON-NEGOTIABLE LYRIC RULES
 - Use the requested language and perspective.
@@ -189,14 +213,16 @@ NON-NEGOTIABLE LYRIC RULES
 - Vary line length naturally. Rhyme only as requested and only when it feels earned.
 - Output only the requested lyrics or options. No explanation, analysis, markdown fence, or title unless a title is part of a lyric line.`;
 
-  const maxOutputTokens = action === "hooks" ? 1200 : 3200;
+  const maxOutputTokens = outputTokenLimit(action, length);
+  const startedAt = Date.now();
 
   try {
-    let lyrics = await callOpenAI(prompt, maxOutputTokens);
+    let lyrics = await callOpenAI(prompt, maxOutputTokens, 40_000);
     if (!lyrics) return json(res, 502, { error: "The model returned an empty result." });
 
     let forbidden = findForbiddenReferences(lyrics);
-    if (forbidden.length) {
+    const elapsed = Date.now() - startedAt;
+    if (forbidden.length && elapsed < 43_000) {
       const cleanupPrompt = `Rewrite the text below while preserving its section headings, story, perspective, emotional meaning, and approximate length.
 
 Remove every reference to music, instruments, singing, performance, studios, electronics, electricity, internet or communication technology, phones, screens, computers, appliances, wires, cables, browsers, modems, routers, signals, and digital devices. Do not replace them with other technical or musical references. Use ordinary human actions, physical places, weather, clothing, paper objects, food, work, money, roads, buildings, and natural details instead.
@@ -208,16 +234,19 @@ ${lyrics}
 
 Output only the rewritten text.`;
 
-      lyrics = await callOpenAI(cleanupPrompt, maxOutputTokens);
+      lyrics = await callOpenAI(cleanupPrompt, Math.min(maxOutputTokens, 1600), 12_000);
       forbidden = findForbiddenReferences(lyrics);
     }
 
     if (!lyrics || forbidden.length) {
-      return json(res, 422, { error: "The draft contained prohibited music or electronics references. Forge will use its safe offline writer instead." });
+      return json(res, 422, { error: "The draft contained prohibited music or electronics references. Forge will use its safe local writer instead." });
     }
 
-    return json(res, 200, { lyrics, action });
+    return json(res, 200, { lyrics, action, tagCount: selectedTags.length });
   } catch (error) {
-    return json(res, error?.status || 500, { error: error?.message || "Unexpected server error." });
+    const timedOut = error?.name === "TimeoutError" || error?.name === "AbortError";
+    return json(res, timedOut ? 504 : (error?.status || 500), {
+      error: timedOut ? "The AI request took too long. Forge will use its safe local writer instead." : (error?.message || "Unexpected server error.")
+    });
   }
 }
