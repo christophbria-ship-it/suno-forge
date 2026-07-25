@@ -7,7 +7,8 @@
   <meta name="description" content="Forge Studio — mobile-first AI songwriting and music prompt workstation">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="style.css">
-  <title>Forge Studio</title>
+  <link rel="stylesheet" href="style-v32.css">
+  <title>Forge Studio v3.2</title>
 </head>
 <body>
   <div class="app-shell">
@@ -27,9 +28,9 @@
     <main>
       <section class="card hero">
         <div>
-          <p class="eyebrow">FORGE STUDIO V3.1</p>
+          <p class="eyebrow">FORGE STUDIO V3.2</p>
           <h2>Build the sound. Direct the writing. Finish the prompt.</h2>
-          <p class="muted">Massive tag library, advanced vocal arrangements, AI drafting, safe lyric content, presets, history, and mobile-first editing.</p>
+          <p class="muted">Fast tag search, visible music categories, any-genre hybrid building, advanced vocal arrangements, AI drafting, presets, and mobile-first editing.</p>
         </div>
         <button id="forgePromptBtn" class="primary-button" type="button">Forge Prompt</button>
       </section>
@@ -49,13 +50,13 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">SOUND PALETTE</p>
-            <h2>Tags</h2>
+            <h2>Choose Genres, Instruments & Vocals</h2>
           </div>
           <span id="selectedCount" class="count-badge">0 selected</span>
         </div>
         <label class="search-field">
           <span aria-hidden="true">⌕</span>
-          <input id="tagSearch" type="search" placeholder="Search genres, instruments, vocal styles, arrangements..." autocomplete="off">
+          <input id="tagSearch" type="search" placeholder="Try: baroque+darkwave, violin, choir, glam rock..." autocomplete="off">
         </label>
         <div id="selectedTags" class="selected-tags" aria-live="polite"></div>
         <div id="categoryList" class="category-list"></div>
@@ -131,9 +132,9 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">WRITING ROOM</p>
-            <h2>Lyrics & Direction</h2>
+            <h2>Lyrics & Story</h2>
           </div>
-          <button id="clearLyricsBtn" class="text-button danger-text" type="button">Clear</button>
+          <button id="clearLyricsBtn" class="text-button danger-text" type="button">Clear Writing</button>
         </div>
 
         <label class="field">
@@ -142,8 +143,8 @@
         </label>
 
         <label class="field">
-          <span>Extra AI direction <small>(optional)</small></span>
-          <textarea id="customInstructions" rows="3" maxlength="1200" placeholder="Examples: keep the chorus blunt, avoid perfect rhyme, mention a specific physical object, end unresolved..."></textarea>
+          <span>AI Style Direction <small>(optional)</small></span>
+          <textarea id="customInstructions" rows="5" maxlength="1200" placeholder="Direct the arrangement, vocal behavior, dynamics, and how selected tags should interact."></textarea>
         </label>
 
         <div class="ai-action-grid">
@@ -183,7 +184,7 @@
           <select id="promptFormatSelect"></select>
         </label>
 
-        <textarea id="promptOutput" rows="18" readonly placeholder="Your forged prompt appears here."></textarea>
+        <textarea id="promptOutput" rows="18" readonly placeholder="Tap Forge Prompt to build the final prompt."></textarea>
 
         <div class="action-grid three-actions">
           <button id="copyLyricsBtn" type="button">Copy Lyrics</button>
@@ -242,9 +243,11 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="data.js" defer></script>
+  <script src="data-v32.js" defer></script>
   <script src="app-core.js" defer></script>
   <script src="app-editor.js" defer></script>
   <script src="app-actions.js" defer></script>
   <script src="app-storage.js" defer></script>
+  <script src="app-v32.js" defer></script>
 </body>
 </html>

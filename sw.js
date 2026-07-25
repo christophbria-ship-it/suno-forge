@@ -1,13 +1,16 @@
-const CACHE_NAME = "forge-v3-1-20260725b";
+const CACHE_NAME = "forge-v3-2-20260725a";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/style.css",
+  "/style-v32.css",
   "/data.js",
+  "/data-v32.js",
   "/app-core.js",
   "/app-editor.js",
   "/app-actions.js",
   "/app-storage.js",
+  "/app-v32.js",
   "/manifest.webmanifest"
 ];
 
