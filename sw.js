@@ -1,4 +1,4 @@
-const CACHE_NAME = "forge-v3-20260725";
+const CACHE_NAME = "forge-v3-1-20260725";
 const APP_SHELL = [
   "/",
   "/index.html",
