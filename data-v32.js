@@ -170,4 +170,25 @@
     ],
     baroqueRecipes
   });
+
+  const style = document.createElement("link");
+  style.rel = "stylesheet";
+  style.href = "style-v33.css";
+  document.head.appendChild(style);
+
+  const dataScript = document.createElement("script");
+  dataScript.src = "data-v33.js";
+  dataScript.async = false;
+  dataScript.addEventListener("load", () => {
+    const loadApp = () => {
+      const appScript = document.createElement("script");
+      appScript.src = "app-v33.js";
+      appScript.async = false;
+      document.head.appendChild(appScript);
+    };
+
+    if (document.readyState === "complete") loadApp();
+    else window.addEventListener("load", loadApp, { once: true });
+  });
+  document.head.appendChild(dataScript);
 })();
