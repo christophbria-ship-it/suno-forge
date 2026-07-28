@@ -1,10 +1,10 @@
 {
   "name": "suno-forge",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
   "scripts": {
     "postinstall": "npm test",
-    "test": "node --check data.js && node --check data-v32.js && node --check data-v33.js && node --check data-v34.js && node --check data-v35.js && node --check app-core.js && node --check app-editor.js && node --check app-actions.js && node --check app-storage.js && node --check app-v32.js && node --check app-v33.js && node --check app-v34.js && node --check app-v35.js && node --check app-v351.js && node --check app-v4.js && node --check lib/stem-server.js && node --check api/generate-lyrics.js && node --check api/generate-lyrics-v33.js && node --check api/generate-lyrics-v35.js && node --check api/generate-lyrics-v351.js && node --check api/stem-config.js && node --check api/stem-upload.js && node --check api/stem-start.js && node --check api/stem-status.js && node --check api/stem-cancel.js && node --check api/stem-cleanup.js"
+    "test": "node --check data.js && node --check data-v32.js && node --check data-v33.js && node --check data-v34.js && node --check data-v35.js && node --check app-core.js && node --check app-editor.js && node --check app-actions.js && node --check app-storage.js && node --check app-v32.js && node --check app-v33.js && node --check app-v34.js && node --check app-v35.js && node --check app-v351.js && node --check app-v4.js && node --check app-v41.js && node --check lib/stem-server.js && node --check lib/remote-server.js && node --check api/generate-lyrics.js && node --check api/generate-lyrics-v33.js && node --check api/generate-lyrics-v35.js && node --check api/generate-lyrics-v351.js && node --check api/stem-config.js && node --check api/stem-upload.js && node --check api/stem-start.js && node --check api/stem-status.js && node --check api/stem-cancel.js && node --check api/stem-cleanup.js && node --check api/remote-config.js && node --check api/remote-start.js && node --check api/remote-status.js && node --check api/remote-stop.js"
   },
   "dependencies": {
     "@vercel/blob": "2.6.1"
