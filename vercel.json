@@ -5,6 +5,9 @@
     },
     "api/generate-lyrics-v33.js": {
       "maxDuration": 60
+    },
+    "api/generate-lyrics-v341.js": {
+      "maxDuration": 60
     }
   },
   "headers": [
