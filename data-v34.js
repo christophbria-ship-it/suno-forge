@@ -29,3 +29,31 @@ window.FORGE_V34 = Object.freeze({
     "repetitive chorus"
   ]
 });
+
+(() => {
+  const style = document.createElement("link");
+  style.rel = "stylesheet";
+  style.href = "style-v35.css";
+  document.head.appendChild(style);
+
+  const dataScript = document.createElement("script");
+  dataScript.src = "data-v35.js";
+  dataScript.async = false;
+  dataScript.addEventListener("load", () => {
+    const loadV35 = () => {
+      if (document.documentElement.dataset.forgeV34 !== "ready") {
+        window.setTimeout(loadV35, 40);
+        return;
+      }
+      if (document.querySelector('script[src="app-v35.js"]')) return;
+      const appScript = document.createElement("script");
+      appScript.src = "app-v35.js";
+      appScript.async = false;
+      document.head.appendChild(appScript);
+    };
+
+    if (document.readyState === "complete") loadV35();
+    else window.addEventListener("load", loadV35, { once: true });
+  });
+  document.head.appendChild(dataScript);
+})();
