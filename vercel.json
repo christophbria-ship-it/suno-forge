@@ -29,6 +29,9 @@
     },
     "api/stem-cleanup.js": {
       "maxDuration": 60
+    },
+    "api/remote.js": {
+      "maxDuration": 60
     }
   },
   "headers": [
