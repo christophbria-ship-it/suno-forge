@@ -1,7 +1,6 @@
 import {
   REMOTE_DEFAULTS,
   REMOTE_NAMES,
-  cleanDropletId,
   createRemoteDroplet,
   digitalOceanRequest,
   dropletPublicIpv4,
@@ -140,18 +139,13 @@ async function handleStop(req, res) {
 
   try {
     const droplets = await listRemoteDroplets();
-    const requestedId = cleanDropletId(body.id);
-    const targets = requestedId
-      ? droplets.filter((item) => item.id === requestedId)
-      : droplets;
-
-    for (const droplet of targets) {
+    for (const droplet of droplets) {
       await digitalOceanRequest(`/droplets/${droplet.id}`, { method: "DELETE" });
     }
 
     return sendJson(res, 200, {
       stopped: true,
-      deletedDroplets: targets.map((item) => item.id),
+      deletedDroplets: droplets.map((item) => item.id),
       profilePreserved: true
     });
   } catch (error) {
