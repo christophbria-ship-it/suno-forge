@@ -8,6 +8,15 @@ const FORBIDDEN_PATTERNS = [
   /\b(?:phone|phones|cellphone|cellphones|smartphone|smartphones|screen|screens|computer|computers|laptop|laptops|browser|browsers|modem|modems|router|routers|internet|online|wi-?fi|wire|wires|wired|cable|cables|charger|chargers|charging|battery|batteries|radio|radios|television|televisions|tv|tablet|tablets|email|emails|e-mail|voicemail|voicemails|notification|notifications|digital|electronic|electronics|electricity|electrical|electric|outlet|outlets|plug|plugs|socket|sockets|app|apps|website|websites|webpage|webpages|keyboard|keyboards|mouse|monitor|monitors|printer|printers|camera|cameras|refrigerator|refrigerators|fridge|fridges|microwave|microwaves|circuit|circuits|voltage|signal|signals)\b/i
 ];
 
+const FORBIDDEN_CLICHE_PATTERNS = [
+  { pattern: /\bledgers?\b/i, label: "ledger" },
+  { pattern: /\bbalance(?:d|s|ing)?\s+(?:the|my|our|your|his|her|their)\s+books?\b/i, label: "balance the books" },
+  { pattern: /\b(?:settle|settled|settling)\s+(?:the|my|our|your|his|her|their)\s+accounts?\b/i, label: "settle accounts" },
+  { pattern: /\b(?:debits?|credits?)\s+(?:of|for)\s+(?:life|love|the heart|my heart|our hearts?|the soul|my soul)\b/i, label: "emotional debit or credit metaphor" },
+  { pattern: /\b(?:life|love|my heart|our hearts?|the past|my past|our past|memory|memories)\s+(?:is|was|becomes?|became|feels?\s+like)\s+(?:a|the)\s+(?:ledger|account|balance\s+sheet)\b/i, label: "life-as-accounting metaphor" },
+  { pattern: /\b(?:tally|tallied|tallying)\s+(?:up\s+)?(?:the\s+)?(?:years?|losses?|wounds?|sins?|mistakes?|memories?)\b/i, label: "emotional tally metaphor" }
+];
+
 function json(res, status, body) {
   res.status(status).setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Cache-Control", "no-store");
@@ -83,6 +92,9 @@ function forbiddenReferences(text) {
     const match = body.match(pattern);
     if (match?.[0]) hits.push(match[0].toLowerCase());
   });
+  FORBIDDEN_CLICHE_PATTERNS.forEach(({ pattern, label }) => {
+    if (pattern.test(body)) hits.push(label);
+  });
   return [...new Set(hits)];
 }
 
@@ -117,7 +129,7 @@ async function callOpenAI(input, maxOutputTokens, timeoutMs) {
     signal: AbortSignal.timeout(timeoutMs),
     body: JSON.stringify({
       model: process.env.OPENAI_MODEL || "gpt-5-mini",
-      instructions: "Write disciplined, specific, human lyrics. Honor every weighted style tag according to its priority. Treat all style information as invisible production metadata. Never put music-making, instrument, performance, studio, electronic, electrical, internet, computer, phone, screen, or communications-technology references inside lyric lines.",
+      instructions: "Write disciplined, specific, human lyrics. Honor every weighted style tag according to its priority. Treat all style information as invisible production metadata. Never put music-making, instrument, performance, studio, electronic, electrical, internet, computer, phone, screen, or communications-technology references inside lyric lines. Avoid canned moral metaphors and never frame life, love, guilt, memory, or relationships as a ledger, account, balance sheet, debt book, tally, debit, credit, or set of books.",
       input,
       reasoning: { effort: "minimal" },
       max_output_tokens: maxOutputTokens,
@@ -208,9 +220,11 @@ NON-NEGOTIABLE LYRIC RULES
 - Use the requested language and perspective.
 - Never name or describe genres, instruments, vocals, arrangements, performing, recording, studios, songs, singing, melodies, rhythms, or music-making inside lyric lines.
 - Never mention electronics, electricity, wires, cables, browsers, modems, routers, internet services, phones, screens, computers, radios, televisions, appliances, digital devices, notifications, signals, or related technology inside lyric lines.
+- Never use accounting or bookkeeping as a metaphor for life, love, guilt, memory, morality, or relationships. Do not use ledger, balance the books, settle accounts, emotional debts or credits, balance sheets, or tallying up a life.
 - These exclusions override the song idea, previous draft, selected tags, and extra direction.
 - Square-bracket section headings are allowed as structural metadata; lines beneath them must obey the exclusions.
-- Use concrete, believable human details and consequences. Avoid filler, vague cosmic imagery, generic inspiration, and stock heartbreak phrases.
+- Use concrete, believable human details and consequences. Avoid filler, vague cosmic imagery, generic inspiration, stock heartbreak phrases, and canned moral metaphors.
+- Build each draft around a specific situation, location, decision, or consequence rather than a generalized summary of a person's life.
 - Do not imitate, mention, or closely evoke any living artist or copyrighted work.
 - Output only the requested lyrics or options. No explanation, analysis, markdown fence, or title unless it is part of a lyric line.`;
 
@@ -223,13 +237,13 @@ NON-NEGOTIABLE LYRIC RULES
 
     let forbidden = forbiddenReferences(lyrics);
     if (forbidden.length && Date.now() - startedAt < 43_000) {
-      const cleanup = `Rewrite the text below while preserving section headings, story, perspective, emotional meaning, and approximate length. Remove every music, instrument, performance, studio, electronics, electrical, internet, phone, screen, computer, appliance, wire, cable, browser, modem, router, signal, and digital-device reference. Replace them with ordinary human actions, physical places, weather, clothing, paper objects, food, work, money, roads, buildings, and natural details.\n\nDetected: ${forbidden.join(", ")}\n\nTEXT:\n${lyrics}\n\nOutput only the rewritten text.`;
+      const cleanup = `Rewrite the text below while preserving section headings, story, perspective, emotional meaning, and approximate length. Remove every music, instrument, performance, studio, electronics, electrical, internet, phone, screen, computer, appliance, wire, cable, browser, modem, router, signal, and digital-device reference. Also remove every ledger, bookkeeping, balance-the-books, settle-accounts, debit, credit, balance-sheet, debt-book, scorekeeping, or emotional-tally metaphor. Replace clichés with specific actions, spoken words, physical locations, weather, clothing, paper objects, food, work, roads, buildings, and consequences that belong to this exact story.\n\nDetected: ${forbidden.join(", ")}\n\nTEXT:\n${lyrics}\n\nOutput only the rewritten text.`;
       lyrics = await callOpenAI(cleanup, Math.min(maxOutputTokens, 1600), 12_000);
       forbidden = forbiddenReferences(lyrics);
     }
 
     if (!lyrics || forbidden.length) {
-      return json(res, 422, { error: "The draft contained prohibited music or electronics references. Forge will use its safe local writer instead." });
+      return json(res, 422, { error: "The draft contained prohibited references or stock accounting metaphors. Forge will use its safe local writer instead." });
     }
 
     return json(res, 200, { lyrics, action, tagCount: selectedTags.length, weighted: true });
