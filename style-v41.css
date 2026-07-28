@@ -1,0 +1,235 @@
+.workspace-switcher {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.remote-workspace {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 0 16px calc(120px + env(safe-area-inset-bottom));
+}
+
+.remote-hero {
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 43, 168, .22), transparent 38%),
+    radial-gradient(circle at 90% 20%, rgba(66, 153, 255, .20), transparent 42%),
+    linear-gradient(145deg, rgba(18, 20, 31, .98), rgba(15, 27, 48, .98));
+}
+
+.remote-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.remote-flow span {
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  color: var(--muted, #aab1c2);
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.remote-status-card {
+  border-color: rgba(245, 166, 35, .42);
+  background:
+    linear-gradient(180deg, rgba(54, 34, 6, .30), rgba(14, 16, 23, .98));
+}
+
+.remote-message {
+  margin: 0 0 14px;
+  color: var(--muted, #aab1c2);
+  line-height: 1.45;
+}
+
+.remote-message.ok {
+  color: #61dba2;
+}
+
+.remote-message.warn,
+.remote-message.working {
+  color: #f2b94b;
+}
+
+.remote-message.error {
+  color: #ff6c78;
+}
+
+.remote-service-list {
+  display: grid;
+  gap: 8px;
+}
+
+.remote-service-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  background: rgba(5, 7, 11, .44);
+}
+
+.remote-service-row small {
+  text-align: right;
+}
+
+.remote-ready-dot,
+.remote-live-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff4d5c;
+  box-shadow: 0 0 0 4px rgba(255, 77, 92, .10);
+}
+
+.remote-ready-dot.ready,
+.remote-live-dot.ready {
+  background: #31d49b;
+  box-shadow: 0 0 0 4px rgba(49, 212, 155, .12);
+}
+
+.remote-live-dot.booting {
+  background: #f2b94b;
+  box-shadow: 0 0 0 4px rgba(242, 185, 75, .12);
+}
+
+.remote-access-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.remote-access-row .field {
+  margin: 0;
+}
+
+.remote-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.remote-actions button {
+  min-height: 54px;
+}
+
+.danger-button {
+  border-color: rgba(255, 86, 105, .40);
+  color: #ff8793;
+  background: rgba(70, 11, 22, .34);
+}
+
+.remote-cost {
+  margin: 14px 0 4px;
+  color: #d8dce7;
+  font-size: .92rem;
+  line-height: 1.45;
+}
+
+.remote-live-row {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+.remote-live-row small {
+  text-align: right;
+}
+
+.remote-progress-track {
+  height: 10px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+}
+
+.remote-progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff2ba8, #4d9cff);
+  transition: width .35s ease;
+}
+
+.remote-progress-fill.indeterminate {
+  animation: remote-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes remote-pulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+
+.remote-tip-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.remote-tip {
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  background: rgba(255,255,255,.025);
+}
+
+.remote-tip p {
+  margin: 6px 0 0;
+  color: var(--muted, #aab1c2);
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.remote-warning {
+  margin: 14px 0 0;
+  padding: 12px;
+  border-left: 3px solid #f2b94b;
+  border-radius: 8px;
+  color: #d5d9e5;
+  background: rgba(242, 185, 75, .08);
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .workspace-switcher {
+    gap: 6px;
+    padding-inline: 10px;
+  }
+
+  .workspace-tab {
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: .82rem;
+  }
+
+  .remote-workspace {
+    padding-inline: 10px;
+  }
+
+  .remote-actions,
+  .remote-tip-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .remote-access-row {
+    grid-template-columns: 1fr;
+  }
+
+  .remote-live-row {
+    grid-template-columns: auto 1fr;
+  }
+
+  .remote-live-row small {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+}
