@@ -1,7 +1,7 @@
 {
   "name": "Forge Studio",
   "short_name": "Forge",
-  "description": "Mobile-first AI songwriting and music prompt workstation",
+  "description": "Mobile instrument removal, stem subtraction, Suno prompt generation, and AI lyric workstation",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#080a0f",
