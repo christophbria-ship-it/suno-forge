@@ -11,6 +11,24 @@
     },
     "api/generate-lyrics-v351.js": {
       "maxDuration": 60
+    },
+    "api/stem-config.js": {
+      "maxDuration": 30
+    },
+    "api/stem-upload.js": {
+      "maxDuration": 60
+    },
+    "api/stem-start.js": {
+      "maxDuration": 60
+    },
+    "api/stem-status.js": {
+      "maxDuration": 60
+    },
+    "api/stem-cancel.js": {
+      "maxDuration": 60
+    },
+    "api/stem-cleanup.js": {
+      "maxDuration": 60
     }
   },
   "headers": [
