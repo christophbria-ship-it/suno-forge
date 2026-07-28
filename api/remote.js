@@ -62,7 +62,7 @@ async function handleStatus(req, res) {
       exists: true,
       id: droplet.id,
       status: droplet.status,
-      ready: active && ageMs >= 75_000,
+      ready: active && ageMs >= 120_000,
       bootSeconds: Math.max(0, Math.round(ageMs / 1000)),
       sessionUrl: remoteSessionUrl(),
       publicIpv4: dropletPublicIpv4(droplet),
@@ -95,15 +95,22 @@ async function handleStart(req, res) {
   try {
     await ensureRemoteTag();
     const existing = await listRemoteDroplets();
-    const active = existing.find((item) => ["new", "active", "off", "archive"].includes(item.status));
+    const active = existing.find((item) => ["new", "active", "off"].includes(item.status));
     if (active) {
+      if (active.status === "off") {
+        await digitalOceanRequest(`/droplets/${active.id}/actions`, {
+          method: "POST",
+          body: JSON.stringify({ type: "power_on" })
+        });
+      }
       return sendJson(res, 200, {
         id: active.id,
-        status: active.status,
+        status: active.status === "off" ? "new" : active.status,
         createdAt: active.created_at || null,
         sessionUrl: remoteSessionUrl(),
         region: REMOTE_DEFAULTS.region,
-        reused: true
+        reused: true,
+        poweredOn: active.status === "off"
       });
     }
 
