@@ -1,9 +1,10 @@
 {
   "name": "suno-forge",
-  "version": "3.1.0",
+  "version": "3.4.0",
   "private": true,
   "scripts": {
-    "test": "node --check data.js && node --check app-core.js && node --check app-editor.js && node --check app-actions.js && node --check app-storage.js && node --check api/generate-lyrics.js"
+    "postinstall": "npm test",
+    "test": "node --check data.js && node --check data-v32.js && node --check data-v33.js && node --check data-v34.js && node --check app-core.js && node --check app-editor.js && node --check app-actions.js && node --check app-storage.js && node --check app-v32.js && node --check app-v33.js && node --check app-v34.js && node --check api/generate-lyrics.js && node --check api/generate-lyrics-v33.js"
   },
   "engines": {
     "node": ">=20"

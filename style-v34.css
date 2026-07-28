@@ -1,0 +1,148 @@
+.suno-export-card {
+  border-color: rgba(239, 148, 53, 0.42);
+}
+
+.suno-export-tools {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.suno-profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(110px, 0.45fr) minmax(110px, 0.45fr);
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.suno-profile-grid input[type="number"] {
+  width: 100%;
+}
+
+.suno-output-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.suno-output-meta strong {
+  font-size: 0.96rem;
+}
+
+.suno-output-meta span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.suno-counter {
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.suno-counter[data-state="good"] {
+  color: #a9dfbb;
+  border-color: rgba(98, 196, 128, 0.35);
+}
+
+.suno-counter[data-state="near"] {
+  color: #ffd08b;
+  border-color: rgba(239, 172, 68, 0.42);
+}
+
+.suno-counter[data-state="over"] {
+  color: #ffaaa3;
+  border-color: rgba(255, 92, 82, 0.52);
+}
+
+.suno-limit-status {
+  margin-top: -7px;
+}
+
+.suno-copy-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.suno-exclude-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  scrollbar-width: thin;
+}
+
+.suno-exclude-chip {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.suno-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.suno-setting {
+  display: grid;
+  gap: 4px;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.suno-setting span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.suno-setting strong {
+  font-size: 0.86rem;
+  line-height: 1.25;
+}
+
+.suno-export-card textarea[readonly] {
+  background: rgba(6, 8, 12, 0.82);
+}
+
+@media (max-width: 760px) {
+  .suno-profile-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .suno-profile-grid .field:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .suno-settings-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .suno-copy-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .suno-profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .suno-profile-grid .field:first-child {
+    grid-column: auto;
+  }
+}

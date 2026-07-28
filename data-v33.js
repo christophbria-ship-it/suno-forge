@@ -40,3 +40,31 @@ window.FORGE_V33 = Object.freeze({
     { left: ["Low Register"], right: ["High Register", "Whistle Register"], message: "Very low and very high registers imply a wide-range or role-split arrangement." }
   ]
 });
+
+(() => {
+  const style = document.createElement("link");
+  style.rel = "stylesheet";
+  style.href = "style-v34.css";
+  document.head.appendChild(style);
+
+  const dataScript = document.createElement("script");
+  dataScript.src = "data-v34.js";
+  dataScript.async = false;
+  dataScript.addEventListener("load", () => {
+    const loadV34 = () => {
+      if (document.documentElement.dataset.forgeV33 !== "ready") {
+        window.setTimeout(loadV34, 40);
+        return;
+      }
+      if (document.querySelector('script[src="app-v34.js"]')) return;
+      const appScript = document.createElement("script");
+      appScript.src = "app-v34.js";
+      appScript.async = false;
+      document.head.appendChild(appScript);
+    };
+
+    if (document.readyState === "complete") loadV34();
+    else window.addEventListener("load", loadV34, { once: true });
+  });
+  document.head.appendChild(dataScript);
+})();
