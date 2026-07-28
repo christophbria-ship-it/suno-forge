@@ -30,16 +30,7 @@
     "api/stem-cleanup.js": {
       "maxDuration": 60
     },
-    "api/remote-config.js": {
-      "maxDuration": 30
-    },
-    "api/remote-start.js": {
-      "maxDuration": 60
-    },
-    "api/remote-status.js": {
-      "maxDuration": 30
-    },
-    "api/remote-stop.js": {
+    "api/remote.js": {
       "maxDuration": 60
     }
   },
