@@ -291,7 +291,7 @@
 
   async function loadConfig() {
     try {
-      state.config = await api("/api/remote-config");
+      state.config = await api("/api/remote?action=config");
       renderServices();
     } catch (error) {
       setMessage(error.message, "error");
@@ -305,7 +305,7 @@
       return;
     }
     try {
-      state.status = await api("/api/remote-status", { headers: { "x-forge-remote-key": accessCode() } });
+      state.status = await api("/api/remote?action=status", { headers: { "x-forge-remote-key": accessCode() } });
       renderStatus();
       if (state.status.exists && !state.status.ready) schedulePoll();
     } catch (error) {
@@ -334,7 +334,7 @@
     setBusy(true);
     setMessage("Creating the on-demand Studio computer...", "working");
     try {
-      const data = await api("/api/remote-start", {
+      const data = await api("/api/remote?action=start", {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({ accessCode: accessCode() })
@@ -369,7 +369,7 @@
     setMessage("Destroying the paid computer and preserving your browser profile...", "working");
     clearTimeout(state.pollTimer);
     try {
-      await api("/api/remote-stop", {
+      await api("/api/remote?action=stop", {
         method: "POST",
         headers: headers(),
         body: JSON.stringify({ id: state.status.id, accessCode: accessCode() })
