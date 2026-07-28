@@ -47,6 +47,18 @@ window.FORGE_V33 = Object.freeze({
   style.href = "style-v34.css";
   document.head.appendChild(style);
 
+  const loadV341 = () => {
+    if (document.documentElement.dataset.forgeV34 !== "ready") {
+      window.setTimeout(loadV341, 40);
+      return;
+    }
+    if (document.querySelector('script[src="app-v341.js"]')) return;
+    const patchScript = document.createElement("script");
+    patchScript.src = "app-v341.js";
+    patchScript.async = false;
+    document.head.appendChild(patchScript);
+  };
+
   const dataScript = document.createElement("script");
   dataScript.src = "data-v34.js";
   dataScript.async = false;
@@ -56,10 +68,17 @@ window.FORGE_V33 = Object.freeze({
         window.setTimeout(loadV34, 40);
         return;
       }
-      if (document.querySelector('script[src="app-v34.js"]')) return;
+
+      const existing = document.querySelector('script[src="app-v34.js"]');
+      if (existing) {
+        loadV341();
+        return;
+      }
+
       const appScript = document.createElement("script");
       appScript.src = "app-v34.js";
       appScript.async = false;
+      appScript.addEventListener("load", loadV341, { once: true });
       document.head.appendChild(appScript);
     };
 
