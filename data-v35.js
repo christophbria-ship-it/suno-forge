@@ -137,3 +137,27 @@ window.FORGE_V35 = Object.freeze({
   if (document.readyState === "complete") loadV42();
   else window.addEventListener("load", loadV42, { once: true });
 })();
+
+(() => {
+  if (!document.querySelector('link[href="style-v43.css"]')) {
+    const style = document.createElement("link");
+    style.rel = "stylesheet";
+    style.href = "style-v43.css";
+    document.head.appendChild(style);
+  }
+
+  const loadV43 = () => {
+    if (document.documentElement.dataset.forgeV42 !== "ready") {
+      window.setTimeout(loadV43, 50);
+      return;
+    }
+    if (document.querySelector('script[src="app-v43.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "app-v43.js";
+    script.async = false;
+    document.head.appendChild(script);
+  };
+
+  if (document.readyState === "complete") loadV43();
+  else window.addEventListener("load", loadV43, { once: true });
+})();
