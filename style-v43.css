@@ -1,0 +1,19 @@
+.hybrid-source-select {
+  display: none !important;
+}
+
+.hybrid-text-input {
+  min-width: 0;
+}
+
+.hybrid-text-input:placeholder-shown {
+  color: var(--muted);
+}
+
+#hybridLab .hybrid-controls {
+  align-items: end;
+}
+
+#hybridLab .field > span {
+  line-height: 1.25;
+}
