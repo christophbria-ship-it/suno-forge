@@ -1,0 +1,301 @@
+/* Forge Studio v4.2 — compact prompt generator */
+
+.generator-mode-tabs {
+  position: sticky;
+  top: 72px;
+  z-index: 18;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(8, 10, 15, 0.96);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.generator-mode-tab {
+  min-width: 0;
+  min-height: 42px;
+  padding: 7px 5px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  border-radius: 10px;
+}
+
+.generator-mode-tab.active {
+  color: #1c0d02;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.generator-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.generator-panel-hidden {
+  display: none !important;
+}
+
+.generator-panel > .card {
+  margin: 0;
+}
+
+.generator-panel .hero {
+  padding-block: 13px;
+}
+
+.generator-panel .hero h2 {
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+
+.generator-panel .hero .muted {
+  display: none;
+}
+
+.generator-panel .card {
+  padding: 14px;
+  border-radius: 15px;
+}
+
+.generator-panel .section-heading {
+  margin-bottom: 10px;
+}
+
+.generator-panel .section-heading h2 {
+  font-size: 1.12rem;
+}
+
+.compact-recipes-card .recipe-grid {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.compact-recipes-card .recipe-button {
+  flex: 0 0 150px;
+  min-height: 66px;
+  padding: 9px 10px;
+  scroll-snap-align: start;
+}
+
+.compact-recipes-card .recipe-button span {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.sound-palette-card .category-shortcuts {
+  margin-inline: -2px;
+  padding-bottom: 7px;
+}
+
+.sound-palette-card .category-shortcut {
+  min-width: 112px;
+  padding: 8px 9px;
+}
+
+.sound-palette-card .selected-tags {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 2px 0 7px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sound-palette-card .selected-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.sound-palette-card .category-list {
+  gap: 7px;
+}
+
+.sound-palette-card .category-header {
+  min-height: 44px;
+  padding: 8px 10px;
+}
+
+.sound-palette-card .category-content {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 0 9px 10px;
+}
+
+.sound-palette-card .direct-tag-results {
+  max-height: 310px;
+  overflow: hidden;
+}
+
+.sound-palette-card .direct-tag-grid {
+  max-height: 260px;
+}
+
+.compact-accordion-card {
+  padding-bottom: 11px !important;
+}
+
+.compact-accordion-card.compact-collapsed {
+  padding-block: 11px !important;
+}
+
+.compact-accordion-card.compact-collapsed .section-heading,
+.compact-accordion-card.compact-collapsed .intelligence-heading {
+  margin-bottom: 0;
+}
+
+.compact-accordion-toggle {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 6px 10px;
+  color: var(--accent-2);
+  background: rgba(255, 122, 24, 0.08);
+  border-color: rgba(255, 122, 24, 0.3);
+  font-size: 0.75rem;
+}
+
+.compact-accordion-body[hidden] {
+  display: none !important;
+}
+
+.compact-accordion-body {
+  display: grid;
+  gap: 0;
+}
+
+.compact-writing-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 12px;
+}
+
+.compact-writing-primary #generateLyricsBtn {
+  width: 100%;
+}
+
+.compact-writing-more {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(11, 15, 22, 0.72);
+  overflow: hidden;
+}
+
+.compact-writing-more summary {
+  min-height: 44px;
+  padding: 12px;
+  color: var(--accent-2);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.compact-writing-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 10px 10px;
+}
+
+.lyrics-editor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.lyrics-editor-heading > span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+#lyricsFullscreenBtn {
+  flex: 0 0 auto;
+}
+
+body.lyrics-fullscreen-open {
+  overflow: hidden;
+}
+
+.field.lyrics-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 250;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  margin: 0 !important;
+  padding: calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom));
+  background: var(--bg);
+}
+
+.field.lyrics-fullscreen textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 0 !important;
+  resize: none;
+}
+
+.compact-export-card #promptOutput {
+  min-height: 150px;
+}
+
+.compact-export-card #sunoExportTools textarea {
+  min-height: 110px;
+}
+
+.compact-export-card #sunoExportTools textarea[readonly] {
+  max-height: 230px;
+}
+
+.compact-export-card .suno-profile-grid,
+.compact-export-card .suno-settings-grid {
+  gap: 7px;
+}
+
+@media (max-width: 520px) {
+  .generator-mode-tabs {
+    top: 66px;
+  }
+
+  .generator-panel .card {
+    padding: 12px;
+  }
+
+  .generator-mode-tab {
+    font-size: 0.72rem;
+  }
+
+  .compact-writing-tool-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .intelligence-card .influence-row {
+    padding: 9px;
+  }
+}
+
+@media (max-width: 380px) {
+  .generator-mode-tabs {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .generator-mode-tab {
+    min-height: 40px;
+    font-size: 0.68rem;
+  }
+
+  .compact-recipes-card .recipe-button {
+    flex-basis: 136px;
+  }
+}
