@@ -202,3 +202,20 @@ window.FORGE_V35 = Object.freeze({
   if (document.readyState === "complete") loadV45();
   else window.addEventListener("load", loadV45, { once: true });
 })();
+
+(() => {
+  const loadV46 = () => {
+    if (document.documentElement.dataset.forgeV45 !== "ready") {
+      window.setTimeout(loadV46, 50);
+      return;
+    }
+    if (document.querySelector('script[src="app-v46.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "app-v46.js";
+    script.async = false;
+    document.head.appendChild(script);
+  };
+
+  if (document.readyState === "complete") loadV46();
+  else window.addEventListener("load", loadV46, { once: true });
+})();
