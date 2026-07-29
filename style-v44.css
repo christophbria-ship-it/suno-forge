@@ -1,0 +1,399 @@
+/* Forge Studio v4.4 — denser workspace, clearer export controls */
+
+:root {
+  --radius: 15px;
+  --radius-small: 10px;
+  --shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+html {
+  font-size: 15px;
+}
+
+body {
+  font-size: 0.93rem;
+}
+
+.app-shell {
+  width: min(100%, 1040px);
+  padding: env(safe-area-inset-top) 9px calc(82px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  gap: 7px;
+  padding: 8px 0 7px;
+}
+
+h1 {
+  font-size: clamp(1.55rem, 6vw, 2.2rem);
+}
+
+h2 {
+  font-size: clamp(1.05rem, 4.2vw, 1.32rem);
+}
+
+h3 {
+  margin: 15px 0 7px;
+  font-size: 0.76rem;
+}
+
+.eyebrow {
+  margin-bottom: 3px;
+  font-size: 0.62rem;
+}
+
+button,
+.file-button {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.icon-button {
+  width: 40px;
+  min-width: 40px;
+  font-size: 1rem;
+}
+
+main,
+.generator-panel {
+  gap: 9px;
+}
+
+.card,
+.generator-panel .card {
+  padding: 11px;
+  border-radius: 13px;
+  box-shadow: var(--shadow);
+}
+
+.generator-panel .hero {
+  gap: 10px;
+  padding-block: 10px;
+}
+
+.generator-panel .hero h2 {
+  font-size: 1.04rem;
+}
+
+.section-heading,
+.generator-panel .section-heading {
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.generator-panel .section-heading h2 {
+  font-size: 1.04rem;
+}
+
+.helper-text {
+  min-height: 18px;
+  margin: 7px 0;
+  font-size: 0.75rem;
+  line-height: 1.38;
+}
+
+.status-badge,
+.save-badge,
+.count-badge {
+  min-height: 26px;
+  padding: 4px 7px;
+  font-size: 0.65rem;
+}
+
+.generator-mode-tabs {
+  top: 57px;
+  gap: 4px;
+  padding: 5px;
+  border-radius: 11px;
+}
+
+.generator-mode-tab {
+  min-height: 37px;
+  padding: 5px 3px;
+  font-size: 0.69rem;
+  border-radius: 8px;
+}
+
+input,
+select {
+  min-height: 41px;
+  padding-inline: 10px;
+}
+
+textarea {
+  padding: 9px 10px;
+  line-height: 1.42;
+}
+
+.search-field {
+  gap: 7px;
+  margin-bottom: 8px;
+  padding-inline: 9px;
+}
+
+.search-field input {
+  min-height: 41px;
+}
+
+.field,
+.control-group {
+  gap: 6px;
+}
+
+.field + .field {
+  margin-top: 10px;
+}
+
+.control-grid,
+.action-grid,
+.ai-action-grid {
+  gap: 7px;
+}
+
+.control-group {
+  margin-bottom: 11px;
+}
+
+.recipe-grid,
+.compact-recipes-card .recipe-grid {
+  gap: 6px;
+}
+
+.compact-recipes-card .recipe-button {
+  flex-basis: 132px;
+  min-height: 58px;
+  padding: 7px 8px;
+}
+
+.recipe-button span {
+  margin-top: 3px;
+  font-size: 0.67rem;
+}
+
+.category-shortcuts {
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.sound-palette-card .category-shortcut {
+  min-width: 96px;
+  padding: 6px 7px;
+}
+
+.category-shortcut strong {
+  font-size: 0.74rem;
+}
+
+.category-shortcut span {
+  font-size: 0.63rem;
+}
+
+.selected-tags {
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.selected-chip {
+  min-height: 28px;
+  padding: 4px 7px;
+  font-size: 0.68rem;
+}
+
+.sound-palette-card .category-list {
+  gap: 5px;
+}
+
+.sound-palette-card .category-header {
+  min-height: 39px;
+  padding: 6px 8px;
+}
+
+.sound-palette-card .category-content {
+  gap: 5px;
+  max-height: 230px;
+  padding: 0 7px 8px;
+}
+
+.tag-button {
+  min-height: 32px;
+  padding: 5px 8px;
+  font-size: 0.72rem;
+}
+
+.direct-tag-results {
+  margin: 6px 0 8px;
+  border-radius: 10px;
+}
+
+.tag-search-hint,
+.tag-result-summary {
+  padding: 7px 8px;
+  font-size: 0.69rem;
+}
+
+.direct-tag-grid,
+.sound-palette-card .direct-tag-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  max-height: 245px;
+  padding: 6px;
+}
+
+.direct-tag-result {
+  gap: 2px;
+  min-height: 0;
+  padding: 7px;
+  border-radius: 9px;
+}
+
+.direct-tag-result strong {
+  font-size: 0.72rem;
+}
+
+.direct-tag-result small {
+  display: grid;
+  gap: 1px;
+  overflow: visible;
+  font-size: 0.6rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.tag-result-category {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.72;
+}
+
+.tag-result-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  opacity: 0.88;
+}
+
+.compact-accordion-card.compact-collapsed {
+  padding-block: 9px !important;
+}
+
+.compact-accordion-toggle {
+  min-height: 32px;
+  padding: 4px 8px;
+  font-size: 0.68rem;
+}
+
+.compact-writing-actions {
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.compact-writing-more summary {
+  min-height: 39px;
+  padding: 9px;
+  font-size: 0.74rem;
+}
+
+.compact-writing-tool-grid {
+  gap: 6px;
+  padding: 0 8px 8px;
+}
+
+.writing-card textarea#lyricsInput {
+  min-height: 280px;
+}
+
+.style-direction-card textarea {
+  min-height: 105px;
+}
+
+.stats-row {
+  gap: 5px;
+  margin-bottom: 7px;
+}
+
+.stats-row span {
+  padding: 5px 3px;
+  font-size: 0.62rem;
+}
+
+.output-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.output-heading-actions .text-button {
+  min-height: 34px;
+  padding: 5px 7px;
+  font-size: 0.69rem;
+}
+
+.clear-output-button {
+  color: var(--danger);
+}
+
+.compact-export-card #promptOutput {
+  min-height: 125px;
+}
+
+.compact-export-card #sunoExportTools textarea {
+  min-height: 90px;
+}
+
+.suno-output-meta {
+  margin-top: 10px;
+}
+
+.suno-copy-actions,
+.suno-profile-grid,
+.suno-settings-grid {
+  gap: 6px;
+}
+
+.bottom-bar {
+  gap: 5px;
+  padding-top: 7px;
+  padding-bottom: calc(7px + env(safe-area-inset-bottom));
+}
+
+.bottom-bar button {
+  min-height: 39px;
+  font-size: 0.72rem;
+}
+
+@media (min-width: 700px) {
+  .direct-tag-grid,
+  .sound-palette-card .direct-tag-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .generator-panel .control-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-inline: 7px;
+  }
+
+  .header-actions {
+    gap: 3px;
+  }
+
+  .save-badge {
+    display: none;
+  }
+
+  .writing-card textarea#lyricsInput {
+    min-height: 245px;
+  }
+
+  .baroque-recipe-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
