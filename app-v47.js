@@ -84,8 +84,8 @@
   }
 
   function categoryData(name) {
-    const tags = globalThis.DATA?.categories?.[name];
-    const selected = Array.isArray(globalThis.state?.selectedTags) ? globalThis.state.selectedTags : [];
+    const tags = typeof DATA !== "undefined" ? DATA.categories?.[name] : undefined;
+    const selected = typeof state !== "undefined" && Array.isArray(state.selectedTags) ? state.selectedTags : [];
     return {
       total: Array.isArray(tags) ? tags.length : 0,
       selected: Array.isArray(tags) ? tags.filter((tag) => selected.includes(tag)).length : 0
