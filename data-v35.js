@@ -161,3 +161,27 @@ window.FORGE_V35 = Object.freeze({
   if (document.readyState === "complete") loadV43();
   else window.addEventListener("load", loadV43, { once: true });
 })();
+
+(() => {
+  if (!document.querySelector('link[href="style-v44.css"]')) {
+    const style = document.createElement("link");
+    style.rel = "stylesheet";
+    style.href = "style-v44.css";
+    document.head.appendChild(style);
+  }
+
+  const loadV44 = () => {
+    if (document.documentElement.dataset.forgeV43 !== "ready") {
+      window.setTimeout(loadV44, 50);
+      return;
+    }
+    if (document.querySelector('script[src="app-v44.js"]')) return;
+    const script = document.createElement("script");
+    script.src = "app-v44.js";
+    script.async = false;
+    document.head.appendChild(script);
+  };
+
+  if (document.readyState === "complete") loadV44();
+  else window.addEventListener("load", loadV44, { once: true });
+})();
