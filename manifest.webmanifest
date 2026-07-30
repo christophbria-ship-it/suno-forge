@@ -1,9 +1,9 @@
 {
-  "name": "Forge Studio",
+  "name": "Forge Studio v5",
   "short_name": "Forge",
-  "description": "Mobile instrument removal, stem subtraction, Suno prompt generation, and AI lyric workstation",
+  "description": "Brief-first AI music prompt, arrangement, lyric, and export workstation",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#080a0f",
-  "theme_color": "#090b10"
+  "background_color": "#090a0d",
+  "theme_color": "#090a0d"
 }
