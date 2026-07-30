@@ -1,38 +1,18 @@
 {
   "functions": {
-    "api/generate-lyrics.js": {
-      "maxDuration": 60
-    },
-    "api/generate-lyrics-v33.js": {
-      "maxDuration": 60
-    },
-    "api/generate-lyrics-v35.js": {
-      "maxDuration": 60
-    },
-    "api/generate-lyrics-v351.js": {
-      "maxDuration": 60
-    },
-    "api/stem-config.js": {
-      "maxDuration": 30
-    },
-    "api/stem-upload.js": {
-      "maxDuration": 60
-    },
-    "api/stem-start.js": {
-      "maxDuration": 60
-    },
-    "api/stem-status.js": {
-      "maxDuration": 60
-    },
-    "api/stem-cancel.js": {
-      "maxDuration": 60
-    },
-    "api/stem-cleanup.js": {
-      "maxDuration": 60
-    },
-    "api/remote.js": {
-      "maxDuration": 60
-    }
+    "api/generate-lyrics.js": { "maxDuration": 60 },
+    "api/generate-lyrics-v33.js": { "maxDuration": 60 },
+    "api/generate-lyrics-v35.js": { "maxDuration": 60 },
+    "api/generate-lyrics-v351.js": { "maxDuration": 60 },
+    "api/generate-lyrics-v5.js": { "maxDuration": 60 },
+    "api/ai-status.js": { "maxDuration": 20 },
+    "api/stem-config.js": { "maxDuration": 30 },
+    "api/stem-upload.js": { "maxDuration": 60 },
+    "api/stem-start.js": { "maxDuration": 60 },
+    "api/stem-status.js": { "maxDuration": 60 },
+    "api/stem-cancel.js": { "maxDuration": 60 },
+    "api/stem-cleanup.js": { "maxDuration": 60 },
+    "api/remote.js": { "maxDuration": 60 }
   },
   "headers": [
     {
@@ -40,7 +20,8 @@
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "Referrer-Policy", "value": "same-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" }
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" }
       ]
     }
   ]
