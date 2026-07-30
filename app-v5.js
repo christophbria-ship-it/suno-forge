@@ -1,20 +1,2 @@
 "use strict";
-
-(async () => {
-  try {
-    const response = await fetch("app-v5-core.txt?v=5.0.0", { cache: "no-store" });
-    if (!response.ok) throw new Error(`Forge v5 core failed (${response.status})`);
-    const encoded = (await response.text()).replace(/\s+/g, "");
-    const binary = atob(encoded);
-    const bytes = new Uint8Array(binary.length);
-    for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
-    if (!("DecompressionStream" in window)) throw new Error("This browser needs a current Chrome, Edge, or Safari version for Forge v5.");
-    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
-    const source = await new Response(stream).text();
-    (0, eval)(`${source}\n//# sourceURL=forge-app-v5-core.js`);
-  } catch (error) {
-    console.error("Forge v5 failed to start", error);
-    document.documentElement.dataset.forgeV5 = "error";
-    if (typeof reportError === "function") reportError(error, "Forge v5 startup");
-  }
-})();
+(async()=>{try{const r=await fetch("app-v5-core.txt?v=5.0.1",{cache:"no-store"});if(!r.ok)throw new Error(`Forge v5 core failed (${r.status})`);const b=atob((await r.text()).replace(/\s+/g,"")),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);if(!("DecompressionStream"in window))throw new Error("Update Chrome to run Forge v5.");const s=await new Response(new Blob([a]).stream().pipeThrough(new DecompressionStream("gzip"))).text();(0,eval)(`${s}\n//# sourceURL=forge-app-v5-core.js`)}catch(e){console.error("Forge v5 failed",e);document.documentElement.dataset.forgeV5="error";typeof reportError==="function"&&reportError(e,"Forge v5 startup")}})();
