@@ -55,9 +55,8 @@ for (const expected of ["Brief", "Sound", "Song", "Export", "v5-build-dock", "v5
   assert.ok(core.includes(expected), `V5 core missing required feature marker: ${expected}`);
 }
 assert.doesNotMatch(core, /forge-studio-(?:one-mu|v48)\.vercel\.app/i);
+assert.ok(core.includes('[/\\b(?:female|woman|alto|soprano)\\b/, ["Female Vocal", "Alto"]]'), "Female vocal parser must use word boundaries");
+assert.ok(core.includes('[/\\b(?:male|man|baritone|tenor)\\b/, ["Male Vocal", "Baritone"]]'), "Male vocal parser must use word boundaries");
+assert.ok(!core.includes('[/male|man|baritone|tenor/'), "Unsafe male-vocal substring matcher must not return");
 
-for (const term of ["female", "male", "Female Vocal", "Male Vocal"]) {
-  const index = core.indexOf(term);
-  if (index >= 0) console.log(`V5_PARSER_${term.replace(/\W+/g, "_").toUpperCase()}: ${core.slice(Math.max(0, index - 220), index + 320).replace(/\s+/g, " ")}`);
-}
 console.log(`Forge V5 smoke checks passed: ${localAssets.length} local assets, ${core.length} bytes of validated core source.`);
