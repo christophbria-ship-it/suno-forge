@@ -1,0 +1,57 @@
+/* Forge Studio v5 final production layer */
+.v5-ai-settings-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(255,255,255,.05);
+  color: #c7ced9;
+  font: inherit;
+  font-size: .64rem;
+  font-weight: 850;
+  letter-spacing: .03em;
+  white-space: nowrap;
+}
+.v5-ai-settings-button[data-ai-status="ready"] { border-color: rgba(69,211,157,.4); background: rgba(69,211,157,.1); color: #7de5bd; }
+.v5-ai-settings-button[data-ai-status="invalid"] { border-color: rgba(255,105,116,.42); background: rgba(255,105,116,.09); color: #ff9ba3; }
+.v5-ai-settings-button[data-ai-status="checking"] { color: #ffbd85; }
+
+.v5-ai-dialog {
+  width: min(calc(100% - 20px), 520px);
+  max-height: min(86vh, 680px);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  background: #10141b;
+  color: #f4f6fb;
+  box-shadow: 0 28px 90px rgba(0,0,0,.72);
+}
+.v5-ai-dialog::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(6px); }
+.v5-ai-dialog-shell { display: grid; gap: 13px; padding: 16px; }
+.v5-ai-dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.v5-ai-dialog-header span { color: #ff9b51; font-size: .64rem; font-weight: 900; letter-spacing: .09em; }
+.v5-ai-dialog-header h2 { margin: 3px 0 0; color: #fff; font-size: 1.1rem; letter-spacing: -.025em; }
+.v5-ai-dialog-header > button { width: 36px; min-width: 36px; min-height: 36px; padding: 0; border-radius: 10px; }
+.v5-ai-copy,
+.v5-ai-security { margin: 0; color: #b6becb; font-size: .74rem; line-height: 1.48; }
+.v5-ai-security { color: #858e9c; font-size: .66rem; }
+.v5-ai-field { display: grid; gap: 6px; }
+.v5-ai-field > span { color: #d9dee8; font-size: .7rem; font-weight: 800; }
+.v5-ai-field > div { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 7px; }
+.v5-ai-field input { width: 100%; min-width: 0; }
+.v5-ai-field button { min-width: 68px; }
+.v5-ai-dialog-status { min-height: 34px; padding: 9px 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: #0b0f15; color: #aeb7c5; font-size: .7rem; }
+.v5-ai-dialog-status[data-state="success"] { border-color: rgba(69,211,157,.28); color: #77dcb6; background: rgba(69,211,157,.07); }
+.v5-ai-dialog-status[data-state="error"] { border-color: rgba(255,105,116,.3); color: #ff9ba3; background: rgba(255,105,116,.07); }
+.v5-ai-dialog-status[data-state="busy"] { color: #ffbd85; }
+.v5-ai-actions { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; }
+.v5-ai-actions button { min-height: 44px; }
+
+@media (max-width: 520px) {
+  .topbar .header-actions { gap: 5px; }
+  .v5-ai-settings-button { min-height: 32px; padding: 5px 8px; font-size: .58rem; }
+  .v5-ai-dialog { margin: auto auto 8px; }
+  .v5-ai-actions { grid-template-columns: 1fr; }
+}
