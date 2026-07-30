@@ -169,6 +169,23 @@
     requestAnimationFrame(runRefinement);
   }
 
+  function loadV5Assets() {
+    if (!document.querySelector('link[data-forge-v5="style"]')) {
+      const style = document.createElement("link");
+      style.rel = "stylesheet";
+      style.href = "style-v5.css?v=5.0.0";
+      style.dataset.forgeV5 = "style";
+      document.head.appendChild(style);
+    }
+    if (!document.querySelector('script[data-forge-v5="app"]')) {
+      const script = document.createElement("script");
+      script.src = "app-v5.js?v=5.0.0";
+      script.async = false;
+      script.dataset.forgeV5 = "app";
+      document.body.appendChild(script);
+    }
+  }
+
   function updateVersion() {
     document.title = "Forge Studio";
     document.documentElement.dataset.forgeV47 = READY;
@@ -194,6 +211,7 @@
     }, true);
 
     updateVersion();
+    loadV5Assets();
   }
 
   if (document.readyState === "complete") init();
