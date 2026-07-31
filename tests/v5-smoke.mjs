@@ -41,18 +41,26 @@ assert.doesNotMatch(finish, /console\.(?:log|info)\([^\n]*key/i);
 assert.match(finishCss, /v5-ai-dialog/);
 assert.match(finishCss, /v5-ai-settings-button/);
 
-assert.match(clear, /style-v5-clean\.css\?v=5\.1\.0/);
-assert.match(clear, /app-v5-clean\.js\?v=5\.1\.0/);
+assert.match(clear, /style-v5-clean\.css\?v=5\.2\.0/);
+assert.match(clear, /app-v5-clean\.js\?v=5\.2\.0/);
 assert.match(clear, /Clear Sound/);
+assert.match(clean, /What do you want to make\?/);
+assert.match(clean, /Build My Starting Point/);
+assert.match(clean, /More options/);
+assert.match(clean, /More sound controls/);
 assert.match(clean, /v5-clean-picker-results/);
 assert.match(clean, /Add Selection/);
 assert.match(clean, /tagsForPicker/);
 assert.match(clean, /slice\(0, 500\)/);
 assert.match(clean, /Browse the full sound library/);
 assert.match(clean, /Advanced track controls/);
+assert.match(cleanCss, /--clean-bg:#f7f6f3/);
 assert.match(cleanCss, /forge-v5-clean/);
-assert.match(cleanCss, /v5-clean-disclosure/);
+assert.match(cleanCss, /v5-clean-primary-task/);
+assert.match(cleanCss, /v5-clean-inline-disclosure/);
+assert.match(cleanCss, /v5-clean-sound-more/);
 assert.match(cleanCss, /v5-clean-picker-row/);
+assert.match(cleanCss, /v5-build-dock\{display:none!important\}/);
 
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /gpt-5-mini/);
@@ -61,6 +69,7 @@ assert.match(api, /store:\s*false/);
 assert.match(statusApi, /https:\/\/api\.openai\.com\/v1\/models/);
 assert.match(statusApi, /x-forge-openai-key/);
 
+assert.match(serviceWorker, /forge-v5-20260731b/);
 assert.match(serviceWorker, /style-v5-finish\.css/);
 assert.match(serviceWorker, /app-v5-finish\.js/);
 assert.match(serviceWorker, /style-v5-clean\.css/);
@@ -80,4 +89,4 @@ assert.ok(!core.includes('[/male|man|baritone|tenor/'), "Unsafe male-vocal subst
 assert.ok(!core.includes('.slice(0, 120).forEach((tag) => {'), "Sound picker must not truncate the genre library");
 assert.ok(core.includes('options.filter((tag) => !query || tag.toLowerCase().includes(query)).forEach((tag) => {'), "Sound picker must render every matching option");
 
-console.log(`Forge V5.1 smoke checks passed: ${localAssets.length} indexed assets, ${core.length} bytes of validated core source.`);
+console.log(`Forge V5.2 smoke checks passed: ${localAssets.length} indexed assets, ${core.length} bytes of validated core source.`);
