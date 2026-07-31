@@ -3,6 +3,21 @@
 (() => {
   let installed = false;
 
+  function ensureCleanAssets() {
+    if (!document.querySelector('link[href*="style-v5-clean.css"]')) {
+      const style = document.createElement("link");
+      style.rel = "stylesheet";
+      style.href = "style-v5-clean.css?v=5.1.0";
+      document.head.appendChild(style);
+    }
+    if (!document.querySelector('script[src*="app-v5-clean.js"]')) {
+      const script = document.createElement("script");
+      script.src = "app-v5-clean.js?v=5.1.0";
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }
+
   function notify(message) {
     if (typeof showToast === "function") {
       showToast(message);
@@ -95,6 +110,7 @@
   }
 
   function install() {
+    ensureCleanAssets();
     if (installed && document.getElementById("forgeClearBtn")) return true;
     const actions = document.querySelector(".topbar .header-actions") || document.querySelector(".topbar");
     if (!actions) return false;
