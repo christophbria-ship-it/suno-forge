@@ -94,8 +94,8 @@
       state.favorite = false;
       if (typeof saveAll === "function") saveAll({ immediate: true });
       if (typeof syncControls === "function") syncControls(false);
-      const selected = document.getElementById("selectedTags");
-      if (selected) selected.dispatchEvent(new Event("change", { bubbles: true }));
+      if (typeof renderAll === "function") renderAll();
+      document.dispatchEvent(new CustomEvent("forge:state-change", { detail: { tag } }));
       return true;
     } catch (error) {
       console.error("Forge direct tag add failed", error);
@@ -144,9 +144,7 @@
     const tags = tagsForPicker(sheetTitle(sheet));
     const query = input.value.trim();
     const clean = normalize(query);
-    const matches = clean
-      ? tags.filter((tag) => normalize(tag).includes(clean))
-      : tags;
+    const matches = clean ? tags.filter((tag) => normalize(tag).includes(clean)) : tags;
     const current = selectedTags().map(normalize);
 
     results.replaceChildren();
@@ -154,7 +152,7 @@
     if (!shown.length) {
       const empty = document.createElement("div");
       empty.className = "v5-clean-picker-empty";
-      empty.textContent = "No exact library match. Change the search or use the custom Add button below.";
+      empty.textContent = "No library match. Change the search or add the typed phrase as a custom sound.";
       results.appendChild(empty);
     } else {
       const fragment = document.createDocumentFragment();
@@ -228,13 +226,48 @@
     details.className = "v5-clean-disclosure";
     details.open = open;
     const summary = document.createElement("summary");
-    const title = document.createElement("span");
-    title.textContent = label;
-    const small = document.createElement("small");
-    small.textContent = helper;
-    summary.append(title, small);
+    summary.innerHTML = `<span></span><small></small>`;
+    summary.querySelector("span").textContent = label;
+    summary.querySelector("small").textContent = helper;
     card.before(details);
     details.append(summary, card);
+  }
+
+  function wrapInline(element, label, helper) {
+    if (!element || element.closest(".v5-clean-inline-disclosure")) return;
+    const details = document.createElement("details");
+    details.className = "v5-clean-inline-disclosure";
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<span></span><small></small>`;
+    summary.querySelector("span").textContent = label;
+    summary.querySelector("small").textContent = helper;
+    element.before(details);
+    details.append(summary, element);
+  }
+
+  function reframeBrief() {
+    const card = document.querySelector(".v5-brief-card");
+    if (!card) return;
+    card.classList.add("v5-clean-primary-task");
+    const title = card.querySelector(".v5-brief-heading h2");
+    const copy = card.querySelector(".v5-brief-heading .muted");
+    const input = card.querySelector("textarea");
+    const action = card.querySelector(".v5-primary-hero");
+    if (title) title.textContent = "What do you want to make?";
+    if (copy) copy.textContent = "Describe the sound, story, or feeling. Forge will build the first production-ready version.";
+    if (input) input.placeholder = "Example: Dark Appalachian folk about finally leaving, intimate female vocal, restrained verses, defiant final chorus.";
+    if (action) action.textContent = "Build My Starting Point";
+    wrapInline(card.querySelector(".v5-brief-controls"), "More options", "Target platform, vocal mode, and song length.");
+  }
+
+  function reframeTabs() {
+    const labels = ["Brief", "Sound", "Write", "Export"];
+    document.querySelectorAll(".v5-mode-tab").forEach((button, index) => {
+      if (labels[index]) button.textContent = labels[index];
+    });
+    const active = document.querySelector(".v5-mode-tab.active");
+    const label = active?.textContent?.trim().toLowerCase() || "brief";
+    document.body.dataset.forgeTab = label;
   }
 
   function collapseSecondarySections() {
@@ -242,6 +275,24 @@
     wrapCard(document.querySelector(".sound-palette-card") || document.getElementById("categoryList")?.closest(".card"), "Browse the full sound library", "Search every genre, instrument, vocal, mood, and production option.");
     wrapCard(document.getElementById("bpmRange")?.closest(".card"), "Advanced track controls", "Exact tempo, perspective, rhyme, density, language, and detailed DNA.");
     wrapCard(document.getElementById("presetList")?.closest(".card"), "Projects and history", "Presets, backups, favorites, and previous exports.");
+  }
+
+  function collapseSoundRoles() {
+    const stack = document.querySelector(".v5-sound-stack");
+    if (!stack || stack.parentElement?.querySelector(":scope > .v5-clean-sound-more")) return;
+    const roles = [...stack.querySelectorAll(":scope > .v5-stack-role")];
+    if (roles.length < 5) return;
+    const keepPattern = /primary genre|mood|instrument|vocal/i;
+    const secondary = roles.filter((role) => !keepPattern.test(role.querySelector("strong")?.textContent || ""));
+    if (!secondary.length) return;
+    const details = document.createElement("details");
+    details.className = "v5-clean-sound-more";
+    const summary = document.createElement("summary");
+    summary.innerHTML = "<span>More sound controls</span><small>Genre blend, groove, production, and additional detail.</small>";
+    const group = document.createElement("div");
+    secondary.forEach((role) => group.appendChild(role));
+    details.append(summary, group);
+    stack.insertAdjacentElement("afterend", details);
   }
 
   function collapseSectionActions() {
@@ -262,10 +313,12 @@
   }
 
   function simplifyHeader() {
+    const brand = document.querySelector(".brand-block h1");
+    if (brand) brand.textContent = "FORGE STUDIO";
     const ai = document.getElementById("forgeAiSettingsBtn");
     if (ai) {
       ai.setAttribute("aria-label", ai.textContent || "AI settings");
-      if (/ready/i.test(ai.textContent || "")) ai.textContent = "AI";
+      ai.textContent = "AI";
     }
     const clear = document.getElementById("forgeClearBtn");
     if (clear) clear.textContent = "Clear";
@@ -274,7 +327,10 @@
   function decorate() {
     document.body.classList.add("forge-v5-clean");
     simplifyHeader();
+    reframeTabs();
+    reframeBrief();
     collapseSecondarySections();
+    collapseSoundRoles();
     collapseSectionActions();
     document.querySelectorAll(".v5-sheet,dialog").forEach(enhancePicker);
   }
@@ -291,7 +347,7 @@
   function init() {
     decorate();
     const observer = new MutationObserver(scheduleDecorate);
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
