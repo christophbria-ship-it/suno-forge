@@ -77,5 +77,7 @@ assert.doesNotMatch(core, /forge-studio-(?:one-mu|v48)\.vercel\.app/i);
 assert.ok(core.includes('[/\\b(?:female|woman|alto|soprano)\\b/, ["Female Vocal", "Alto"]]'), "Female vocal parser must use word boundaries");
 assert.ok(core.includes('[/\\b(?:male|man|baritone|tenor)\\b/, ["Male Vocal", "Baritone"]]'), "Male vocal parser must use word boundaries");
 assert.ok(!core.includes('[/male|man|baritone|tenor/'), "Unsafe male-vocal substring matcher must not return");
+assert.ok(!core.includes('.slice(0, 120).forEach((tag) => {'), "Sound picker must not truncate the genre library");
+assert.ok(core.includes('options.filter((tag) => !query || tag.toLowerCase().includes(query)).forEach((tag) => {'), "Sound picker must render every matching option");
 
 console.log(`Forge V5.1 smoke checks passed: ${localAssets.length} indexed assets, ${core.length} bytes of validated core source.`);
