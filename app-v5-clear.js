@@ -21,10 +21,10 @@
       document.body.appendChild(script);
     }
     const existingFlow = document.querySelector('script[src*="app-v5-flow.js"]');
-    if (existingFlow && !existingFlow.src.includes("v=5.2.1")) existingFlow.remove();
+    if (existingFlow && !existingFlow.src.includes("v=5.2.2")) existingFlow.remove();
     if (!document.querySelector('script[src*="app-v5-flow.js"]')) {
       const script = document.createElement("script");
-      script.src = "app-v5-flow.js?v=5.2.1";
+      script.src = "app-v5-flow.js?v=5.2.2";
       script.defer = true;
       document.body.appendChild(script);
     }
