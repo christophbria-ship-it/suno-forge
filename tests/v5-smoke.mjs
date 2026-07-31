@@ -7,6 +7,9 @@ const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf
 const index = read("index.html");
 const finish = read("app-v5-finish.js");
 const finishCss = read("style-v5-finish.css");
+const clear = read("app-v5-clear.js");
+const clean = read("app-v5-clean.js");
+const cleanCss = read("style-v5-clean.css");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const api = read("api/generate-lyrics-v5.js");
@@ -18,6 +21,7 @@ assert.match(index, /FORGE STUDIO V5/);
 assert.match(index, /style-v5\.css\?v=5\.0\.3/);
 assert.match(index, /style-v5-finish\.css\?v=5\.0\.3/);
 assert.match(index, /app-v5-finish\.js\?v=5\.0\.3/);
+assert.match(index, /app-v5-clear\.js\?v=5\.0\.5/);
 assert.ok(index.indexOf("app-v5-finish.js") < index.indexOf("app-v47.js"), "AI bridge must load before V5 startup");
 assert.doesNotMatch(index, /forge-studio-(?:one-mu|v48|v5-)[^"']*\.vercel\.app/i);
 
@@ -37,6 +41,19 @@ assert.doesNotMatch(finish, /console\.(?:log|info)\([^\n]*key/i);
 assert.match(finishCss, /v5-ai-dialog/);
 assert.match(finishCss, /v5-ai-settings-button/);
 
+assert.match(clear, /style-v5-clean\.css\?v=5\.1\.0/);
+assert.match(clear, /app-v5-clean\.js\?v=5\.1\.0/);
+assert.match(clear, /Clear Sound/);
+assert.match(clean, /v5-clean-picker-results/);
+assert.match(clean, /Add Selection/);
+assert.match(clean, /tagsForPicker/);
+assert.match(clean, /slice\(0, 500\)/);
+assert.match(clean, /Browse the full sound library/);
+assert.match(clean, /Advanced track controls/);
+assert.match(cleanCss, /forge-v5-clean/);
+assert.match(cleanCss, /v5-clean-disclosure/);
+assert.match(cleanCss, /v5-clean-picker-row/);
+
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /gpt-5-mini/);
 assert.match(api, /x-forge-openai-key/);
@@ -46,6 +63,8 @@ assert.match(statusApi, /x-forge-openai-key/);
 
 assert.match(serviceWorker, /style-v5-finish\.css/);
 assert.match(serviceWorker, /app-v5-finish\.js/);
+assert.match(serviceWorker, /style-v5-clean\.css/);
+assert.match(serviceWorker, /app-v5-clean\.js/);
 assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
 assert.equal(manifest.name, "Forge Studio v5");
 assert.equal(manifest.display, "standalone");
@@ -59,4 +78,4 @@ assert.ok(core.includes('[/\\b(?:female|woman|alto|soprano)\\b/, ["Female Vocal"
 assert.ok(core.includes('[/\\b(?:male|man|baritone|tenor)\\b/, ["Male Vocal", "Baritone"]]'), "Male vocal parser must use word boundaries");
 assert.ok(!core.includes('[/male|man|baritone|tenor/'), "Unsafe male-vocal substring matcher must not return");
 
-console.log(`Forge V5 smoke checks passed: ${localAssets.length} local assets, ${core.length} bytes of validated core source.`);
+console.log(`Forge V5.1 smoke checks passed: ${localAssets.length} indexed assets, ${core.length} bytes of validated core source.`);
