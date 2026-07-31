@@ -4,15 +4,19 @@
   let installed = false;
 
   function ensureCleanAssets() {
+    const existingStyle = document.querySelector('link[href*="style-v5-clean.css"]');
+    if (existingStyle && !existingStyle.href.includes("v=5.2.0")) existingStyle.remove();
     if (!document.querySelector('link[href*="style-v5-clean.css"]')) {
       const style = document.createElement("link");
       style.rel = "stylesheet";
-      style.href = "style-v5-clean.css?v=5.1.0";
+      style.href = "style-v5-clean.css?v=5.2.0";
       document.head.appendChild(style);
     }
+    const existingScript = document.querySelector('script[src*="app-v5-clean.js"]');
+    if (existingScript && !existingScript.src.includes("v=5.2.0")) existingScript.remove();
     if (!document.querySelector('script[src*="app-v5-clean.js"]')) {
       const script = document.createElement("script");
-      script.src = "app-v5-clean.js?v=5.1.0";
+      script.src = "app-v5-clean.js?v=5.2.0";
       script.defer = true;
       document.body.appendChild(script);
     }
