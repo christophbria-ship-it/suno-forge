@@ -55,7 +55,6 @@
       const output = document.getElementById("promptOutput");
       if (output) output.value = "";
       if (typeof saveAll === "function") saveAll({ immediate: true });
-      if (typeof syncControls === "function") syncControls(false);
       notify("Export cleared");
       return true;
     } catch (error) {

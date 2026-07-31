@@ -44,6 +44,8 @@ assert.match(finishCss, /v5-ai-settings-button/);
 assert.match(clear, /style-v5-clean\.css\?v=5\.2\.0/);
 assert.match(clear, /app-v5-clean\.js\?v=5\.2\.0/);
 assert.match(clear, /Clear Sound/);
+assert.match(clear, /state\.output = ""/);
+assert.doesNotMatch(clear, /if \(typeof syncControls === "function"\) syncControls\(false\);/);
 assert.match(clean, /What do you want to make\?/);
 assert.match(clean, /Build My Starting Point/);
 assert.match(clean, /More options/);
@@ -69,7 +71,7 @@ assert.match(api, /store:\s*false/);
 assert.match(statusApi, /https:\/\/api\.openai\.com\/v1\/models/);
 assert.match(statusApi, /x-forge-openai-key/);
 
-assert.match(serviceWorker, /forge-v5-20260731b/);
+assert.match(serviceWorker, /forge-v5-20260731c/);
 assert.match(serviceWorker, /style-v5-finish\.css/);
 assert.match(serviceWorker, /app-v5-finish\.js/);
 assert.match(serviceWorker, /style-v5-clean\.css/);
