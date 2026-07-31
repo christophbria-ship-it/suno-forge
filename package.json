@@ -1,6 +1,6 @@
 {
   "name": "suno-forge",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "private": true,
   "scripts": {
     "pretest": "node scripts/patch-v5-core.mjs",
