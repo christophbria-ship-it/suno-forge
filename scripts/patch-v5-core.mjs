@@ -25,6 +25,12 @@ if (source.includes('[/male|man|baritone|tenor/')) {
   throw new Error("Unsafe Forge V5 male-vocal parser remains after patch.");
 }
 
+for (const match of source.matchAll(/\.slice\([^)]*\)/g)) {
+  const start = Math.max(0, match.index - 180);
+  const end = Math.min(source.length, match.index + match[0].length + 180);
+  console.log(`V5_SLICE_CONTEXT: ${source.slice(start, end).replace(/\s+/g, " ")}`);
+}
+
 const patched = gzipSync(Buffer.from(source, "utf8"), { level: 9 }).toString("base64");
 writeFileSync(path, `${patched}\n`, "utf8");
 console.log("Forge V5 core parser patch applied.");
