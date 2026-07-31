@@ -13,6 +13,10 @@ const replacements = [
   {
     old: '[/male|man|baritone|tenor/, ["Male Vocal", "Baritone"]]',
     next: '[/\\b(?:male|man|baritone|tenor)\\b/, ["Male Vocal", "Baritone"]]'
+  },
+  {
+    old: 'options.filter((tag) => !query || tag.toLowerCase().includes(query)).slice(0, 120).forEach((tag) => {',
+    next: 'options.filter((tag) => !query || tag.toLowerCase().includes(query)).forEach((tag) => {'
   }
 ];
 
@@ -24,13 +28,10 @@ for (const { old, next } of replacements) {
 if (source.includes('[/male|man|baritone|tenor/')) {
   throw new Error("Unsafe Forge V5 male-vocal parser remains after patch.");
 }
-
-for (const match of source.matchAll(/\.slice\([^)]*\)/g)) {
-  const start = Math.max(0, match.index - 180);
-  const end = Math.min(source.length, match.index + match[0].length + 180);
-  console.log(`V5_SLICE_CONTEXT: ${source.slice(start, end).replace(/\s+/g, " ")}`);
+if (source.includes('.slice(0, 120).forEach((tag) => {')) {
+  throw new Error("Forge V5 picker still truncates the sound library.");
 }
 
 const patched = gzipSync(Buffer.from(source, "utf8"), { level: 9 }).toString("base64");
 writeFileSync(path, `${patched}\n`, "utf8");
-console.log("Forge V5 core parser patch applied.");
+console.log("Forge V5 core patches applied: vocal parsing and complete sound library.");
