@@ -28,6 +28,14 @@
       script.defer = true;
       document.body.appendChild(script);
     }
+    const existingExport = document.querySelector('script[src*="app-v5-export.js"]');
+    if (existingExport && !existingExport.src.includes("v=5.2.3")) existingExport.remove();
+    if (!document.querySelector('script[src*="app-v5-export.js"]')) {
+      const script = document.createElement("script");
+      script.src = "app-v5-export.js?v=5.2.3";
+      script.defer = true;
+      document.body.appendChild(script);
+    }
   }
 
   function notify(message) {
