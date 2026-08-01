@@ -10,6 +10,8 @@ const finishCss = read("style-v5-finish.css");
 const clear = read("app-v5-clear.js");
 const clean = read("app-v5-clean.js");
 const cleanCss = read("style-v5-clean.css");
+const flow = read("app-v5-flow.js");
+const splitExport = read("app-v5-export.js");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const api = read("api/generate-lyrics-v5.js");
@@ -43,6 +45,8 @@ assert.match(finishCss, /v5-ai-settings-button/);
 
 assert.match(clear, /style-v5-clean\.css\?v=5\.2\.0/);
 assert.match(clear, /app-v5-clean\.js\?v=5\.2\.0/);
+assert.match(clear, /app-v5-flow\.js\?v=5\.2\.2/);
+assert.match(clear, /app-v5-export\.js\?v=5\.2\.3/);
 assert.match(clear, /Clear Sound/);
 assert.match(clear, /state\.output = ""/);
 assert.doesNotMatch(clear, /if \(typeof syncControls === "function"\) syncControls\(false\);/);
@@ -64,6 +68,20 @@ assert.match(cleanCss, /v5-clean-sound-more/);
 assert.match(cleanCss, /v5-clean-picker-row/);
 assert.match(cleanCss, /v5-build-dock\{display:none!important\}/);
 
+assert.match(flow, /Your starting prompt/);
+assert.match(flow, /Copy & Use Now/);
+assert.match(splitExport, /Copy each field separately/);
+assert.match(splitExport, /Copy Style/);
+assert.match(splitExport, /Copy Lyrics/);
+assert.match(splitExport, /Copy Everything \(optional\)/);
+assert.match(splitExport, /data-suno-output="style"/);
+assert.match(splitExport, /data-suno-output="lyrics"/);
+assert.match(splitExport, /Paste only this into Suno's Style box/);
+assert.match(splitExport, /Paste them into Suno's Lyrics box/);
+const styleFunction = splitExport.match(/function buildStyleExport\(\) \{([\s\S]*?)\n  \}\n\n  function buildLyricsExport/)?.[1] || "";
+assert.ok(styleFunction, "Style export function must be present");
+assert.doesNotMatch(styleFunction, /lyrics/i, "Style export must not include lyrics");
+
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /gpt-5-mini/);
 assert.match(api, /x-forge-openai-key/);
@@ -71,16 +89,20 @@ assert.match(api, /store:\s*false/);
 assert.match(statusApi, /https:\/\/api\.openai\.com\/v1\/models/);
 assert.match(statusApi, /x-forge-openai-key/);
 
-assert.match(serviceWorker, /forge-v5-20260731c/);
+assert.match(serviceWorker, /forge-v5-20260731d/);
 assert.match(serviceWorker, /style-v5-finish\.css/);
 assert.match(serviceWorker, /app-v5-finish\.js/);
 assert.match(serviceWorker, /style-v5-clean\.css/);
 assert.match(serviceWorker, /app-v5-clean\.js/);
+assert.match(serviceWorker, /app-v5-flow\.js/);
+assert.match(serviceWorker, /app-v5-export\.js/);
 assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
 assert.equal(manifest.name, "Forge Studio v5");
 assert.equal(manifest.display, "standalone");
 
 new vm.Script(core, { filename: "app-v5-core.js" });
+new vm.Script(flow, { filename: "app-v5-flow.js" });
+new vm.Script(splitExport, { filename: "app-v5-export.js" });
 for (const expected of ["Brief", "Sound", "Song", "Export", "v5-build-dock", "v5-sound-stack", "v5-lyrics-sections", "COPY EVERYTHING"]) {
   assert.ok(core.includes(expected), `V5 core missing required feature marker: ${expected}`);
 }
