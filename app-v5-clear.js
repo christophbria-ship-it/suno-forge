@@ -44,6 +44,14 @@
       script.defer = true;
       document.body.appendChild(script);
     }
+    const existingDisclosure = document.querySelector('script[src*="app-v5-disclosure.js"]');
+    if (existingDisclosure && !existingDisclosure.src.includes("v=5.2.5")) existingDisclosure.remove();
+    if (!document.querySelector('script[src*="app-v5-disclosure.js"]')) {
+      const script = document.createElement("script");
+      script.src = "app-v5-disclosure.js?v=5.2.5";
+      script.defer = true;
+      document.body.appendChild(script);
+    }
   }
 
   function notify(message) {
