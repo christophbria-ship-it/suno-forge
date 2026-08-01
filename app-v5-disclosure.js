@@ -1,71 +1,106 @@
 "use strict";
 
 (() => {
-  const HIDDEN_CLASSES = [
-    "v5-legacy-panel",
-    "v5-legacy-hero",
-    "v5-legacy-output",
-    "v5-panel-hidden",
-    "workspace-hidden"
+  const RULES = [
+    { match: /start from a recipe/i, panel: "brief" },
+    { match: /browse the full sound library/i, panel: "sound" },
+    { match: /advanced track controls/i, panel: "sound" },
+    { match: /projects and history/i, panel: "tools" }
   ];
   let scheduled = false;
 
   function ensureStyle() {
-    if (document.getElementById("v5-disclosure-fix-style")) return;
+    if (document.getElementById("v5-disclosure-integrity-style")) return;
     const style = document.createElement("style");
-    style.id = "v5-disclosure-fix-style";
+    style.id = "v5-disclosure-integrity-style";
     style.textContent = `
       body.forge-v5-clean{overflow-x:hidden!important}
       body.forge-v5-clean .v5-panel{min-width:0!important;max-width:100%!important}
       .v5-clean-disclosure{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
       .v5-clean-disclosure>summary{min-width:0!important;box-sizing:border-box!important}
-      .v5-clean-disclosure[open]>.v5-clean-disclosure-content{display:block!important;visibility:visible!important;opacity:1!important;max-height:none!important;overflow:visible!important}
+      .v5-clean-disclosure-tools-only{display:none!important}
     `;
     document.head.appendChild(style);
   }
 
-  function contentFor(details) {
+  function directContent(details) {
     return [...details.children].find((child) => child.tagName !== "SUMMARY") || null;
   }
 
-  function unlock(details) {
-    if (!details?.open) return;
-    const content = contentFor(details);
-    if (!content) return;
-
-    content.classList.add("v5-clean-disclosure-content");
-    HIDDEN_CLASSES.forEach((name) => content.classList.remove(name));
-    content.hidden = false;
-    content.removeAttribute("aria-hidden");
-    if (content.style.display === "none") content.style.removeProperty("display");
-
-    const summary = details.querySelector(":scope > summary");
-    summary?.setAttribute("aria-expanded", "true");
+  function summaryLabel(details) {
+    return details.querySelector(":scope > summary")?.textContent?.trim() || "";
   }
 
-  function prepare(details) {
+  function ruleFor(details) {
+    const label = summaryLabel(details);
+    return RULES.find((rule) => rule.match.test(label)) || null;
+  }
+
+  function setExpanded(details) {
+    details.querySelector(":scope > summary")?.setAttribute("aria-expanded", String(details.open));
+  }
+
+  function targetPanel(name) {
+    return document.querySelector(`.v5-panel[data-v5-panel="${name}"]`);
+  }
+
+  function moveToCorrectPanel(details, content, panelName) {
+    const panel = targetPanel(panelName);
+    if (!panel) return false;
+    panel.appendChild(content);
+    details.remove();
+    return true;
+  }
+
+  function repairDetails(details) {
     if (!(details instanceof HTMLDetailsElement)) return;
-    const content = contentFor(details);
-    if (content) content.classList.add("v5-clean-disclosure-content");
 
-    const summary = details.querySelector(":scope > summary");
-    summary?.setAttribute("aria-expanded", String(details.open));
+    const rule = ruleFor(details);
+    const content = directContent(details);
 
-    if (details.dataset.disclosureFix !== "ready") {
-      details.dataset.disclosureFix = "ready";
-      details.addEventListener("toggle", () => {
-        summary?.setAttribute("aria-expanded", String(details.open));
-        unlock(details);
-      });
+    if (!rule) {
+      if (!content) details.remove();
+      return;
     }
 
-    unlock(details);
+    if (rule.panel === "tools") {
+      if (!content) {
+        details.remove();
+        return;
+      }
+      details.classList.add("v5-clean-disclosure-tools-only");
+      details.hidden = true;
+      details.dataset.forgeDisclosure = "tools";
+      return;
+    }
+
+    if (!content) {
+      details.remove();
+      return;
+    }
+
+    const actualPanel = details.closest(".v5-panel")?.dataset.v5Panel || "";
+    if (actualPanel !== rule.panel) {
+      moveToCorrectPanel(details, content, rule.panel);
+      return;
+    }
+
+    details.hidden = false;
+    details.classList.remove("v5-clean-disclosure-tools-only");
+    details.dataset.forgeDisclosure = rule.panel;
+    setExpanded(details);
+
+    if (details.dataset.disclosureIntegrity !== "ready") {
+      details.dataset.disclosureIntegrity = "ready";
+      details.addEventListener("toggle", () => setExpanded(details));
+    }
   }
 
   function repair() {
     scheduled = false;
     ensureStyle();
-    document.querySelectorAll(".v5-clean-disclosure").forEach(prepare);
+    if (document.documentElement.dataset.forgeV5 !== "ready") return;
+    document.querySelectorAll(".v5-clean-disclosure").forEach(repairDetails);
   }
 
   function scheduleRepair() {
@@ -76,16 +111,15 @@
 
   function init() {
     repair();
+    window.setTimeout(scheduleRepair, 120);
+    window.setTimeout(scheduleRepair, 360);
     const observer = new MutationObserver(scheduleRepair);
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: ["class", "hidden", "open"]
+      attributeFilter: ["class", "open", "hidden", "data-forge-v5"]
     });
-    document.addEventListener("click", (event) => {
-      if (event.target.closest(".v5-clean-disclosure > summary")) scheduleRepair();
-    }, true);
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
