@@ -50,7 +50,7 @@ assert.match(clear, /app-v5-clean\.js\?v=5\.2\.0/);
 assert.match(clear, /app-v5-flow\.js\?v=5\.2\.2/);
 assert.match(clear, /app-v5-export\.js\?v=5\.2\.3/);
 assert.match(clear, /app-v5-guide\.js\?v=5\.2\.4/);
-assert.match(clear, /app-v5-disclosure\.js\?v=5\.2\.5/);
+assert.match(clear, /app-v5-disclosure\.js\?v=5\.2\.6/);
 assert.match(clear, /Clear Sound/);
 assert.match(clear, /state\.output = ""/);
 assert.doesNotMatch(clear, /if \(typeof syncControls === "function"\) syncControls\(false\);/);
@@ -94,13 +94,21 @@ assert.match(guide, /Copy Style first, then Lyrics/);
 assert.match(guide, /Step \$\{index \+ 1\} of 4/);
 assert.doesNotMatch(guide, /tutorial|tour|modal/i);
 
-assert.match(disclosure, /v5-legacy-panel/);
-assert.match(disclosure, /v5-clean-disclosure-content/);
-assert.match(disclosure, /v5-clean-disclosure\[open\]/);
-assert.match(disclosure, /content\.hidden = false/);
-assert.match(disclosure, /removeAttribute\("aria-hidden"\)/);
-assert.match(disclosure, /details\.open/);
+assert.match(disclosure, /start from a recipe/i);
+assert.match(disclosure, /browse the full sound library/i);
+assert.match(disclosure, /advanced track controls/i);
+assert.match(disclosure, /projects and history/i);
+assert.match(disclosure, /panel: "brief"/);
+assert.match(disclosure, /panel: "sound"/);
+assert.match(disclosure, /panel: "tools"/);
+assert.match(disclosure, /v5-clean-disclosure-tools-only/);
+assert.match(disclosure, /moveToCorrectPanel/);
+assert.match(disclosure, /panel\.appendChild\(content\)/);
+assert.match(disclosure, /details\.remove\(\)/);
+assert.match(disclosure, /data-forge-v5/);
 assert.match(disclosure, /aria-expanded/);
+assert.doesNotMatch(disclosure, /HIDDEN_CLASSES/);
+assert.doesNotMatch(disclosure, /classList\.remove\("v5-panel-hidden"\)/);
 
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /gpt-5-mini/);
@@ -109,7 +117,7 @@ assert.match(api, /store:\s*false/);
 assert.match(statusApi, /https:\/\/api\.openai\.com\/v1\/models/);
 assert.match(statusApi, /x-forge-openai-key/);
 
-assert.match(serviceWorker, /forge-v5-20260801f/);
+assert.match(serviceWorker, /forge-v5-20260801g/);
 assert.match(serviceWorker, /style-v5-finish\.css/);
 assert.match(serviceWorker, /app-v5-finish\.js/);
 assert.match(serviceWorker, /style-v5-clean\.css/);
@@ -130,6 +138,10 @@ new vm.Script(disclosure, { filename: "app-v5-disclosure.js" });
 for (const expected of ["Brief", "Sound", "Song", "Export", "v5-build-dock", "v5-sound-stack", "v5-lyrics-sections", "COPY EVERYTHING"]) {
   assert.ok(core.includes(expected), `V5 core missing required feature marker: ${expected}`);
 }
+assert.match(core, /nodes\.panels\.brief\.appendChild\(recipeCard\)/);
+assert.match(core, /nodes\.panels\.sound\.appendChild\(palette\)/);
+assert.match(core, /nodes\.panels\.sound\.appendChild\(track\)/);
+assert.match(core, /makeSheet\("Presets & History"\)/);
 assert.doesNotMatch(core, /forge-studio-(?:one-mu|v48)\.vercel\.app/i);
 assert.ok(core.includes('[/\\b(?:female|woman|alto|soprano)\\b/, ["Female Vocal", "Alto"]]'), "Female vocal parser must use word boundaries");
 assert.ok(core.includes('[/\\b(?:male|man|baritone|tenor)\\b/, ["Male Vocal", "Baritone"]]'), "Male vocal parser must use word boundaries");
