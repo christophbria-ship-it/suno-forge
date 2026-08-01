@@ -12,6 +12,7 @@ const clean = read("app-v5-clean.js");
 const cleanCss = read("style-v5-clean.css");
 const flow = read("app-v5-flow.js");
 const splitExport = read("app-v5-export.js");
+const guide = read("app-v5-guide.js");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const api = read("api/generate-lyrics-v5.js");
@@ -47,6 +48,7 @@ assert.match(clear, /style-v5-clean\.css\?v=5\.2\.0/);
 assert.match(clear, /app-v5-clean\.js\?v=5\.2\.0/);
 assert.match(clear, /app-v5-flow\.js\?v=5\.2\.2/);
 assert.match(clear, /app-v5-export\.js\?v=5\.2\.3/);
+assert.match(clear, /app-v5-guide\.js\?v=5\.2\.4/);
 assert.match(clear, /Clear Sound/);
 assert.match(clear, /state\.output = ""/);
 assert.doesNotMatch(clear, /if \(typeof syncControls === "function"\) syncControls\(false\);/);
@@ -82,6 +84,14 @@ const styleFunction = splitExport.match(/function buildStyleExport\(\) \{([\s\S]
 assert.ok(styleFunction, "Style export function must be present");
 assert.doesNotMatch(styleFunction, /lyrics/i, "Style export must not include lyrics");
 
+assert.match(guide, /v5-quick-path/);
+assert.match(guide, /Shape the Sound/);
+assert.match(guide, /Write the Song/);
+assert.match(guide, /Prepare for Suno/);
+assert.match(guide, /Copy Style first, then Lyrics/);
+assert.match(guide, /Step \$\{index \+ 1\} of 4/);
+assert.doesNotMatch(guide, /tutorial|tour|modal/i);
+
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /gpt-5-mini/);
 assert.match(api, /x-forge-openai-key/);
@@ -89,13 +99,14 @@ assert.match(api, /store:\s*false/);
 assert.match(statusApi, /https:\/\/api\.openai\.com\/v1\/models/);
 assert.match(statusApi, /x-forge-openai-key/);
 
-assert.match(serviceWorker, /forge-v5-20260731d/);
+assert.match(serviceWorker, /forge-v5-20260731e/);
 assert.match(serviceWorker, /style-v5-finish\.css/);
 assert.match(serviceWorker, /app-v5-finish\.js/);
 assert.match(serviceWorker, /style-v5-clean\.css/);
 assert.match(serviceWorker, /app-v5-clean\.js/);
 assert.match(serviceWorker, /app-v5-flow\.js/);
 assert.match(serviceWorker, /app-v5-export\.js/);
+assert.match(serviceWorker, /app-v5-guide\.js/);
 assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
 assert.equal(manifest.name, "Forge Studio v5");
 assert.equal(manifest.display, "standalone");
@@ -103,6 +114,7 @@ assert.equal(manifest.display, "standalone");
 new vm.Script(core, { filename: "app-v5-core.js" });
 new vm.Script(flow, { filename: "app-v5-flow.js" });
 new vm.Script(splitExport, { filename: "app-v5-export.js" });
+new vm.Script(guide, { filename: "app-v5-guide.js" });
 for (const expected of ["Brief", "Sound", "Song", "Export", "v5-build-dock", "v5-sound-stack", "v5-lyrics-sections", "COPY EVERYTHING"]) {
   assert.ok(core.includes(expected), `V5 core missing required feature marker: ${expected}`);
 }
