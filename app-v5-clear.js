@@ -36,6 +36,14 @@
       script.defer = true;
       document.body.appendChild(script);
     }
+    const existingGuide = document.querySelector('script[src*="app-v5-guide.js"]');
+    if (existingGuide && !existingGuide.src.includes("v=5.2.4")) existingGuide.remove();
+    if (!document.querySelector('script[src*="app-v5-guide.js"]')) {
+      const script = document.createElement("script");
+      script.src = "app-v5-guide.js?v=5.2.4";
+      script.defer = true;
+      document.body.appendChild(script);
+    }
   }
 
   function notify(message) {
