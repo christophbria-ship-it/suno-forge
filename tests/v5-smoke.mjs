@@ -78,7 +78,9 @@ assert.match(splitExport, /data-suno-output="style"/);
 assert.match(splitExport, /data-suno-output="lyrics"/);
 assert.match(splitExport, /Paste only this into Suno's Style box/);
 assert.match(splitExport, /Paste them into Suno's Lyrics box/);
-assert.doesNotMatch(splitExport, /buildStyleExport\([\s\S]*project\?\.lyrics/);
+const styleFunction = splitExport.match(/function buildStyleExport\(\) \{([\s\S]*?)\n  \}\n\n  function buildLyricsExport/)?.[1] || "";
+assert.ok(styleFunction, "Style export function must be present");
+assert.doesNotMatch(styleFunction, /lyrics/i, "Style export must not include lyrics");
 
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /gpt-5-mini/);
