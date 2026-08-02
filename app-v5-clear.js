@@ -52,6 +52,14 @@
       script.defer = true;
       document.body.appendChild(script);
     }
+    const existingAiActions = document.querySelector('script[src*="app-v5-ai-actions.js"]');
+    if (existingAiActions && !existingAiActions.src.includes("v=5.2.7")) existingAiActions.remove();
+    if (!document.querySelector('script[src*="app-v5-ai-actions.js"]')) {
+      const script = document.createElement("script");
+      script.src = "app-v5-ai-actions.js?v=5.2.7";
+      script.defer = true;
+      document.body.appendChild(script);
+    }
   }
 
   function notify(message) {

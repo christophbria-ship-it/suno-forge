@@ -17,11 +17,15 @@ const replacements = [
   {
     old: 'options.filter((tag) => !query || tag.toLowerCase().includes(query)).slice(0, 120).forEach((tag) => {',
     next: 'options.filter((tag) => !query || tag.toLowerCase().includes(query)).forEach((tag) => {'
+  },
+  {
+    old: 'fetch("/api/generate-lyrics-v35"',
+    next: 'fetch("/api/generate-lyrics-v5"'
   }
 ];
 
 for (const { old, next } of replacements) {
-  if (source.includes(old)) source = source.replace(old, next);
+  if (source.includes(old)) source = source.split(old).join(next);
   if (!source.includes(next)) throw new Error(`Forge V5 core patch target is missing: ${next}`);
 }
 
@@ -31,7 +35,10 @@ if (source.includes('[/male|man|baritone|tenor/')) {
 if (source.includes('.slice(0, 120).forEach((tag) => {')) {
   throw new Error("Forge V5 picker still truncates the sound library.");
 }
+if (source.includes('fetch("/api/generate-lyrics-v35"')) {
+  throw new Error("Forge V5 section AI still uses the obsolete endpoint.");
+}
 
 const patched = gzipSync(Buffer.from(source, "utf8"), { level: 9 }).toString("base64");
 writeFileSync(path, `${patched}\n`, "utf8");
-console.log("Forge V5 core patches applied: vocal parsing and complete sound library.");
+console.log("Forge V5 core patches applied: vocal parsing, complete sound library, and direct AI routing.");
