@@ -1,0 +1,369 @@
+/* Forge focused workflow: one decision at a time. */
+
+.stem-focus-workspace {
+  --focus-bg: #f4f1ec;
+  --focus-card: #ffffff;
+  --focus-text: #171717;
+  --focus-muted: #6d6963;
+  --focus-border: #ddd7cf;
+  --focus-accent: #f26b21;
+  max-width: 760px !important;
+  gap: 18px !important;
+  padding: 18px 16px 120px !important;
+  color: var(--focus-text) !important;
+  background: var(--focus-bg) !important;
+}
+
+.stem-focus-workspace > .card,
+.stem-history-disclosure > .card {
+  padding: 22px !important;
+  border: 1px solid var(--focus-border) !important;
+  border-radius: 20px !important;
+  color: var(--focus-text) !important;
+  background: var(--focus-card) !important;
+  box-shadow: 0 10px 30px rgba(38, 31, 24, 0.055) !important;
+}
+
+.stem-focus-workspace h2,
+.stem-focus-workspace h3,
+.stem-focus-workspace strong,
+.stem-focus-workspace label,
+.stem-focus-workspace .field > span {
+  color: var(--focus-text) !important;
+}
+
+.stem-focus-workspace .muted,
+.stem-focus-workspace small,
+.stem-focus-workspace .helper-text {
+  color: var(--focus-muted) !important;
+}
+
+.stem-focus-hero {
+  padding-block: 18px !important;
+  background: var(--focus-card) !important;
+}
+
+.stem-focus-hero .eyebrow {
+  color: var(--focus-accent) !important;
+}
+
+.stem-focus-hero h2 {
+  margin: 0 0 7px !important;
+  font-size: clamp(1.35rem, 4vw, 1.8rem) !important;
+  line-height: 1.15 !important;
+}
+
+.stem-focus-hero p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.stem-setup-compact {
+  display: grid !important;
+  gap: 8px !important;
+  padding: 14px 16px !important;
+  border-color: #e2b04f !important;
+  background: #fff8e8 !important;
+  box-shadow: none !important;
+}
+
+.stem-setup-compact.engine-ready {
+  border-color: #a7d6b5 !important;
+  background: #f0faf3 !important;
+}
+
+.stem-setup-compact .section-heading {
+  margin: 0 !important;
+  align-items: center !important;
+}
+
+.stem-setup-compact .eyebrow {
+  display: none !important;
+}
+
+.stem-setup-compact h2 {
+  margin: 0 !important;
+  font-size: 0.98rem !important;
+}
+
+.stem-setup-compact .helper-text {
+  margin: 0 !important;
+  min-height: 0 !important;
+  font-size: 0.82rem !important;
+}
+
+.stem-setup-compact #refreshConfigBtn,
+.stem-setup-compact .stem-setup-details {
+  min-height: 36px !important;
+  padding: 7px 10px !important;
+  border: 1px solid var(--focus-border) !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  color: var(--focus-text) !important;
+}
+
+.stem-setup-compact .stem-setup-list {
+  margin-top: 4px !important;
+}
+
+.stem-setup-compact .stem-setup-row {
+  border-color: var(--focus-border) !important;
+  background: #fff !important;
+}
+
+.stem-focus-steps {
+  position: sticky;
+  top: 72px;
+  z-index: 22;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 7px;
+  border: 1px solid var(--focus-border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 24px rgba(38, 31, 24, 0.08);
+  backdrop-filter: blur(14px);
+}
+
+.stem-focus-step-button {
+  min-height: 40px !important;
+  padding: 8px 5px !important;
+  border: 0 !important;
+  border-radius: 11px !important;
+  background: transparent !important;
+  color: #77716b !important;
+  font-size: 0.72rem !important;
+  font-weight: 800 !important;
+  white-space: nowrap;
+}
+
+.stem-focus-step-button.active {
+  background: var(--focus-accent) !important;
+  color: #fff !important;
+}
+
+.stem-focus-step-button.complete {
+  color: #2f7650 !important;
+}
+
+.stem-focus-step-panel[hidden] {
+  display: none !important;
+}
+
+.stem-focus-step-panel .section-heading {
+  margin-bottom: 18px !important;
+}
+
+.stem-focus-step-panel .eyebrow {
+  color: var(--focus-accent) !important;
+}
+
+.stem-upload-zone {
+  min-height: 190px !important;
+  border-color: #bbb3aa !important;
+  background: #fbfaf8 !important;
+}
+
+.stem-upload-zone:hover,
+.stem-upload-zone.dragover {
+  border-color: var(--focus-accent) !important;
+  background: #fff6ef !important;
+}
+
+.stem-target-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.stem-target {
+  min-height: 68px !important;
+  padding: 12px 13px !important;
+  border: 1px solid var(--focus-border) !important;
+  border-radius: 14px !important;
+  background: #fff !important;
+  color: var(--focus-text) !important;
+}
+
+.stem-target.active {
+  border-color: var(--focus-accent) !important;
+  background: #fff4ed !important;
+  box-shadow: 0 0 0 1px var(--focus-accent) inset !important;
+}
+
+.stem-extra-target {
+  display: none !important;
+}
+
+.show-all-targets .stem-extra-target {
+  display: block !important;
+}
+
+.stem-more-targets {
+  width: 100% !important;
+  min-height: 44px !important;
+  margin-top: 10px !important;
+  border: 1px solid var(--focus-border) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  color: var(--focus-text) !important;
+}
+
+.stem-focus-workspace input,
+.stem-focus-workspace select,
+.stem-focus-workspace textarea {
+  border-color: var(--focus-border) !important;
+  background: #fbfaf8 !important;
+  color: var(--focus-text) !important;
+}
+
+.stem-control-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+.stem-advanced-settings {
+  order: 2;
+  border: 1px solid var(--focus-border);
+  border-radius: 14px;
+  background: #fbfaf8;
+}
+
+.stem-advanced-settings summary {
+  padding: 13px 14px;
+  color: var(--focus-text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.stem-advanced-settings-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 14px 14px;
+}
+
+.stem-access-row {
+  order: 1;
+  grid-template-columns: 1fr auto !important;
+}
+
+.stem-access-row.access-saved .field {
+  display: none !important;
+}
+
+.stem-access-row.access-saved button::before {
+  content: "Access code saved · ";
+}
+
+.stem-access-row.access-saved button {
+  width: 100%;
+  border-color: #a7d6b5 !important;
+  background: #f0faf3 !important;
+  color: #245f40 !important;
+}
+
+.stem-run-button {
+  min-height: 58px !important;
+  margin-top: 14px !important;
+  border: 0 !important;
+  border-radius: 15px !important;
+  background: var(--focus-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(242, 107, 33, 0.24) !important;
+}
+
+.stem-run-button:disabled {
+  background: #c9c4bd !important;
+  box-shadow: none !important;
+}
+
+.stem-warning {
+  margin: 12px 0 0 !important;
+  padding: 10px 12px !important;
+  color: #6e561b !important;
+  background: #fff8e8 !important;
+}
+
+.stem-progress-track {
+  background: #ebe7e1 !important;
+}
+
+.stem-progress-fill {
+  background: linear-gradient(90deg, #f26b21, #ff9a55) !important;
+}
+
+.stem-player {
+  border-color: var(--focus-border) !important;
+  background: #fbfaf8 !important;
+}
+
+.stem-download {
+  border-color: var(--focus-border) !important;
+  background: #fff !important;
+  color: var(--focus-text) !important;
+}
+
+.stem-download.primary {
+  border-color: var(--focus-accent) !important;
+  background: var(--focus-accent) !important;
+  color: #fff !important;
+}
+
+.stem-history-disclosure {
+  border: 1px solid var(--focus-border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.stem-history-disclosure > summary {
+  padding: 15px 17px;
+  color: var(--focus-text);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.stem-history-disclosure > .card {
+  margin: 0 12px 12px !important;
+  box-shadow: none !important;
+}
+
+.v6-focused-panel > section.card:not(.v5-quick-path):not(#forgeAiDraftAction) {
+  scroll-margin-top: 110px;
+}
+
+#forgeAiDraftAction {
+  max-width: 760px;
+  margin-inline: auto;
+}
+
+#forgeAiDraftAction .v6-ai-summary {
+  max-width: 58ch;
+}
+
+@media (max-width: 560px) {
+  .stem-focus-workspace {
+    padding-inline: 12px !important;
+  }
+
+  .stem-focus-workspace > .card,
+  .stem-history-disclosure > .card {
+    padding: 18px !important;
+    border-radius: 17px !important;
+  }
+
+  .stem-focus-steps {
+    top: 64px;
+  }
+
+  .stem-focus-step-button {
+    font-size: 0.66rem !important;
+  }
+
+  .stem-target-grid,
+  .stem-advanced-settings-body,
+  .stem-result-actions {
+    grid-template-columns: 1fr !important;
+  }
+}
