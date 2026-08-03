@@ -151,7 +151,7 @@ async function openAIRequest(apiKey, payload) {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json"
     },
-    signal: AbortSignal.timeout(52_000),
+    signal: AbortSignal.timeout(22_000),
     body: JSON.stringify(payload)
   });
   const data = await response.json().catch(() => ({}));
@@ -176,7 +176,7 @@ async function callOpenAI(apiKey, prompt, action, length) {
   };
 
   let lastError;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
     const payload = attempt === 0 ? { ...basePayload, reasoning: { effort: "minimal" } } : basePayload;
     try {
       const data = await openAIRequest(apiKey, payload);
@@ -193,7 +193,7 @@ async function callOpenAI(apiKey, prompt, action, length) {
       const parameterProblem = status === 400 && /reasoning|unsupported|unknown parameter/i.test(error?.message || "");
       if (attempt === 0 && parameterProblem) continue;
       const transient = status === 0 || TRANSIENT_STATUS.has(status) || error?.name === "TimeoutError" || error?.name === "AbortError";
-      if (!transient || attempt === 2) break;
+      if (!transient || attempt === 1) break;
       await sleep(status === 429 ? 1500 * (attempt + 1) : 650 * (attempt + 1));
     }
   }
