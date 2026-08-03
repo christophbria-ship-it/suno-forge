@@ -2,9 +2,12 @@
 
 (() => {
   const KEY_STORAGE = "forgeOpenAIKeyV5";
-  let scheduled = false;
+  const STATUS_TTL = 60_000;
+  const TRANSIENT = new Set([408, 409, 425, 429, 500, 502, 503, 504]);
+  let installQueued = false;
   let running = false;
-  let statusChecked = false;
+  let lastStatusAt = 0;
+  let lastStatus = "unknown";
 
   function projectState() {
     try {
@@ -37,15 +40,12 @@
   }
 
   function notify(message) {
-    if (typeof showToast === "function") {
-      showToast(message);
-      return;
-    }
+    if (typeof showToast === "function") return showToast(message);
     const toast = document.getElementById("toast");
     if (!toast) return;
     toast.textContent = message;
     toast.classList.add("show");
-    window.setTimeout(() => toast.classList.remove("show"), 1900);
+    window.setTimeout(() => toast.classList.remove("show"), 2000);
   }
 
   function buildPayload(action) {
@@ -82,9 +82,7 @@
     if (legacy) legacy.value = lyrics;
     if (typeof saveAll === "function") saveAll({ immediate: true });
     if (typeof syncControls === "function") syncControls(false);
-
-    const tab = writeTab();
-    if (tab) tab.click();
+    writeTab()?.click();
     document.dispatchEvent(new CustomEvent("forge:state-change", { detail: { source: "whole-song-ai" } }));
   }
 
@@ -93,22 +91,22 @@
     const style = document.createElement("style");
     style.id = "v5-ai-draft-style";
     style.textContent = `
-      .v5-ai-draft-action{display:grid!important;gap:14px!important;padding:20px!important;border:1px solid #e4dfd8!important;border-radius:20px!important;background:#fff!important;box-shadow:0 12px 34px rgba(37,31,25,.055)!important}
-      .v5-ai-draft-heading{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:14px!important}
-      .v5-ai-draft-heading span{display:block!important;margin-bottom:5px!important;color:#f56f1f!important;font-size:.66rem!important;font-weight:850!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+      .v5-ai-draft-action{display:grid!important;gap:14px!important;padding:20px!important;border:1px solid #dfdad3!important;border-radius:20px!important;background:#fff!important;box-shadow:0 12px 34px rgba(37,31,25,.055)!important}
+      .v5-ai-draft-heading span{display:block!important;margin-bottom:5px!important;color:#f26b21!important;font-size:.66rem!important;font-weight:850!important;letter-spacing:.11em!important;text-transform:uppercase!important}
       .v5-ai-draft-heading h2{margin:0 0 6px!important;color:#171717!important;font-size:1.25rem!important;line-height:1.15!important}
       .v5-ai-draft-heading p,.v5-ai-draft-status{margin:0!important;color:#6f6d73!important;font-size:.8rem!important;line-height:1.48!important}
-      .v5-ai-draft-action>button{width:100%!important;min-height:52px!important;border:1px solid #f56f1f!important;border-radius:14px!important;background:#f56f1f!important;color:#fff!important;font-size:.84rem!important;font-weight:850!important}
-      .v5-ai-draft-action>button:disabled{border-color:#cfcac4!important;background:#cfcac4!important;color:#666!important}
+      .v5-ai-draft-action>button{width:100%!important;min-height:54px!important;border:0!important;border-radius:14px!important;background:#f26b21!important;color:#fff!important;font-size:.86rem!important;font-weight:850!important}
+      .v5-ai-draft-action>button:disabled{background:#cfcac4!important;color:#666!important}
       .v5-ai-draft-status[data-state="error"]{color:#a53b2a!important}
       .v5-ai-draft-status[data-state="success"]{color:#256b43!important}
+      .v5-ai-draft-status[data-state="busy"]{color:#82501d!important}
       .v5-ai-draft-preview{display:grid!important;gap:12px!important;padding-top:4px!important}
-      .v5-ai-draft-preview>span{color:#f56f1f!important;font-size:.66rem!important;font-weight:850!important;letter-spacing:.11em!important;text-transform:uppercase!important}
-      .v5-ai-draft-preview textarea{width:100%!important;min-height:260px!important;padding:14px!important;border:1px solid #dedbe1!important;border-radius:14px!important;background:#f0eef2!important;color:#171717!important;font:inherit!important;font-size:.79rem!important;line-height:1.55!important;resize:vertical!important;box-sizing:border-box!important}
+      .v5-ai-draft-preview>span{color:#f26b21!important;font-size:.66rem!important;font-weight:850!important;letter-spacing:.11em!important;text-transform:uppercase!important}
+      .v5-ai-draft-preview textarea{width:100%!important;min-height:260px!important;padding:14px!important;border:1px solid #dedbe1!important;border-radius:14px!important;background:#f7f5f2!important;color:#171717!important;font:inherit!important;font-size:.79rem!important;line-height:1.55!important;resize:vertical!important;box-sizing:border-box!important}
       .v5-ai-draft-preview-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:10px!important}
       .v5-ai-draft-preview-actions button{min-height:46px!important;border:1px solid #d8d5d0!important;border-radius:12px!important;background:#fff!important;color:#222!important;font-weight:800!important}
-      .v5-ai-draft-preview-actions button:first-child{border-color:#f56f1f!important;background:#f56f1f!important;color:#fff!important}
-      @media(max-width:520px){.v5-ai-draft-heading{display:block!important}.v5-ai-draft-preview-actions{grid-template-columns:1fr!important}}
+      .v5-ai-draft-preview-actions button:first-child{border-color:#f26b21!important;background:#f26b21!important;color:#fff!important}
+      @media(max-width:520px){.v5-ai-draft-preview-actions{grid-template-columns:1fr!important}}
     `;
     document.head.appendChild(style);
   }
@@ -138,18 +136,9 @@
 
     accept.addEventListener("click", () => {
       const value = textarea.value.trim();
-      if (!value) {
-        notify("The AI preview is empty.");
-        return;
-      }
-      try {
-        saveAcceptedLyrics(value, action);
-        notify("AI draft added");
-      } catch (error) {
-        const status = shell.querySelector(".v5-ai-draft-status");
-        status.textContent = error.message || "The AI draft could not be saved.";
-        status.dataset.state = "error";
-      }
+      if (!value) return notify("The AI preview is empty.");
+      saveAcceptedLyrics(value, action);
+      notify("AI draft added");
     });
     keep.addEventListener("click", () => {
       preview.remove();
@@ -162,6 +151,64 @@
     preview.append(label, textarea, actions);
   }
 
+  async function fetchJson(url, options = {}, timeoutMs = 55_000) {
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
+      const data = await response.json().catch(() => ({}));
+      return { response, data };
+    } catch (error) {
+      if (error?.name === "AbortError") throw new Error("The AI request timed out. Nothing was changed.");
+      throw error;
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
+  async function requestLyrics(payload) {
+    const headers = { "Content-Type": "application/json" };
+    const key = storedKey();
+    if (key) headers["x-forge-openai-key"] = key;
+
+    let lastError;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const { response, data } = await fetchJson("/api/generate-lyrics-v5", {
+          method: "POST",
+          headers,
+          body: JSON.stringify(payload)
+        });
+        if (response.ok && typeof data.lyrics === "string" && data.lyrics.trim()) return data.lyrics.trim();
+        const error = new Error(data.error || `AI request failed (${response.status}).`);
+        error.status = response.status;
+        throw error;
+      } catch (error) {
+        lastError = error;
+        const status = Number(error?.status) || 0;
+        const retry = attempt === 0 && (status === 0 || TRANSIENT.has(status));
+        if (!retry) break;
+        await new Promise((resolve) => window.setTimeout(resolve, status === 429 ? 1400 : 650));
+      }
+    }
+    throw lastError || new Error("AI could not finish. Nothing was changed.");
+  }
+
+  async function verifyConnection(force = false) {
+    if (!force && Date.now() - lastStatusAt < STATUS_TTL) return lastStatus;
+    const key = storedKey();
+    try {
+      const { response, data } = key
+        ? await fetchJson("/api/ai-status", { method: "POST", headers: { "x-forge-openai-key": key } }, 15_000)
+        : await fetchJson("/api/ai-status?verify=1", {}, 15_000);
+      lastStatus = response.ok && data.valid ? "ready" : "offline";
+    } catch {
+      lastStatus = "offline";
+    }
+    lastStatusAt = Date.now();
+    return lastStatus;
+  }
+
   async function runWholeSongAI(shell) {
     if (running) return;
     const button = shell.querySelector("[data-ai-draft-action]");
@@ -172,24 +219,21 @@
     running = true;
     button.disabled = true;
     button.textContent = existing ? "Writing a New Draft…" : "Writing Your Draft…";
-    status.textContent = "Sending the brief, sound choices, and structure to AI…";
+    status.textContent = "Checking the AI connection…";
     status.dataset.state = "busy";
 
     try {
-      const headers = { "Content-Type": "application/json" };
-      const key = storedKey();
-      if (key) headers["x-forge-openai-key"] = key;
-      const response = await fetch("/api/generate-lyrics-v5", {
-        method: "POST",
-        headers,
-        body: JSON.stringify(buildPayload(action))
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || typeof data.lyrics !== "string" || !data.lyrics.trim()) {
-        throw new Error(data.error || `AI request failed (${response.status}).`);
+      const ready = await verifyConnection(true);
+      if (ready !== "ready") {
+        status.textContent = "AI is not connected. Tap AI at the top, save a valid API key, then retry.";
+        status.dataset.state = "error";
+        document.getElementById("forgeAiSettingsBtn")?.click();
+        return;
       }
-      previewResult(shell, data.lyrics.trim(), action);
-      status.textContent = "AI draft ready. Review it before replacing your current lyrics.";
+      status.textContent = "Writing from your brief, sound choices, and structure…";
+      const lyrics = await requestLyrics(buildPayload(action));
+      previewResult(shell, lyrics, action);
+      status.textContent = "Draft ready. Review it before replacing your current lyrics.";
       status.dataset.state = "success";
     } catch (error) {
       status.textContent = `${error.message || "AI could not finish."} Your current lyrics were not changed.`;
@@ -201,26 +245,19 @@
     }
   }
 
-  async function checkStatus(shell) {
-    if (statusChecked) return;
-    statusChecked = true;
+  async function refreshStatus(shell) {
     const status = shell.querySelector(".v5-ai-draft-status");
-    try {
-      const response = await fetch("/api/ai-status", { cache: "no-store" });
-      const data = await response.json().catch(() => ({}));
-      const ready = Boolean(data.serverConfigured || storedKey());
-      status.textContent = ready
-        ? "AI is ready. Your current lyrics stay untouched until you accept the preview."
-        : "AI needs a key. Tap AI in the header to connect one.";
-      status.dataset.state = ready ? "success" : "error";
-    } catch {
-      status.textContent = "AI status could not be checked. Your current lyrics will remain safe.";
-      status.dataset.state = "error";
-    }
+    status.textContent = "Checking AI…";
+    status.dataset.state = "busy";
+    const ready = await verifyConnection(true);
+    status.textContent = ready === "ready"
+      ? "AI connection verified. Your lyrics stay untouched until you accept a preview."
+      : "AI is offline. Tap AI at the top to connect and test a key.";
+    status.dataset.state = ready === "ready" ? "success" : "error";
   }
 
   function install() {
-    scheduled = false;
+    installQueued = false;
     ensureStyles();
     const panel = writePanel();
     if (!panel) return;
@@ -232,11 +269,9 @@
       shell.className = "v5-ai-draft-action";
       shell.innerHTML = `
         <div class="v5-ai-draft-heading">
-          <div>
-            <span>AI WRITER</span>
-            <h2>Build the full lyric draft</h2>
-            <p>Uses your brief, sound direction, and song structure. You approve the result before it replaces anything.</p>
-          </div>
+          <span>AI WRITER</span>
+          <h2>Build the full lyric draft</h2>
+          <p>One verified action. You approve the preview before Forge replaces anything.</p>
         </div>
         <button type="button" data-ai-draft-action>Generate Full Draft with AI</button>
         <p class="v5-ai-draft-status" role="status">Checking AI…</p>`;
@@ -244,6 +279,7 @@
       if (guide) guide.insertAdjacentElement("afterend", shell);
       else panel.prepend(shell);
       shell.querySelector("[data-ai-draft-action]").addEventListener("click", () => runWholeSongAI(shell));
+      refreshStatus(shell);
     } else if (shell.parentElement !== panel) {
       panel.prepend(shell);
     }
@@ -254,27 +290,27 @@
     const advanced = [...panel.querySelectorAll("button")].find((item) => /^whole-song ai$/i.test(item.textContent.trim()));
     if (advanced) {
       advanced.textContent = "More AI Tools";
-      advanced.title = "Open advanced whole-song writing controls";
+      advanced.title = "Open advanced writing controls";
     }
-    const settings = document.getElementById("forgeAiSettingsBtn");
-    if (settings) {
-      settings.title = "AI connection settings";
-      settings.setAttribute("aria-label", "AI connection settings");
-    }
-    checkStatus(shell);
   }
 
-  function scheduleInstall() {
-    if (scheduled) return;
-    scheduled = true;
+  function queueInstall() {
+    if (installQueued) return;
+    installQueued = true;
     window.requestAnimationFrame(install);
   }
 
   function init() {
     install();
-    const observer = new MutationObserver(scheduleInstall);
-    observer.observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["class"] });
-    document.addEventListener("input", scheduleInstall, true);
+    const observer = new MutationObserver(queueInstall);
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    window.addEventListener("storage", (event) => {
+      if (event.key === KEY_STORAGE) {
+        lastStatusAt = 0;
+        const shell = document.getElementById("forgeAiDraftAction");
+        if (shell) refreshStatus(shell);
+      }
+    });
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init, { once: true });
