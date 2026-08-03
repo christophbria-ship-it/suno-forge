@@ -2,6 +2,7 @@
   "functions": {
     "api/generate-lyrics.js": { "maxDuration": 60 },
     "api/generate-lyrics-v5.js": { "maxDuration": 60 },
+    "api/generate-lyrics-v6.js": { "maxDuration": 60 },
     "api/ai-status.js": { "maxDuration": 20 },
     "api/stem-config.js": { "maxDuration": 30 },
     "api/stem-upload.js": { "maxDuration": 60 },
