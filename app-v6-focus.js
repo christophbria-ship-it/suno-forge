@@ -13,7 +13,7 @@
   }
 
   function isHidden(item) {
-    return !item || item.hidden || item.classList.contains("workspace-hidden");
+    return !item || item.classList.contains("workspace-hidden");
   }
 
   function installStemFocus() {
@@ -87,6 +87,9 @@
         reveal.setAttribute("aria-expanded", String(showing));
       });
     }
+
+    const spanPrompting = settings.querySelector('input[type="checkbox"]');
+    if (spanPrompting) spanPrompting.checked = true;
 
     const controlGrid = settings.querySelector(".stem-control-grid");
     if (controlGrid) {
