@@ -18,7 +18,8 @@ const finalCss = read("style-v6-focus.css");
 const launcher = read("app-v47.js");
 const serviceWorker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
-const api = read("api/generate-lyrics-v5.js");
+const apiV5 = read("api/generate-lyrics-v5.js");
+const api = read("api/generate-lyrics-v6.js");
 const statusApi = read("api/ai-status.js");
 const encodedCore = read("app-v5-core.txt").replace(/\s+/g, "");
 const core = gunzipSync(Buffer.from(encodedCore, "base64")).toString("utf8");
@@ -98,6 +99,7 @@ assert.match(serviceWorker, /style-v6-focus\.css/);
 assert.match(serviceWorker, /app-v6-focus\.js/);
 assert.match(serviceWorker, /pathname\.startsWith\("\/api\/"\)/);
 
+assert.match(apiV5, /generate-lyrics-v6\.js/);
 assert.match(api, /https:\/\/api\.openai\.com\/v1\/responses/);
 assert.match(api, /x-forge-openai-key/);
 assert.match(api, /store:\s*false/);
