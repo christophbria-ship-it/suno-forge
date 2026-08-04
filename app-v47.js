@@ -33,10 +33,10 @@
     document.title = "Forge Studio";
 
     addStyle("style-v5.css?v=5.2.1", "v5-style");
-    addStyle("style-v6-focus.css?v=6.0.0", "v6-focus-style");
+    addStyle("style-v6-focus.css?v=6.1.0", "v6-focus-style");
     addScript("app-v5.js?v=5.2.1", "v5-app");
     addScript("app-v5-ai-actions.js?v=6.0.0", "v6-ai-actions");
-    addScript("app-v6-focus.js?v=6.0.0", "v6-focus-app");
+    addScript("app-v6-focus.js?v=6.1.0", "v6-focus-app");
   }
 
   if (document.readyState === "complete") init();
