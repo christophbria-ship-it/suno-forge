@@ -21,10 +21,6 @@ export default async function handler(req, res) {
     return sendJson(res, 405, { error: "Method not allowed." });
   }
 
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    return sendJson(res, 503, { error: "BLOB_READ_WRITE_TOKEN is not configured on the server." });
-  }
-
   const body = readJsonBody(req);
 
   try {
