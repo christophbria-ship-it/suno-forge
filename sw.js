@@ -1,1 +1,11 @@
-const CACHE_NAME="forge-v6-20260803-final";const APP_SHELL=["/","/index.html","/style.css","/style-v32.css","/style-v33.css","/style-v34.css","/style-v35.css","/style-v4.css","/style-v41.css","/style-v42.css","/style-v43.css","/style-v44.css","/style-v47.css","/style-v5.css","/style-v5-finish.css","/style-v5-clear.css","/style-v5-clean.css","/style-v6-focus.css","/data.js","/data-v32.js","/data-v33.js","/data-v34.js","/data-v35.js","/app-core.js","/app-editor.js","/app-actions.js","/app-storage.js","/app-v32.js","/app-v33.js","/app-v34.js","/app-v35.js","/app-v351.js","/app-v4.js","/app-v41.js","/app-v42.js","/app-v43.js","/app-v44.js","/app-v45.js","/app-v46.js","/app-v47.js","/app-v5.js","/app-v5-core.txt","/app-v5-finish.js","/app-v5-clear.js","/app-v5-clean.js","/app-v5-flow.js","/app-v5-export.js","/app-v5-guide.js","/app-v5-disclosure.js","/app-v5-ai-actions.js","/app-v6-focus.js","/manifest.webmanifest"];self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(APP_SHELL)).then(()=>self.skipWaiting())));self.addEventListener("activate",e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE_NAME).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;const u=new URL(e.request.url);if(u.pathname.startsWith("/api/"))return;e.respondWith(fetch(e.request).then(r=>{if(r.ok){const copy=r.clone();caches.open(CACHE_NAME).then(c=>c.put(e.request,copy))}return r}).catch(()=>caches.match(e.request)))})
+const CACHE_NAME="forge-prompt-v1-20260805";
+const ASSETS=["/","/index.html","/prompt-style.css","/prompt-app.js","/data.js","/manifest.webmanifest"];
+self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
+self.addEventListener("fetch",event=>{
+  if(event.request.method!=="GET")return;
+  event.respondWith(fetch(event.request).then(response=>{
+    if(response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(event.request,copy));}
+    return response;
+  }).catch(()=>caches.match(event.request)));
+});
