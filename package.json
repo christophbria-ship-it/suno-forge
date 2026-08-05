@@ -1,12 +1,13 @@
 {
   "name": "suno-forge",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "scripts": {
     "postinstall": "npm test",
-    "test": "node --check data.js && node --check prompt-app.js && node --check sw.js"
+    "test": "node --check data.js && node --check prompt-app.js && node --check sw.js && node --check api/refine-prompt.js"
   },
   "engines": {
     "node": "24.x"
-  }
+  },
+  "type": "module"
 }
