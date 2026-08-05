@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
-  <meta name="description" content="Forge Studio — a professional mobile-first music prompt generator.">
+  <meta name="description" content="The Simplest Prompt Maker for AI Music — the easiest AI music prompt builder you'll ever need.">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="prompt-style.css?v=2.0.0">
-  <title>Forge Studio</title>
+  <link rel="stylesheet" href="prompt-style.css?v=2.1.0">
+  <title>The Simplest Prompt Maker for AI Music</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div class="brand-block">
-        <span class="brand-name">FORGE STUDIO</span>
-        <span class="brand-subtitle">Professional music prompt generator</span>
+        <span class="brand-name">THE SIMPLEST PROMPT MAKER</span>
+        <span class="brand-subtitle">FOR AI MUSIC</span>
       </div>
       <div class="header-actions">
         <button id="toolsBtn" type="button">Tools</button>
@@ -24,7 +24,7 @@
     </header>
 
     <main>
-      <nav class="mode-tabs" aria-label="Forge steps">
+      <nav class="mode-tabs" aria-label="Prompt maker steps">
         <button class="mode-tab active" type="button" data-step="brief" aria-selected="true">Brief</button>
         <button class="mode-tab" type="button" data-step="sound" aria-selected="false">Sound</button>
         <button class="mode-tab" type="button" data-step="shape" aria-selected="false">Shape</button>
@@ -44,7 +44,7 @@
         <section class="card hero-card">
           <p class="eyebrow">THE IDEA</p>
           <h1>What do you want to make?</h1>
-          <p class="hero-copy">Describe the sound in plain language. Forge turns it into a focused, production-ready prompt.</p>
+          <p class="hero-copy">Describe the sound in plain language. The Simplest Prompt Maker turns it into a focused, production-ready prompt.</p>
 
           <label class="field major-field">
             <span>Song brief</span>
@@ -105,7 +105,7 @@
           <div class="section-heading">
             <div>
               <p class="eyebrow">ALL OPTIONS</p>
-              <h2>Full Forge sound library</h2>
+              <h2>Full sound library</h2>
               <p class="section-copy">Browse every category. Nothing has been removed.</p>
             </div>
           </div>
@@ -231,7 +231,7 @@
           <div class="quick-copy">
             <span>STEP 4 OF 4</span>
             <strong>Build and copy</strong>
-            <p>Forge the finished prompt, review it, and copy it into your music platform.</p>
+            <p>Build the finished prompt, review it, and copy it into your music platform.</p>
           </div>
         </div>
 
@@ -244,11 +244,11 @@
             <span id="promptCount" class="count-pill">0 / 1000</span>
           </div>
 
-          <textarea id="promptOutput" rows="16" readonly placeholder="Your forged prompt will appear here."></textarea>
-          <p id="outputStatus" class="helper-text">Forge builds the prompt locally on this device.</p>
+          <textarea id="promptOutput" rows="16" readonly placeholder="Your finished prompt will appear here."></textarea>
+          <p id="outputStatus" class="helper-text">Your prompt is built locally on this device.</p>
 
           <div class="primary-actions">
-            <button id="forgeBtn" class="primary-button" type="button">Forge Prompt</button>
+            <button id="forgeBtn" class="primary-button" type="button">Build Prompt</button>
             <button id="copyBtn" class="secondary-button" type="button">Copy Prompt</button>
           </div>
 
@@ -299,6 +299,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="data.js" defer></script>
-  <script src="prompt-app.js?v=2.0.0" defer></script>
+  <script src="prompt-app.js?v=2.1.0" defer></script>
 </body>
 </html>
