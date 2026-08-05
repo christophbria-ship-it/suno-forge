@@ -1,18 +1,20 @@
-# Forge Prompt Generator
+# Forge Studio
 
-Forge is a focused, mobile-first music prompt generator.
+Forge Studio is a professional, mobile-first music prompt generator.
 
-## Current scope
+## Current release
 
-- Song brief
-- Searchable sound library
-- Genre, instrument, vocal, mood, production, and arrangement tags
-- Tempo, key, mode, meter, energy, length, and vocal-plan controls
-- Arrangement and exclusion controls
-- Limit-aware final prompt
-- Copy, share, presets, history, backup, and offline PWA support
+- Four focused steps: Brief, Sound, Shape, and Export.
+- Full searchable Forge sound library with genres, instruments, vocals, moods, arrangement, effects, and production controls.
+- Up to 100 selected sound options per project.
+- Tempo, energy, length, key, mode, meter, vocal plan, arrangement, production direction, and exclusions.
+- Character-limit controls for music-platform style boxes.
+- Copy, share, presets, history, backup, autosave, and offline PWA support.
+- Optional prompt-only AI refinement. AI does not write lyrics and is never required.
 
-The current production build intentionally contains no lyric generation, remote desktop, stem separation, or paid AI workflow. The complete previous workstation is preserved on the `archive/full-studio-before-prompt-only` branch.
+## Deferred modules
+
+Lyric generation, stem separation, and Studio Remote are not part of this release. The previous full workstation remains preserved on the `archive/full-studio-before-prompt-only` branch.
 
 ## Test
 
