@@ -1,11 +1,11 @@
 {
   "name": "suno-forge",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "private": true,
   "scripts": {
-    "pretest": "node scripts/patch-tag-order.mjs",
+    "pretest": "node scripts/patch-tag-order.mjs && node scripts/patch-branding.mjs",
     "postinstall": "npm test",
-    "test": "node --check data.js && node --check prompt-app.js && node --check sw.js && node --check api/refine-prompt.js && node --check scripts/patch-tag-order.mjs"
+    "test": "node --check data.js && node --check prompt-app.js && node --check sw.js && node --check api/refine-prompt.js && node --check scripts/patch-tag-order.mjs && node --check scripts/patch-branding.mjs"
   },
   "engines": {
     "node": "24.x"
