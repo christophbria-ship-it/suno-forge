@@ -1,4 +1,7 @@
 {
+  "functions": {
+    "api/refine-prompt.js": { "maxDuration": 30 }
+  },
   "headers": [
     {
       "source": "/(.*)",
