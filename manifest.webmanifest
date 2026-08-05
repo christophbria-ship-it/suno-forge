@@ -1,9 +1,11 @@
 {
-  "name": "Forge Studio v5",
+  "name": "Forge Prompt Generator",
   "short_name": "Forge",
-  "description": "Brief-first AI music prompt, arrangement, lyric, and export workstation",
+  "description": "Focused mobile-first music prompt generator.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#090a0d",
-  "theme_color": "#090a0d"
+  "theme_color": "#090a0d",
+  "icons": []
 }
