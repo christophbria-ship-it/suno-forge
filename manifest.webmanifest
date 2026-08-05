@@ -1,7 +1,7 @@
 {
-  "name": "Forge Studio",
-  "short_name": "Forge",
-  "description": "Professional mobile-first music prompt generator",
+  "name": "The Simplest Prompt Maker for AI Music",
+  "short_name": "Prompt Maker",
+  "description": "The easiest AI music prompt builder you'll ever need.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
