@@ -1,11 +1,13 @@
-# Forge Studio
+# The Simplest Prompt Maker for AI Music
 
-Forge Studio is a professional, mobile-first music prompt generator.
+**The easiest AI music prompt builder you'll ever need.**
+
+The Simplest Prompt Maker is a professional, mobile-first music prompt generator.
 
 ## Current release
 
 - Four focused steps: Brief, Sound, Shape, and Export.
-- Full searchable Forge sound library with genres, instruments, vocals, moods, arrangement, effects, and production controls.
+- Full searchable sound library with genres, instruments, vocals, moods, arrangement, effects, and production controls.
 - Up to 100 selected sound options per project.
 - Tempo, energy, length, key, mode, meter, vocal plan, arrangement, production direction, and exclusions.
 - Character-limit controls for music-platform style boxes.
