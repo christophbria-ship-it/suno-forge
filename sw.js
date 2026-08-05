@@ -1,4 +1,4 @@
-const CACHE_NAME="forge-prompt-v2-20260805";
+const CACHE_NAME="forge-prompt-v2-order-20260805";
 const ASSETS=["/","/index.html","/prompt-style.css?v=2.0.0","/prompt-app.js?v=2.0.0","/data.js","/manifest.webmanifest"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
