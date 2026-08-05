@@ -4,171 +4,206 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#090a0d">
-  <meta name="description" content="Forge Studio v5 — brief-first AI music prompt, arrangement, lyric, and export workstation">
+  <meta name="description" content="Forge — a focused, mobile-first music prompt generator.">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="style-v32.css">
-  <link rel="stylesheet" href="style-v33.css">
-  <link rel="stylesheet" href="style-v34.css">
-  <link rel="stylesheet" href="style-v35.css">
-  <link rel="stylesheet" href="style-v4.css">
-  <link rel="stylesheet" href="style-v41.css">
-  <link rel="stylesheet" href="style-v42.css">
-  <link rel="stylesheet" href="style-v43.css">
-  <link rel="stylesheet" href="style-v44.css">
-  <link rel="stylesheet" href="style-v47.css">
-  <link rel="stylesheet" href="style-v5.css?v=5.0.3" data-forge-v5="style">
-  <link rel="stylesheet" href="style-v5-finish.css?v=5.0.3">
-  <link rel="stylesheet" href="style-v5-clear.css?v=5.0.5">
-  <title>Forge Studio v5</title>
+  <link rel="stylesheet" href="prompt-style.css?v=1.0.0">
+  <title>Forge Prompt Generator</title>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
-      <div class="brand-block">
-        <p class="eyebrow">MOBILE MUSIC WORKSTATION</p>
+      <div>
+        <p class="eyebrow">MUSIC PROMPT GENERATOR</p>
         <h1>FORGE</h1>
       </div>
       <div class="header-actions">
-        <span id="saveBadge" class="save-badge">Saved</span>
-        <span id="statusBadge" class="status-badge">Loading</span>
-        <button id="installBtn" class="icon-button hidden" type="button" aria-label="Install Forge">↓</button>
-        <button id="randomizeBtn" class="icon-button hidden" type="button" aria-label="Legacy randomizer" tabindex="-1">↻</button>
+        <span id="saveBadge" class="status-pill">Saved</span>
+        <button id="newProjectBtn" class="ghost-button" type="button">New</button>
       </div>
     </header>
 
     <main>
-      <section class="card hero">
-        <div>
-          <p class="eyebrow">FORGE STUDIO V5</p>
-          <h2>Describe the song. Shape the production. Export cleanly.</h2>
-          <p class="muted">Brief-first prompt building, structured arrangement, section writing, and platform-ready output.</p>
-        </div>
-        <button id="forgePromptBtn" class="primary-button" type="button">Build Export</button>
+      <section class="hero-card">
+        <p class="eyebrow">PROMPT-FIRST. NOTHING EXTRA.</p>
+        <h2>Build a production-ready music prompt from the sound in your head.</h2>
+        <p>Describe it, choose the sound, shape the track, and copy the finished prompt.</p>
+        <button id="heroForgeBtn" class="primary-button" type="button">Forge Prompt</button>
       </section>
 
-      <section class="card">
+      <section class="card" id="briefCard">
         <div class="section-heading">
-          <div><p class="eyebrow">QUICK START</p><h2>Recipes</h2></div>
-          <button id="clearSelectionsBtn" class="text-button" type="button">Clear Tags</button>
+          <div>
+            <p class="eyebrow">1 · THE IDEA</p>
+            <h2>What are you making?</h2>
+          </div>
+          <button id="clearBriefBtn" class="text-button" type="button">Clear</button>
         </div>
-        <div id="recipeGrid" class="recipe-grid"></div>
+        <label class="field">
+          <span>Song brief</span>
+          <textarea id="briefInput" rows="5" maxlength="900" placeholder="Example: Dark Appalachian folk about finally leaving, intimate female vocal, restrained verses, defiant final chorus."></textarea>
+        </label>
+        <div class="recipe-row" id="recipeRow" aria-label="Starting recipes"></div>
       </section>
 
-      <section class="card">
+      <section class="card" id="soundCard">
         <div class="section-heading">
-          <div><p class="eyebrow">SOUND PALETTE</p><h2>Genres, Instruments & Vocals</h2></div>
-          <span id="selectedCount" class="count-badge">0 selected</span>
+          <div>
+            <p class="eyebrow">2 · THE SOUND</p>
+            <h2>Build the palette</h2>
+          </div>
+          <span id="selectedCount" class="count-pill">0 selected</span>
         </div>
+
         <label class="search-field">
           <span aria-hidden="true">⌕</span>
-          <input id="tagSearch" type="search" placeholder="Search the sound library" autocomplete="off">
+          <input id="tagSearch" type="search" autocomplete="off" placeholder="Search genres, instruments, vocals, moods…">
         </label>
+        <div id="searchResults" class="search-results" hidden></div>
         <div id="selectedTags" class="selected-tags" aria-live="polite"></div>
-        <div id="categoryList" class="category-list"></div>
+
+        <details class="library-disclosure">
+          <summary>Browse the full sound library</summary>
+          <div id="categoryList" class="category-list"></div>
+        </details>
       </section>
 
-      <section class="card">
-        <div class="section-heading compact-heading">
-          <div><p class="eyebrow">TRACK DNA</p><h2>Sound & Writing Controls</h2></div>
+      <section class="card" id="shapeCard">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">3 · THE TRACK</p>
+            <h2>Shape the production</h2>
+          </div>
+          <output id="bpmOutput" class="count-pill">120 BPM</output>
         </div>
-        <div class="control-group">
-          <div class="control-label-row"><label for="bpmRange">Tempo</label><output id="bpmValue">120 BPM</output></div>
+
+        <label class="range-field">
+          <span>Tempo</span>
           <input id="bpmRange" type="range" min="50" max="220" value="120">
-        </div>
+        </label>
+
         <div class="control-grid">
-          <label class="field"><span>Length</span><select id="lengthSelect"><option value="short">Short</option><option value="standard">Standard</option><option value="extended">Extended</option><option value="epic">Epic</option></select></label>
-          <label class="field"><span>Energy</span><select id="energySelect"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="explosive">Explosive</option></select></label>
-          <label class="field"><span>Perspective</span><select id="perspectiveSelect"></select></label>
-          <label class="field"><span>Rhyme Style</span><select id="rhymeSelect"></select></label>
-          <label class="field"><span>Lyric Density</span><select id="densitySelect"></select></label>
-          <label class="field"><span>Language</span><select id="languageSelect"></select></label>
+          <label class="field"><span>Energy</span>
+            <select id="energySelect">
+              <option value="low">Low</option>
+              <option value="medium" selected>Medium</option>
+              <option value="high">High</option>
+              <option value="explosive">Explosive</option>
+            </select>
+          </label>
+          <label class="field"><span>Length</span>
+            <select id="lengthSelect">
+              <option value="short">Short</option>
+              <option value="standard" selected>Standard</option>
+              <option value="extended">Extended</option>
+              <option value="epic">Epic</option>
+            </select>
+          </label>
+          <label class="field"><span>Key</span><select id="keySelect"></select></label>
+          <label class="field"><span>Mode</span>
+            <select id="modeSelect">
+              <option value="major">Major</option>
+              <option value="minor" selected>Minor</option>
+              <option value="dorian">Dorian</option>
+              <option value="mixolydian">Mixolydian</option>
+              <option value="phrygian">Phrygian</option>
+              <option value="modal">Modal / ambiguous</option>
+            </select>
+          </label>
+          <label class="field"><span>Meter</span>
+            <select id="meterSelect">
+              <option value="4/4" selected>4/4</option>
+              <option value="3/4">3/4</option>
+              <option value="6/8">6/8</option>
+              <option value="5/4">5/4</option>
+              <option value="7/8">7/8</option>
+              <option value="free time">Free time</option>
+            </select>
+          </label>
+          <label class="field"><span>Vocal plan</span>
+            <select id="vocalPlanSelect">
+              <option value="follow selected vocal tags" selected>Follow selected vocal tags</option>
+              <option value="instrumental">Instrumental</option>
+              <option value="solo lead vocal">Solo lead vocal</option>
+              <option value="lead with backing vocals">Lead + backing vocals</option>
+              <option value="duet">Duet</option>
+              <option value="group or choir">Group / choir</option>
+            </select>
+          </label>
         </div>
+
+        <details class="advanced-disclosure">
+          <summary>More production control</summary>
+          <div class="advanced-body">
+            <label class="field">
+              <span>Arrangement</span>
+              <input id="structureInput" type="text" maxlength="280" value="Intro > Verse > Chorus > Verse > Chorus > Bridge > Final Chorus > Outro">
+            </label>
+            <div id="structurePresets" class="mini-button-row"></div>
+            <label class="field">
+              <span>Production direction</span>
+              <textarea id="productionInput" rows="4" maxlength="700" placeholder="Dynamics, recording character, transitions, mix behavior, performance details…"></textarea>
+            </label>
+            <label class="field">
+              <span>Exclude</span>
+              <textarea id="excludeInput" rows="3" maxlength="500" placeholder="Example: glossy pop polish, trap hats, EDM drops, over-singing"></textarea>
+            </label>
+            <label class="field">
+              <span>Style-box limit</span>
+              <select id="limitSelect">
+                <option value="1000" selected>1,000 characters</option>
+                <option value="950">950 characters</option>
+                <option value="1200">1,200 characters</option>
+                <option value="0">No limit</option>
+              </select>
+            </label>
+          </div>
+        </details>
       </section>
 
-      <section class="card">
+      <section class="card output-card" id="outputCard">
         <div class="section-heading">
-          <div><p class="eyebrow">ARRANGEMENT</p><h2>Structure</h2></div>
-          <button id="addStructureBtn" class="text-button" type="button">Add Section</button>
+          <div>
+            <p class="eyebrow">4 · THE RESULT</p>
+            <h2>Finished prompt</h2>
+          </div>
+          <span id="promptCount" class="count-pill">0 / 1000</span>
         </div>
-        <p class="helper-text no-min-height">Move, duplicate, rename, or remove sections. Forge follows this order.</p>
-        <div id="structureList" class="structure-list"></div>
+        <textarea id="promptOutput" rows="13" readonly placeholder="Your forged prompt will appear here."></textarea>
+        <div class="primary-actions">
+          <button id="forgeBtn" class="primary-button" type="button">Forge Prompt</button>
+          <button id="copyBtn" class="secondary-button" type="button">Copy Prompt</button>
+        </div>
+        <div class="secondary-actions">
+          <button id="copyExcludeBtn" type="button">Copy Exclude</button>
+          <button id="shareBtn" type="button">Share</button>
+          <button id="savePresetBtn" type="button">Save Preset</button>
+        </div>
+        <p id="outputStatus" class="helper-text">Nothing is sent anywhere. Forge builds the prompt on this device.</p>
       </section>
 
-      <section class="card writing-card">
-        <div class="section-heading">
-          <div><p class="eyebrow">WRITING ROOM</p><h2>Lyrics & Story</h2></div>
-          <button id="clearLyricsBtn" class="text-button danger-text" type="button">Clear Writing</button>
+      <details class="card saved-card">
+        <summary>
+          <span><small>SAVED WORK</small> Presets & history</span>
+          <span id="savedCount">0</span>
+        </summary>
+        <div class="saved-body">
+          <div class="saved-tools">
+            <input id="presetNameInput" type="text" maxlength="70" placeholder="Preset name">
+            <button id="exportBackupBtn" type="button">Export Backup</button>
+            <label class="file-button">Import Backup<input id="importBackupInput" type="file" accept="application/json,.json"></label>
+          </div>
+          <h3>Presets</h3>
+          <div id="presetList" class="saved-list"></div>
+          <h3>Recent prompts</h3>
+          <div id="historyList" class="saved-list"></div>
         </div>
-        <label class="field"><span>Song idea</span><textarea id="songIdea" rows="3" maxlength="700" placeholder="Specific situation, character, place, conflict, or emotional turn..."></textarea></label>
-        <label class="field"><span>AI Style Direction <small>(optional)</small></span><textarea id="customInstructions" rows="5" maxlength="1200" placeholder="Direct the arrangement, vocal behavior, dynamics, and how selected tags should interact."></textarea></label>
-        <div class="ai-action-grid">
-          <button id="generateLyricsBtn" class="secondary-button" type="button">Generate</button>
-          <button id="regenerateLyricsBtn" type="button">Regenerate</button>
-          <button id="polishLyricsBtn" type="button">Polish</button>
-          <button id="continueLyricsBtn" type="button">Continue</button>
-          <button id="hookIdeasBtn" type="button">Hook Ideas</button>
-        </div>
-        <p id="lyricsStatus" class="helper-text">Local writing works immediately. Connect remote AI from the header for advanced generation.</p>
-        <div class="stats-row" aria-live="polite"><span id="sectionStat">0 sections</span><span id="lineStat">0 lines</span><span id="wordStat">0 words</span><span id="durationStat">~0:00</span></div>
-        <label class="field"><span>Editable lyrics, notes, or cues</span><textarea id="lyricsInput" rows="18" maxlength="16000" spellcheck="true" placeholder="Write your own lyrics or generate a draft."></textarea></label>
-      </section>
-
-      <section class="card output-card">
-        <div class="section-heading">
-          <div><p class="eyebrow">FINAL OUTPUT</p><h2>Generated Prompt</h2></div>
-          <button id="copyPromptBtn" class="text-button" type="button">Copy Prompt</button>
-        </div>
-        <label class="field prompt-format-field"><span>Prompt Format</span><select id="promptFormatSelect"></select></label>
-        <textarea id="promptOutput" rows="18" readonly placeholder="Build the export to create the final prompt."></textarea>
-        <div class="action-grid three-actions"><button id="copyLyricsBtn" type="button">Copy Lyrics</button><button id="sharePromptBtn" type="button">Share</button><button id="favoriteBtn" type="button">Favorite</button></div>
-      </section>
-
-      <section class="card">
-        <div class="section-heading">
-          <div><p class="eyebrow">SAVED WORK</p><h2>Presets & History</h2></div>
-          <button id="clearHistoryBtn" class="text-button danger-text" type="button">Clear History</button>
-        </div>
-        <div class="preset-tools"><input id="presetName" type="text" maxlength="80" placeholder="Preset name"><button id="savePresetBtn" type="button">Save Preset</button></div>
-        <div class="action-grid"><button id="exportBtn" type="button">Export Backup</button><label class="file-button">Import Backup<input id="importInput" type="file" accept="application/json,.json"></label></div>
-        <div class="history-tools"><input id="historySearch" type="search" placeholder="Search saved work"><label class="toggle-field"><input id="favoritesOnly" type="checkbox"> Favorites only</label></div>
-        <h3>Presets</h3><div id="presetList" class="saved-list"></div>
-        <h3>History</h3><div id="historyList" class="saved-list"></div>
-      </section>
+      </details>
     </main>
-
-    <nav class="bottom-bar" aria-label="Editing controls"><button id="undoBtn" type="button">Undo</button><button id="redoBtn" type="button">Redo</button><button id="resetBtn" type="button">Reset All</button></nav>
   </div>
 
-  <section id="errorPanel" class="error-panel hidden" role="alertdialog" aria-modal="true" aria-labelledby="errorTitle">
-    <div class="section-heading"><h2 id="errorTitle">Forge Error Report</h2><button id="closeErrorBtn" type="button" aria-label="Close error report">×</button></div>
-    <pre id="errorOutput"></pre><button id="copyErrorBtn" type="button">Copy Error Report</button>
-  </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="data.js" defer></script>
-  <script src="data-v32.js" defer></script>
-  <script src="data-v33.js" defer></script>
-  <script src="data-v34.js" defer></script>
-  <script src="data-v35.js" defer></script>
-  <script src="app-core.js" defer></script>
-  <script src="app-editor.js" defer></script>
-  <script src="app-actions.js" defer></script>
-  <script src="app-storage.js" defer></script>
-  <script src="app-v32.js" defer></script>
-  <script src="app-v33.js" defer></script>
-  <script src="app-v34.js" defer></script>
-  <script src="app-v35.js" defer></script>
-  <script src="app-v351.js" defer></script>
-  <script src="app-v4.js" defer></script>
-  <script src="app-v41.js" defer></script>
-  <script src="app-v42.js" defer></script>
-  <script src="app-v43.js" defer></script>
-  <script src="app-v44.js" defer></script>
-  <script src="app-v45.js" defer></script>
-  <script src="app-v46.js" defer></script>
-  <script src="app-v5-finish.js?v=5.0.3" defer></script>
-  <script src="app-v47.js" defer></script>
-  <script src="app-v5-clear.js?v=5.0.5" defer></script>
+  <script src="prompt-app.js?v=1.0.0" defer></script>
 </body>
 </html>
