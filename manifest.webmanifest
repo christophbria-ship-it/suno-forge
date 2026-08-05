@@ -1,11 +1,11 @@
 {
-  "name": "Forge Prompt Generator",
+  "name": "Forge Studio",
   "short_name": "Forge",
-  "description": "Focused mobile-first music prompt generator.",
+  "description": "Professional mobile-first music prompt generator",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#090a0d",
-  "theme_color": "#090a0d",
+  "background_color": "#f3f1ed",
+  "theme_color": "#111111",
   "icons": []
 }
