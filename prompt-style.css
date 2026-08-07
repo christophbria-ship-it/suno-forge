@@ -682,9 +682,7 @@ select:focus {
 }
 
 .panel-actions {
-  position: sticky;
-  bottom: 12px;
-  z-index: 40;
+  position: static;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -1716,7 +1714,6 @@ input[type="range"]:focus {
   }
 
   .panel-actions {
-    bottom: 7px;
     border-radius: 14px;
   }
 
@@ -1870,4 +1867,3 @@ input[type="range"]:focus {
     border-width: 2px;
   }
 }
-
