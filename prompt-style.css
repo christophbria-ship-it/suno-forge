@@ -31,13 +31,19 @@
 }
 
 html {
-  min-width: 320px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--canvas);
   scroll-behavior: smooth;
   scroll-padding-top: 108px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
+  width: 100%;
+  max-width: 100%;
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
@@ -69,6 +75,8 @@ button,
 input,
 textarea,
 select {
+  min-width: 0;
+  max-width: 100%;
   font: inherit;
 }
 
@@ -406,10 +414,13 @@ svg {
 
 .workspace-main {
   min-width: 0;
+  max-width: 100%;
 }
 
 .step-panel {
   display: grid;
+  min-width: 0;
+  max-width: 100%;
   gap: 16px;
   animation: panel-in .28s ease both;
 }
@@ -1592,24 +1603,27 @@ input[type="range"]:focus {
 
 @media (max-width: 760px) {
   .app-shell {
-    padding: 9px 9px calc(54px + env(safe-area-inset-bottom));
+    padding: 6px 6px calc(40px + env(safe-area-inset-bottom));
   }
 
   .topbar {
-    top: 7px;
-    min-height: 62px;
-    padding: 8px 8px 8px 10px;
-    border-radius: 15px;
+    top: 5px;
+    min-height: 56px;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 13px;
   }
 
   .brand-mark {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
   }
 
   .brand-copy strong {
-    font-size: .76rem;
+    font-size: .69rem;
+    letter-spacing: .09em;
+    white-space: nowrap;
   }
 
   .brand-copy small,
@@ -1618,9 +1632,9 @@ input[type="range"]:focus {
   }
 
   .header-button {
-    min-height: 40px;
-    padding: 8px 10px;
-    font-size: .69rem;
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: .65rem;
   }
 
   .workspace {
@@ -1629,24 +1643,32 @@ input[type="range"]:focus {
   }
 
   .progress-panel {
-    top: 78px;
+    top: 67px;
+    max-width: 100%;
     overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+
+  .progress-panel::-webkit-scrollbar {
+    display: none;
   }
 
   .step-nav {
-    min-width: 420px;
+    width: 100%;
+    min-width: 0;
   }
 
   .panel-heading {
-    min-height: 154px;
+    min-height: 0;
     align-items: flex-start;
-    padding: 24px 21px;
-    border-radius: 21px;
+    padding: 20px;
+    border-radius: 17px;
   }
 
   .panel-heading h1 {
-    max-width: 85%;
-    font-size: clamp(2.1rem, 11vw, 3.15rem);
+    max-width: 100%;
+    font-size: clamp(1.85rem, 9vw, 2.7rem);
   }
 
   .panel-heading > div > p:last-child {
@@ -1661,14 +1683,16 @@ input[type="range"]:focus {
   }
 
   .surface {
-    padding: 20px;
-    border-radius: 17px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 17px;
+    border-radius: 15px;
   }
 
   .brief-input {
-    min-height: 190px;
-    padding: 16px;
-    font-size: .92rem;
+    min-height: 150px;
+    padding: 14px;
+    font-size: .88rem;
   }
 
   .recipe-grid {
@@ -1731,37 +1755,85 @@ input[type="range"]:focus {
 }
 
 @media (max-width: 520px) {
+  .topbar {
+    gap: 6px;
+  }
+
   .brand {
-    gap: 8px;
+    gap: 7px;
   }
 
   .brand-mark {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 
   .brand-mark svg {
-    width: 21px;
+    width: 18px;
+  }
+
+  .brand-copy strong {
+    font-size: .64rem;
+  }
+
+  #installBtn {
+    display: none !important;
+  }
+
+  .header-button {
+    min-height: 34px;
+    padding-inline: 8px;
+    white-space: nowrap;
+  }
+
+  .progress-panel {
+    padding: 5px;
+  }
+
+  .step-nav {
+    gap: 3px;
+  }
+
+  .step-tab {
+    grid-template-columns: 1fr;
+    min-width: 0;
+    min-height: 49px;
+    justify-items: center;
+    gap: 3px;
+    padding: 5px 2px;
+    text-align: center;
+  }
+
+  .step-number {
+    width: 22px;
+    height: 22px;
+    border-radius: 7px;
+    font-size: .56rem;
+  }
+
+  .step-label strong {
+    font-size: .61rem;
+    line-height: 1;
   }
 
   .panel-heading {
     position: relative;
     display: block;
+    padding: 17px;
   }
 
   .panel-heading .step-badge {
-    position: absolute;
-    top: 19px;
-    right: 18px;
+    display: none;
   }
 
   .panel-heading h1 {
     max-width: 100%;
-    padding-right: 25px;
+    padding-right: 0;
+    font-size: clamp(1.72rem, 8.8vw, 2.25rem);
   }
 
   .surface h2 {
-    font-size: 1.25rem;
+    font-size: 1.18rem;
   }
 
   .input-footer > span {
@@ -1821,8 +1893,17 @@ input[type="range"]:focus {
   }
 
   .panel-actions {
+    grid-template-columns: 1fr;
     gap: 7px;
     padding: 9px;
+  }
+
+  .panel-actions > .primary-button {
+    width: 100%;
+  }
+
+  .panel-actions.split-actions {
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .panel-actions .primary-button,
