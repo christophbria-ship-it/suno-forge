@@ -423,22 +423,35 @@
 
   function renderRecipes() {
     nodes.recipeRow.replaceChildren();
-    RECIPES.forEach(recipe => {
+    nodes.recipeSelect.replaceChildren();
+    const prompt = document.createElement("option");
+    prompt.value = "";
+    prompt.textContent = "Choose a Quick Start";
+    nodes.recipeSelect.appendChild(prompt);
+
+    RECIPES.forEach((recipe, index) => {
       const button = document.createElement("button");
       const name = document.createElement("strong");
       const description = document.createElement("small");
+      const option = document.createElement("option");
       button.type = "button";
       button.className = "recipe-card";
+      button.dataset.recipeIndex = String(index);
+      button.setAttribute("aria-pressed", "false");
       button.setAttribute("aria-label", `Load ${recipe.name} recipe`);
       name.textContent = recipe.name;
       description.textContent = recipe.description;
+      option.value = String(index);
+      option.textContent = `${recipe.name} — ${recipe.description}`;
       button.append(name, description);
       button.addEventListener("click", () => applyRecipe(recipe));
       nodes.recipeRow.appendChild(button);
+      nodes.recipeSelect.appendChild(option);
     });
   }
 
   function applyRecipe(recipe) {
+    const recipeIndex = RECIPES.indexOf(recipe);
     state.brief = recipe.brief;
     state.selected = unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
     state.bpm = recipe.bpm;
@@ -447,6 +460,12 @@
     state.mode = recipe.mode;
     state.production = recipe.production;
     state.structure = STRUCTURES[0][1];
+    nodes.recipeSelect.value = recipeIndex >= 0 ? String(recipeIndex) : "";
+    nodes.recipeRow.querySelectorAll("[data-recipe-index]").forEach(button => {
+      const active = Number(button.dataset.recipeIndex) === recipeIndex;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
     markOutputDirty();
     syncControls();
     renderSelected();
@@ -1177,7 +1196,7 @@
   function cacheNodes() {
     [
       "workspace", "saveState", "installBtn", "newProjectBtn", "summaryBrief", "summarySound",
-      "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeRow",
+      "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeSelect", "recipeRow",
       "selectedCount", "tagSearch", "searchResults", "selectedTags", "selectionGuidance",
       "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
       "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
@@ -1253,6 +1272,12 @@
         nodes.tagSearch.value = "";
         renderSearch();
       }
+    });
+
+    nodes.recipeSelect.addEventListener("change", () => {
+      if (nodes.recipeSelect.value === "") return;
+      const recipe = RECIPES[Number(nodes.recipeSelect.value)];
+      if (recipe) applyRecipe(recipe);
     });
 
     nodes.clearBriefBtn.addEventListener("click", () => {
