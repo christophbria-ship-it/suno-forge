@@ -1,9 +1,9 @@
-const CACHE_NAME = "suno-forge-v3-1-20260807";
+const CACHE_NAME = "suno-forge-v3-2-20260807";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/prompt-style.css?v=3.0.1",
-  "/prompt-app.js?v=3.0.1",
+  "/prompt-style.css?v=3.0.2",
+  "/prompt-app.js?v=3.0.2",
   "/data.js",
   "/manifest.webmanifest",
   "/icon.svg"
