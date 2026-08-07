@@ -1,52 +1,80 @@
 "use strict";
 
 (() => {
-  const STORAGE_KEY = "forgePromptGeneratorV2";
-  const HISTORY_KEY = "forgePromptHistoryV2";
-  const PRESET_KEY = "forgePromptPresetsV2";
-  const MAX_SELECTED = 100;
+  const STORAGE_KEY = "sunoForgeProjectV3";
+  const HISTORY_KEY = "sunoForgeHistoryV3";
+  const PRESET_KEY = "sunoForgePresetsV3";
+  const LEGACY_STORAGE_KEY = "forgePromptGeneratorV2";
+  const LEGACY_HISTORY_KEY = "forgePromptHistoryV2";
+  const LEGACY_PRESET_KEY = "forgePromptPresetsV2";
+  const MAX_SELECTED = 32;
+  const STEP_ORDER = ["brief", "sound", "shape", "export"];
 
   const RECIPES = [
     {
       name: "Dark Appalachian",
+      description: "Weathered folk, close vocals, and a defiant final lift.",
       brief: "Dark Appalachian folk about finally leaving, intimate weathered vocal, restrained verses, and a defiant final chorus.",
-      tags: ["Appalachian Folk","Dark Folk","Banjo","Fiddle","Upright Bass","Raspy Vocals","Haunting","Defiant"],
-      bpm: 82, energy: "medium", key: "D", mode: "minor",
+      tags: ["Appalachian Folk", "Dark Folk", "Banjo", "Fiddle", "Upright Bass", "Raspy Vocals", "Haunting", "Defiant"],
+      bpm: 82,
+      energy: "medium",
+      key: "D",
+      mode: "minor",
       production: "Dry close-mic vocal, sparse verses, natural room sound, heavier live drums and stacked harmony only in the final chorus."
     },
     {
       name: "Raw Grunge",
+      description: "Loud-soft dynamics, dirty guitars, and honest tension.",
       brief: "Unpolished alternative rock with tense verses and a violent emotional release in the chorus.",
-      tags: ["Grunge","Alternative Rock","Distorted Guitar","Bass Guitar","Live Drums","Raw Vocals","Gritty","Angry"],
-      bpm: 112, energy: "high", key: "E", mode: "minor",
+      tags: ["Grunge", "Alternative Rock", "Distorted Guitar", "Bass Guitar", "Live Drums", "Raw Vocals", "Gritty", "Angry"],
+      bpm: 112,
+      energy: "high",
+      key: "E",
+      mode: "minor",
       production: "Loose live-band feel, dirty guitar layers, audible pick attack, restrained verse mix, wide explosive chorus without glossy polish."
     },
     {
       name: "Cinematic Fallout",
+      description: "A near-silent opening that grows to full-scale impact.",
       brief: "A dark cinematic track that starts almost empty and becomes enormous without turning into trailer-music cliché.",
-      tags: ["Film Score","Cinematic Rock","String Ensemble","Toms","Piano","Apocalyptic","Powerful","Haunting"],
-      bpm: 76, energy: "explosive", key: "C", mode: "minor",
+      tags: ["Film Score", "Cinematic Rock", "String Ensemble", "Toms", "Piano", "Apocalyptic", "Powerful", "Haunting"],
+      bpm: 76,
+      energy: "explosive",
+      key: "C",
+      mode: "minor",
       production: "Slow dynamic escalation, low strings and piano first, percussion enters late, final section reaches full scale then cuts to a bare ending."
     },
     {
       name: "Soul Pressure",
+      description: "A tight pocket, worn keys, and an intimate lead vocal.",
       brief: "Modern soul with a tight pocket, restrained confidence, and a vocal that sounds close enough to touch.",
-      tags: ["Neo-Soul","Alternative R&B","Rhodes","Bass Guitar","Live Drums","Soulful Vocals","Intimate","Confident"],
-      bpm: 92, energy: "medium", key: "F", mode: "minor",
+      tags: ["Neo-Soul", "Alternative R&B", "Rhodes", "Bass Guitar", "Live Drums", "Soulful Vocals", "Intimate", "Confident"],
+      bpm: 92,
+      energy: "medium",
+      key: "F",
+      mode: "minor",
       production: "Warm bass-forward mix, human drum timing, Rhodes chords with space, intimate lead vocal, selective harmony stacks on the hook."
     },
     {
       name: "Outlaw Drive",
+      description: "Fast, rough country with momentum and no radio gloss.",
       brief: "Hard-driving outlaw country with grit, momentum, and no polished radio-country sheen.",
-      tags: ["Outlaw Country","Country Rock","Electric Guitar","Pedal Steel","Bass Guitar","Live Drums","Raspy Vocals","Reckless"],
-      bpm: 126, energy: "high", key: "A", mode: "mixolydian",
+      tags: ["Outlaw Country", "Country Rock", "Electric Guitar", "Pedal Steel", "Bass Guitar", "Live Drums", "Raspy Vocals", "Reckless"],
+      bpm: 126,
+      energy: "high",
+      key: "A",
+      mode: "mixolydian",
       production: "Live room character, sharp snare, overdriven rhythm guitar, short pedal-steel answers, rough lead vocal and a big gang-vocal final hook."
     },
     {
       name: "Cold Post-Punk",
+      description: "Nervous bass motion, clipped guitar, and emotional distance.",
       brief: "Minimal post-punk with a nervous pulse, detached vocal, and an atmosphere that never fully opens up.",
-      tags: ["Post-Punk","New Wave","Bass Guitar","Clean Electric Guitar","Analog Synth","Detached Delivery","Cold","Tense"],
-      bpm: 132, energy: "medium", key: "B", mode: "minor",
+      tags: ["Post-Punk", "New Wave", "Bass Guitar", "Clean Electric Guitar", "Analog Synth", "Detached Delivery", "Cold", "Tense"],
+      bpm: 132,
+      energy: "medium",
+      key: "B",
+      mode: "minor",
       production: "Bass-led arrangement, dry drums, clipped guitar, narrow synth layer, emotionally restrained vocal, no oversized chorus."
     }
   ];
@@ -58,6 +86,80 @@
     ["Short", "Intro > Verse > Chorus > Verse > Final Chorus"],
     ["Epic", "Intro > Verse > Pre-Chorus > Chorus > Verse > Pre-Chorus > Chorus > Bridge > Breakdown > Final Chorus > Outro"]
   ];
+
+  const QUICK_PICKS = {
+    Style: ["Indie Pop", "Neo-Soul", "Outlaw Country", "Post-Punk", "Hip-Hop", "Film Score"],
+    Mood: ["Intimate", "Dark", "Uplifting", "Haunting", "Defiant", "Energetic"],
+    Instruments: ["Acoustic Guitar", "Electric Guitar", "Piano", "Live Drums", "Analog Synth", "808 Bass"],
+    Vocals: ["Raspy Vocals", "Airy Vocals", "Soulful Vocals", "Rap Vocals", "Raw Vocals", "Instrumental"],
+    Production: ["Raw Production", "Warm Analog", "Wide Stereo", "Dry Mix", "Tape Saturation", "Lo-Fi"]
+  };
+
+  const CATEGORY_LABELS = {
+    Genre: "Style",
+    Mood: "Mood",
+    Instruments: "Instruments",
+    Vocals: "Vocals",
+    "Vocal Delivery": "Vocal delivery",
+    "Vocal Range & Register": "Vocal register",
+    "Vocal Arrangement": "Vocal arrangement",
+    "Harmony & Choir": "Harmony and choir",
+    "Rhythm & Groove": "Rhythm and groove",
+    Production: "Production",
+    "Mix & Master": "Mix",
+    Effects: "Effects",
+    Era: "Era",
+    Language: "Language",
+    Writing: "Writing",
+    Arrangement: "Arrangement",
+    Performance: "Performance",
+    "Recording Space": "Recording space",
+    "Texture & Atmosphere": "Texture and atmosphere"
+  };
+
+  const CATEGORY_ORDER = [
+    "Vocals",
+    "Vocal Delivery",
+    "Vocal Range & Register",
+    "Vocal Arrangement",
+    "Harmony & Choir",
+    "Instruments",
+    "Rhythm & Groove",
+    "Production",
+    "Mix & Master",
+    "Effects",
+    "Era",
+    "Language",
+    "Writing",
+    "Arrangement",
+    "Performance",
+    "Recording Space",
+    "Texture & Atmosphere"
+  ];
+
+  const MODE_CONFIG = {
+    compact: {
+      label: "Compact",
+      maxCategoryItems: 3,
+      briefLimit: 145,
+      structureLimit: 105,
+      productionLimit: 135
+    },
+    balanced: {
+      label: "Balanced",
+      maxCategoryItems: 5,
+      briefLimit: 230,
+      structureLimit: 170,
+      productionLimit: 240
+    },
+    detailed: {
+      label: "Detailed",
+      maxCategoryItems: 8,
+      briefLimit: 420,
+      structureLimit: 280,
+      productionLimit: 520
+    }
+  };
 
   const DEFAULT_STATE = Object.freeze({
     brief: "",
@@ -73,18 +175,26 @@
     production: "",
     exclude: "",
     limit: 1000,
+    promptMode: "balanced",
     output: "",
     activeStep: "brief"
   });
 
   const nodes = {};
-  let state = { ...DEFAULT_STATE, ...loadJson(STORAGE_KEY, {}) };
-  state.selected = Array.isArray(state.selected) ? [...new Set(state.selected)].slice(0, MAX_SELECTED) : [];
-  let history = loadJson(HISTORY_KEY, []);
-  let presets = loadJson(PRESET_KEY, []);
+  const categoryIndex = new Map();
+  const allTagRecords = [];
+  let promptHistory = loadCollection(HISTORY_KEY, LEGACY_HISTORY_KEY);
+  let presets = loadCollection(PRESET_KEY, LEGACY_PRESET_KEY);
+  let state = loadProject();
   let saveTimer = 0;
-  let categoryIndex = null;
-  let lastCompile = { text: "", includedTags: 0, totalTags: 0, truncated: false };
+  let toastTimer = 0;
+  let installPrompt = null;
+  let outputDirty = !state.output;
+  let lastCompile = {
+    includedTags: 0,
+    totalTags: 0,
+    truncated: false
+  };
 
   function clone(value) {
     return typeof structuredClone === "function"
@@ -92,439 +202,139 @@
       : JSON.parse(JSON.stringify(value));
   }
 
-  function loadJson(key, fallback) {
+  function safeJson(key) {
     try {
-      const value = JSON.parse(localStorage.getItem(key) || "null");
-      return value ?? clone(fallback);
+      return JSON.parse(localStorage.getItem(key) || "null");
     } catch {
-      return clone(fallback);
+      return null;
     }
   }
 
   function saveJson(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      return true;
     } catch {
-      // Keep the generator usable even if storage is unavailable.
+      return false;
     }
   }
 
-  function toast(message) {
-    nodes.toast.textContent = message;
-    nodes.toast.classList.add("show");
-    clearTimeout(toast.timer);
-    toast.timer = window.setTimeout(() => nodes.toast.classList.remove("show"), 1900);
+  function loadCollection(primaryKey, legacyKey) {
+    const value = safeJson(primaryKey) ?? safeJson(legacyKey) ?? [];
+    return Array.isArray(value) ? value : [];
   }
 
-  function markDirty() {
-    clearTimeout(saveTimer);
-    saveTimer = window.setTimeout(() => saveJson(STORAGE_KEY, state), 140);
+  function normalizeState(value) {
+    const next = {
+      ...DEFAULT_STATE,
+      ...(value && typeof value === "object" ? value : {})
+    };
+    next.selected = Array.isArray(next.selected)
+      ? unique(next.selected.map(item => String(item || "").trim())).slice(0, MAX_SELECTED)
+      : [];
+    next.bpm = clampNumber(next.bpm, 50, 220, 120);
+    next.limit = [0, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
+    next.promptMode = MODE_CONFIG[next.promptMode] ? next.promptMode : "balanced";
+    next.activeStep = STEP_ORDER.includes(next.activeStep) ? next.activeStep : "brief";
+    [
+      "brief", "energy", "length", "key", "mode", "meter", "vocalPlan",
+      "structure", "production", "exclude", "output"
+    ].forEach(key => next[key] = String(next[key] ?? DEFAULT_STATE[key] ?? ""));
+    return next;
   }
 
-  function categories() {
-    return typeof DATA !== "undefined" && DATA?.categories ? DATA.categories : {};
+  function loadProject() {
+    return normalizeState(safeJson(STORAGE_KEY) ?? safeJson(LEGACY_STORAGE_KEY) ?? {});
   }
 
-  function buildCategoryIndex() {
-    categoryIndex = new Map();
-    Object.entries(categories()).forEach(([category, tags]) => {
-      (Array.isArray(tags) ? tags : []).forEach(tag => categoryIndex.set(tag, category));
-    });
-  }
-
-  function allTags() {
-    return [...categoryIndex.entries()].map(([tag, category]) => ({ tag, category }));
-  }
-
-  function categoryFor(tag) {
-    return categoryIndex.get(tag) || "Style";
+  function clampNumber(value, minimum, maximum, fallback) {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.min(maximum, Math.max(minimum, number)) : fallback;
   }
 
   function unique(items) {
     return [...new Set(items.filter(Boolean))];
   }
 
+  function categories() {
+    return typeof DATA !== "undefined" && DATA?.categories && typeof DATA.categories === "object"
+      ? DATA.categories
+      : {};
+  }
+
+  function buildCategoryIndex() {
+    categoryIndex.clear();
+    allTagRecords.length = 0;
+    Object.entries(categories()).forEach(([category, tags]) => {
+      if (!Array.isArray(tags)) return;
+      tags.forEach(tag => {
+        const clean = String(tag || "").trim();
+        if (!clean || categoryIndex.has(clean)) return;
+        categoryIndex.set(clean, category);
+        allTagRecords.push({
+          tag: clean,
+          category,
+          search: `${clean} ${category}`.toLowerCase()
+        });
+      });
+    });
+    state.selected = state.selected.filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
+  }
+
   function sentence(value) {
     const clean = String(value || "").trim().replace(/\s+/g, " ");
     if (!clean) return "";
-    return /[.!?]$/.test(clean) ? clean : `${clean}.`;
+    return /[.!?…]$/.test(clean) ? clean : `${clean}.`;
   }
 
   function compact(value, maximum) {
     const clean = String(value || "").trim().replace(/\s+/g, " ");
     if (!maximum || clean.length <= maximum) return clean;
-    const cut = clean.slice(0, Math.max(0, maximum - 1));
-    const breakAt = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "), cut.lastIndexOf(", "), cut.lastIndexOf(" "));
-    return `${(breakAt > maximum * 0.65 ? cut.slice(0, breakAt) : cut).trim()}…`;
+    const room = Math.max(1, maximum - 1);
+    const cut = clean.slice(0, room);
+    const breakAt = Math.max(
+      cut.lastIndexOf(". "),
+      cut.lastIndexOf("; "),
+      cut.lastIndexOf(", "),
+      cut.lastIndexOf(" ")
+    );
+    const result = breakAt > room * .65 ? cut.slice(0, breakAt) : cut;
+    return `${result.trim()}…`;
   }
 
-  function setStep(step, options = {}) {
-    const allowed = new Set(["brief", "sound", "shape", "export"]);
-    const next = allowed.has(step) ? step : "brief";
-    state.activeStep = next;
+  function titleCase(value) {
+    const clean = String(value || "");
+    return clean ? clean[0].toUpperCase() + clean.slice(1) : "";
+  }
 
-    document.querySelectorAll(".mode-tab").forEach(button => {
-      const active = button.dataset.step === next;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", String(active));
-    });
-    document.querySelectorAll(".step-panel").forEach(panel => {
-      const active = panel.dataset.panel === next;
-      panel.hidden = !active;
-      panel.classList.toggle("active", active);
-    });
+  function slugify(value) {
+    return String(value || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "");
+  }
 
-    markDirty();
-    if (options.scroll !== false) {
-      document.querySelector(".mode-tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function toast(message) {
+    nodes.toast.textContent = message;
+    nodes.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => nodes.toast.classList.remove("show"), 2100);
+  }
+
+  function markDirty() {
+    nodes.saveState.textContent = "Saving…";
+    clearTimeout(saveTimer);
+    saveTimer = window.setTimeout(() => {
+      const saved = saveJson(STORAGE_KEY, snapshot());
+      nodes.saveState.textContent = saved ? "Saved on this device" : "Device storage unavailable";
+    }, 180);
+  }
+
+  function markOutputDirty() {
+    outputDirty = true;
+    if (state.output && state.activeStep === "export") {
+      nodes.outputStatus.textContent = "Your settings changed. Regenerate when you are ready to replace the edited prompt.";
     }
-    if (next === "export" && options.forge !== false) forgePrompt({ scroll: false });
-  }
-
-  function renderRecipes() {
-    nodes.recipeRow.replaceChildren();
-    RECIPES.forEach(recipe => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = recipe.name;
-      button.addEventListener("click", () => applyRecipe(recipe));
-      nodes.recipeRow.appendChild(button);
-    });
-  }
-
-  function applyRecipe(recipe) {
-    state.brief = recipe.brief;
-    state.selected = unique(recipe.tags).slice(0, MAX_SELECTED);
-    state.bpm = recipe.bpm;
-    state.energy = recipe.energy;
-    state.key = recipe.key;
-    state.mode = recipe.mode;
-    state.production = recipe.production;
-    state.output = "";
-    syncControls();
-    renderSelected();
-    refreshCategoryCounts();
-    markDirty();
-    toast(`${recipe.name} loaded`);
-  }
-
-  function addTag(tag) {
-    if (!tag || state.selected.includes(tag)) return;
-    if (state.selected.length >= MAX_SELECTED) {
-      toast(`Forge allows up to ${MAX_SELECTED} selected options.`);
-      return;
-    }
-    state.selected.push(tag);
-    afterTagChange();
-  }
-
-  function removeTag(tag) {
-    state.selected = state.selected.filter(item => item !== tag);
-    afterTagChange();
-  }
-
-  function toggleTag(tag) {
-    state.selected.includes(tag) ? removeTag(tag) : addTag(tag);
-  }
-
-  function afterTagChange() {
-    renderSelected();
-    renderSearch();
-    refreshCategoryButtons();
-    refreshCategoryCounts();
-    refreshOutput();
-    markDirty();
-  }
-
-  function renderSelected() {
-    nodes.selectedTags.replaceChildren();
-    state.selected.forEach(tag => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = `${tag} ×`;
-      button.title = `Remove ${tag}`;
-      button.addEventListener("click", () => removeTag(tag));
-      nodes.selectedTags.appendChild(button);
-    });
-    nodes.selectedCount.textContent = `${state.selected.length} selected`;
-  }
-
-  function renderSearch() {
-    const query = nodes.tagSearch.value.trim().toLowerCase();
-    nodes.searchResults.replaceChildren();
-    if (!query) {
-      nodes.searchResults.hidden = true;
-      return;
-    }
-
-    const matches = allTags()
-      .filter(({ tag, category }) =>
-        tag.toLowerCase().includes(query) || category.toLowerCase().includes(query)
-      )
-      .slice(0, 100);
-
-    matches.forEach(({ tag, category }) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.classList.toggle("active", state.selected.includes(tag));
-      const label = document.createElement("span");
-      label.textContent = state.selected.includes(tag) ? `✓ ${tag}` : tag;
-      const detail = document.createElement("small");
-      detail.textContent = category;
-      button.append(label, detail);
-      button.addEventListener("click", () => toggleTag(tag));
-      nodes.searchResults.appendChild(button);
-    });
-
-    if (!matches.length) {
-      const empty = document.createElement("p");
-      empty.className = "helper-text";
-      empty.textContent = "No matching sound options.";
-      nodes.searchResults.appendChild(empty);
-    }
-    nodes.searchResults.hidden = false;
-  }
-
-  function makeTagButton(tag) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.tag = tag;
-    button.textContent = tag;
-    button.classList.toggle("active", state.selected.includes(tag));
-    button.addEventListener("click", () => toggleTag(tag));
-    return button;
-  }
-
-  function fillCategory(details, tags) {
-    let grid = details.querySelector(".category-grid");
-    if (grid) return;
-    grid = document.createElement("div");
-    grid.className = "category-grid";
-    tags.forEach(tag => grid.appendChild(makeTagButton(tag)));
-    details.appendChild(grid);
-  }
-
-  function renderCategories() {
-    nodes.categoryList.replaceChildren();
-    Object.entries(categories()).forEach(([category, tags], index) => {
-      const list = Array.isArray(tags) ? tags : [];
-      const details = document.createElement("details");
-      details.className = "category";
-      details.dataset.category = category;
-
-      const summary = document.createElement("summary");
-      const title = document.createElement("span");
-      title.textContent = category;
-      const count = document.createElement("span");
-      count.className = "category-count";
-      count.dataset.categoryCount = category;
-      summary.append(title, count);
-      details.appendChild(summary);
-
-      if (index < 2) {
-        details.open = true;
-        fillCategory(details, list);
-      }
-      details.addEventListener("toggle", () => {
-        if (details.open) fillCategory(details, list);
-      });
-      nodes.categoryList.appendChild(details);
-    });
-    refreshCategoryCounts();
-  }
-
-  function refreshCategoryButtons() {
-    nodes.categoryList.querySelectorAll("[data-tag]").forEach(button => {
-      button.classList.toggle("active", state.selected.includes(button.dataset.tag));
-    });
-  }
-
-  function refreshCategoryCounts() {
-    Object.entries(categories()).forEach(([category, tags]) => {
-      const count = (Array.isArray(tags) ? tags : []).filter(tag => state.selected.includes(tag)).length;
-      const node = nodes.categoryList.querySelector(`[data-category-count="${CSS.escape(category)}"]`);
-      if (node) node.textContent = `${tags.length} options${count ? ` · ${count} selected` : ""}`;
-    });
-  }
-
-  function renderStructures() {
-    nodes.structurePresets.replaceChildren();
-    STRUCTURES.forEach(([name, value]) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = name;
-      button.addEventListener("click", () => {
-        state.structure = value;
-        nodes.structureInput.value = value;
-        refreshOutput();
-        markDirty();
-      });
-      nodes.structurePresets.appendChild(button);
-    });
-  }
-
-  function groupSelected() {
-    const grouped = new Map();
-    state.selected.forEach(tag => {
-      const category = categoryFor(tag);
-      if (!grouped.has(category)) grouped.set(category, []);
-      grouped.get(category).push(tag);
-    });
-    return grouped;
-  }
-
-  function labelForCategory(category) {
-    const labels = {
-      Genre: "Style",
-      Mood: "Mood",
-      Instruments: "Instruments",
-      Vocals: "Vocals",
-      "Vocal Delivery": "Delivery",
-      "Vocal Range & Register": "Register",
-      "Vocal Arrangement": "Vocal arrangement",
-      Choir: "Choir",
-      Rhythm: "Rhythm",
-      Percussion: "Percussion",
-      Production: "Production",
-      Arrangement: "Arrangement",
-      Texture: "Texture",
-      Effects: "Effects"
-    };
-    return labels[category] || category;
-  }
-
-  function compilePrompt() {
-    pullControls();
-    const limit = Number(state.limit) || 0;
-    const grouped = groupSelected();
-    const segments = [];
-    const included = new Set();
-
-    const addCategory = (category, maxItems = Infinity) => {
-      const values = grouped.get(category) || [];
-      if (!values.length) return;
-      const used = values.slice(0, maxItems);
-      used.forEach(tag => included.add(tag));
-      segments.push(`${labelForCategory(category)}: ${used.join(", ")}`);
-    };
-
-    addCategory("Genre");
-    addCategory("Mood");
-    if (state.brief) segments.push(`Direction: ${compact(state.brief, limit ? 240 : 600)}`);
-    segments.push(`Track: ${state.bpm} BPM, ${state.key} ${state.mode}, ${state.meter}, ${state.energy} energy, ${state.length} length`);
-
-    if (state.vocalPlan === "instrumental") {
-      segments.push("Vocals: instrumental, no lead or backing vocals");
-    } else if (state.vocalPlan !== "follow selected vocal tags") {
-      segments.push(`Vocal plan: ${state.vocalPlan}`);
-    }
-
-    [
-      "Vocals", "Vocal Delivery", "Vocal Range & Register", "Vocal Arrangement", "Choir",
-      "Instruments", "Rhythm", "Percussion", "Production", "Arrangement", "Texture", "Effects"
-    ].forEach(category => addCategory(category));
-
-    [...grouped.keys()]
-      .filter(category => ![
-        "Genre","Mood","Vocals","Vocal Delivery","Vocal Range & Register","Vocal Arrangement",
-        "Choir","Instruments","Rhythm","Percussion","Production","Arrangement","Texture","Effects"
-      ].includes(category))
-      .forEach(category => addCategory(category));
-
-    if (state.structure) segments.push(`Structure: ${compact(state.structure, limit ? 190 : 500)}`);
-    if (state.production) segments.push(`Production direction: ${compact(state.production, limit ? 260 : 900)}`);
-    if (state.exclude) segments.push(`Avoid: ${compact(state.exclude, limit ? 180 : 600)}`);
-
-    let text = segments.map(sentence).join(" ");
-    let truncated = false;
-
-    if (limit && text.length > limit) {
-      const optionalPrefixes = ["Production direction:", "Structure:", "Direction:"];
-      let working = [...segments];
-      for (const prefix of optionalPrefixes) {
-        if (working.map(sentence).join(" ").length <= limit) break;
-        const index = working.findIndex(segment => segment.startsWith(prefix));
-        if (index >= 0) {
-          const current = working[index];
-          const target = prefix === "Direction:" ? 150 : prefix === "Production direction:" ? 170 : 125;
-          working[index] = `${prefix} ${compact(current.slice(prefix.length), target)}`;
-        }
-      }
-      text = working.map(sentence).join(" ");
-
-      if (text.length > limit) {
-        const hard = text.slice(0, Math.max(0, limit - 1)).trimEnd();
-        const breakAt = Math.max(hard.lastIndexOf(". "), hard.lastIndexOf("; "), hard.lastIndexOf(", "), hard.lastIndexOf(" "));
-        text = `${(breakAt > limit * 0.7 ? hard.slice(0, breakAt) : hard).trim()}…`;
-        truncated = true;
-      }
-    }
-
-    lastCompile = {
-      text,
-      includedTags: included.size,
-      totalTags: state.selected.length,
-      truncated
-    };
-    return text;
-  }
-
-  function forgePrompt(options = {}) {
-    state.output = compilePrompt();
-    nodes.promptOutput.value = state.output;
-    renderCount();
-    markDirty();
-
-    if (state.output) {
-      addHistory();
-      const tagStatus = lastCompile.totalTags
-        ? `${lastCompile.includedTags} selected sound options represented`
-        : "No sound options selected";
-      nodes.outputStatus.textContent = lastCompile.truncated
-        ? `Prompt reached the character limit. ${tagStatus}; review the ending before copying.`
-        : `Prompt forged locally. ${tagStatus}.`;
-    } else {
-      nodes.outputStatus.textContent = "Add a brief or sound options first.";
-    }
-
-    if (options.scroll !== false) nodes.outputCard.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function refreshOutput() {
-    if (!state.output) return;
-    state.output = compilePrompt();
-    nodes.promptOutput.value = state.output;
-    renderCount();
-  }
-
-  function renderCount() {
-    const limit = Number(state.limit) || 0;
-    const length = state.output.length;
-    nodes.promptCount.textContent = limit ? `${length} / ${limit}` : `${length} characters`;
-    nodes.promptCount.style.borderColor = limit && length >= limit ? "var(--danger)" : "";
-  }
-
-  async function copyText(value, success) {
-    const text = String(value || "").trim();
-    if (!text) {
-      toast("There is nothing to copy yet.");
-      return;
-    }
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const box = document.createElement("textarea");
-      box.value = text;
-      document.body.appendChild(box);
-      box.select();
-      document.execCommand("copy");
-      box.remove();
-    }
-    toast(success);
-  }
-
-  function makeId() {
-    return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   }
 
   function snapshot() {
@@ -543,25 +353,586 @@
       production: state.production,
       exclude: state.exclude,
       limit: state.limit,
+      promptMode: state.promptMode,
       output: state.output,
       activeStep: state.activeStep
     };
   }
 
+  function setStep(step, options = {}) {
+    const next = STEP_ORDER.includes(step) ? step : "brief";
+    const changed = state.activeStep !== next;
+    state.activeStep = next;
+
+    document.querySelectorAll("[data-step]").forEach(button => {
+      const active = button.dataset.step === next;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+      button.tabIndex = active ? 0 : -1;
+    });
+
+    document.querySelectorAll("[data-panel]").forEach(panel => {
+      const active = panel.dataset.panel === next;
+      panel.hidden = !active;
+      panel.classList.toggle("active", active);
+    });
+
+    if (next === "export" && options.forge !== false && (outputDirty || !state.output)) {
+      forgePrompt({ addHistory: false, announce: false });
+    }
+
+    updateStepSummaries();
+    renderQuality();
+    renderExclude();
+    markDirty();
+
+    if (options.history !== false && location.hash !== `#${next}`) {
+      window.history.replaceState(null, "", `#${next}`);
+    }
+
+    if (changed && options.scroll !== false) {
+      const behavior = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      nodes.workspaceMain.scrollIntoView({ behavior, block: "start" });
+      window.setTimeout(() => {
+        document.getElementById(`heading-${next}`)?.focus({ preventScroll: true });
+      }, behavior === "smooth" ? 260 : 0);
+    }
+  }
+
+  function updateStepSummaries() {
+    const briefWords = state.brief.trim() ? state.brief.trim().split(/\s+/).length : 0;
+    nodes.summaryBrief.textContent = briefWords ? `${briefWords} word${briefWords === 1 ? "" : "s"}` : "Not started";
+    nodes.summarySound.textContent = state.selected.length
+      ? `${state.selected.length} selected`
+      : "Nothing selected";
+    nodes.summaryShape.textContent = `${state.bpm} BPM · ${state.key} ${state.mode}`;
+    nodes.summaryExport.textContent = state.output
+      ? `${state.output.length} characters`
+      : "Ready when you are";
+
+    const activeIndex = STEP_ORDER.indexOf(state.activeStep);
+    document.querySelectorAll("[data-step]").forEach(button => {
+      const index = STEP_ORDER.indexOf(button.dataset.step);
+      let complete = index < activeIndex;
+      if (button.dataset.step === "brief") complete = Boolean(state.brief);
+      if (button.dataset.step === "sound") complete = state.selected.length > 0;
+      if (button.dataset.step === "export") complete = Boolean(state.output);
+      button.classList.toggle("complete", complete);
+    });
+  }
+
+  function renderRecipes() {
+    nodes.recipeRow.replaceChildren();
+    RECIPES.forEach(recipe => {
+      const button = document.createElement("button");
+      const name = document.createElement("strong");
+      const description = document.createElement("small");
+      button.type = "button";
+      button.className = "recipe-card";
+      button.setAttribute("aria-label", `Load ${recipe.name} recipe`);
+      name.textContent = recipe.name;
+      description.textContent = recipe.description;
+      button.append(name, description);
+      button.addEventListener("click", () => applyRecipe(recipe));
+      nodes.recipeRow.appendChild(button);
+    });
+  }
+
+  function applyRecipe(recipe) {
+    state.brief = recipe.brief;
+    state.selected = unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
+    state.bpm = recipe.bpm;
+    state.energy = recipe.energy;
+    state.key = recipe.key;
+    state.mode = recipe.mode;
+    state.production = recipe.production;
+    state.structure = STRUCTURES[0][1];
+    markOutputDirty();
+    syncControls();
+    renderSelected();
+    refreshCategoryButtons();
+    refreshCategoryCounts();
+    updateStepSummaries();
+    renderQuality();
+    markDirty();
+    toast(`${recipe.name} loaded`);
+  }
+
+  function addTag(tag) {
+    if (!tag || state.selected.includes(tag) || !categoryIndex.has(tag)) return;
+    if (state.selected.length >= MAX_SELECTED) {
+      toast(`Keep the palette focused: up to ${MAX_SELECTED} choices.`);
+      return;
+    }
+    state.selected.push(tag);
+    afterTagChange();
+  }
+
+  function removeTag(tag) {
+    state.selected = state.selected.filter(item => item !== tag);
+    afterTagChange();
+  }
+
+  function toggleTag(tag) {
+    state.selected.includes(tag) ? removeTag(tag) : addTag(tag);
+  }
+
+  function afterTagChange() {
+    markOutputDirty();
+    renderSelected();
+    renderSearch();
+    refreshCategoryButtons();
+    refreshCategoryCounts();
+    updateStepSummaries();
+    renderQuality();
+    markDirty();
+  }
+
+  function renderSelected() {
+    nodes.selectedTags.replaceChildren();
+    state.selected.forEach(tag => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = `${tag} ×`;
+      button.title = `Remove ${tag}`;
+      button.setAttribute("aria-label", `Remove ${tag}`);
+      button.addEventListener("click", () => removeTag(tag));
+      nodes.selectedTags.appendChild(button);
+    });
+
+    const count = state.selected.length;
+    nodes.selectedCount.textContent = `${count} selected`;
+    const percentage = Math.min(100, Math.round((count / 12) * 100));
+    nodes.paletteBar.style.width = `${percentage}%`;
+
+    if (!count) {
+      nodes.paletteLabel.textContent = "Open canvas";
+      nodes.selectionGuidance.textContent = "Aim for 6–14 choices across a few categories.";
+    } else if (count < 5) {
+      nodes.paletteLabel.textContent = "Still broad";
+      nodes.selectionGuidance.textContent = "Add a mood, instrument, and vocal or production choice.";
+    } else if (count <= 14) {
+      nodes.paletteLabel.textContent = "Focused";
+      nodes.selectionGuidance.textContent = "This is a strong range. Add only details that change the result.";
+    } else if (count <= 22) {
+      nodes.paletteLabel.textContent = "Highly detailed";
+      nodes.selectionGuidance.textContent = "The palette is dense. Remove anything that repeats another choice.";
+    } else {
+      nodes.paletteLabel.textContent = "Overloaded";
+      nodes.selectionGuidance.textContent = "Too many choices can fight each other. Trim to the essentials.";
+    }
+  }
+
+  function renderQuickPicks() {
+    nodes.quickPickGrid.replaceChildren();
+    Object.entries(QUICK_PICKS).forEach(([label, requestedTags]) => {
+      const tags = requestedTags.filter(tag => categoryIndex.has(tag));
+      if (!tags.length) return;
+      const row = document.createElement("div");
+      const heading = document.createElement("strong");
+      const buttons = document.createElement("div");
+      row.className = "quick-pick-row";
+      heading.textContent = label;
+      tags.forEach(tag => buttons.appendChild(makeTagButton(tag)));
+      row.append(heading, buttons);
+      nodes.quickPickGrid.appendChild(row);
+    });
+  }
+
+  function renderSearch() {
+    const query = nodes.tagSearch.value.trim().toLowerCase();
+    nodes.searchResults.replaceChildren();
+    if (!query) {
+      nodes.searchResults.hidden = true;
+      return;
+    }
+
+    const matches = allTagRecords
+      .filter(item => item.search.includes(query))
+      .sort((left, right) => {
+        const leftStarts = left.tag.toLowerCase().startsWith(query) ? 0 : 1;
+        const rightStarts = right.tag.toLowerCase().startsWith(query) ? 0 : 1;
+        return leftStarts - rightStarts || left.tag.localeCompare(right.tag);
+      })
+      .slice(0, 40);
+
+    matches.forEach(({ tag, category }) => {
+      const button = document.createElement("button");
+      const label = document.createElement("span");
+      const detail = document.createElement("small");
+      const active = state.selected.includes(tag);
+      button.type = "button";
+      button.setAttribute("role", "option");
+      button.setAttribute("aria-selected", String(active));
+      button.classList.toggle("active", active);
+      label.textContent = active ? `✓ ${tag}` : tag;
+      detail.textContent = category;
+      button.append(label, detail);
+      button.addEventListener("click", () => toggleTag(tag));
+      nodes.searchResults.appendChild(button);
+    });
+
+    if (!matches.length) {
+      const empty = document.createElement("p");
+      empty.className = "helper-text";
+      empty.textContent = "No matching sound options. Try a shorter or broader term.";
+      nodes.searchResults.appendChild(empty);
+    }
+    nodes.searchResults.hidden = false;
+  }
+
+  function makeTagButton(tag) {
+    const button = document.createElement("button");
+    const active = state.selected.includes(tag);
+    button.type = "button";
+    button.dataset.tag = tag;
+    button.textContent = tag;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+    button.addEventListener("click", () => toggleTag(tag));
+    return button;
+  }
+
+  function fillCategory(details, tags) {
+    let grid = details.querySelector(".category-grid");
+    if (grid) return;
+    grid = document.createElement("div");
+    grid.className = "category-grid";
+    tags.forEach(tag => grid.appendChild(makeTagButton(tag)));
+    details.appendChild(grid);
+  }
+
+  function renderCategories() {
+    nodes.categoryList.replaceChildren();
+    nodes.categoryJump.replaceChildren();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Jump to category";
+    nodes.categoryJump.appendChild(placeholder);
+
+    Object.entries(categories()).forEach(([category, value]) => {
+      const tags = Array.isArray(value) ? value : [];
+      const id = `category-${slugify(category)}`;
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      const title = document.createElement("span");
+      const count = document.createElement("span");
+      const toggle = document.createElement("span");
+      const option = document.createElement("option");
+
+      details.className = "category";
+      details.id = id;
+      details.dataset.category = category;
+      title.textContent = category;
+      count.className = "category-count";
+      count.dataset.categoryCount = category;
+      toggle.className = "category-toggle";
+      toggle.setAttribute("aria-hidden", "true");
+      summary.append(title, count, toggle);
+      details.appendChild(summary);
+      details.addEventListener("toggle", () => {
+        if (details.open) fillCategory(details, tags);
+      });
+      nodes.categoryList.appendChild(details);
+
+      option.value = id;
+      option.textContent = category;
+      nodes.categoryJump.appendChild(option);
+    });
+
+    refreshCategoryCounts();
+  }
+
+  function refreshCategoryButtons() {
+    document.querySelectorAll("[data-tag]").forEach(button => {
+      const active = state.selected.includes(button.dataset.tag);
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
+
+  function refreshCategoryCounts() {
+    Object.entries(categories()).forEach(([category, value]) => {
+      const tags = Array.isArray(value) ? value : [];
+      const selected = tags.filter(tag => state.selected.includes(tag)).length;
+      const node = nodes.categoryList.querySelector(
+        `[data-category-count="${CSS.escape(category)}"]`
+      );
+      if (node) {
+        node.textContent = selected
+          ? `${tags.length} options · ${selected} selected`
+          : `${tags.length} options`;
+      }
+    });
+  }
+
+  function renderStructures() {
+    nodes.structurePresets.replaceChildren();
+    STRUCTURES.forEach(([name, value]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = name;
+      button.addEventListener("click", () => {
+        state.structure = value;
+        nodes.structureInput.value = value;
+        markOutputDirty();
+        markDirty();
+        renderQuality();
+      });
+      nodes.structurePresets.appendChild(button);
+    });
+  }
+
+  function groupSelected() {
+    const grouped = new Map();
+    state.selected.forEach(tag => {
+      const category = categoryIndex.get(tag) || "Style";
+      if (!grouped.has(category)) grouped.set(category, []);
+      grouped.get(category).push(tag);
+    });
+    return grouped;
+  }
+
+  function compilePrompt() {
+    pullControls();
+    const config = MODE_CONFIG[state.promptMode] || MODE_CONFIG.balanced;
+    const grouped = groupSelected();
+    const usedCategories = new Set();
+    const segments = [];
+
+    const add = (text, tags = [], essential = false) => {
+      const clean = String(text || "").trim();
+      if (clean) segments.push({ text: clean, tags, essential });
+    };
+
+    const addCategory = (category, maximum = config.maxCategoryItems) => {
+      const values = grouped.get(category) || [];
+      if (!values.length) return;
+      usedCategories.add(category);
+      const tags = values.slice(0, maximum);
+      add(`${CATEGORY_LABELS[category] || category}: ${tags.join(", ")}`, tags, category === "Genre");
+    };
+
+    addCategory("Genre");
+    addCategory("Mood");
+
+    if (state.brief) {
+      add(`Creative direction: ${compact(state.brief, config.briefLimit)}`, [], true);
+    }
+
+    add(
+      `Track: ${state.bpm} BPM; ${state.key} ${state.mode}; ${state.meter}; ${state.energy} energy; ${state.length} length`,
+      [],
+      true
+    );
+
+    if (state.vocalPlan === "instrumental") {
+      add("Vocals: instrumental; no lead or backing vocals", [], true);
+      usedCategories.add("Vocals");
+      usedCategories.add("Vocal Delivery");
+      usedCategories.add("Vocal Arrangement");
+      usedCategories.add("Harmony & Choir");
+    } else if (state.vocalPlan !== "follow selected vocal tags") {
+      add(`Vocal plan: ${state.vocalPlan}`);
+    }
+
+    CATEGORY_ORDER.forEach(category => {
+      if (!usedCategories.has(category)) addCategory(category);
+    });
+
+    [...grouped.keys()]
+      .filter(category => !usedCategories.has(category) && category !== "Key")
+      .forEach(category => addCategory(category));
+
+    if (state.structure) {
+      add(`Structure: ${compact(state.structure, config.structureLimit)}`);
+    }
+    if (state.production) {
+      add(`Production direction: ${compact(state.production, config.productionLimit)}`);
+    }
+
+    const limit = Number(state.limit) || 0;
+    const included = new Set();
+    const outputSegments = [];
+    let truncated = false;
+
+    for (const segment of segments) {
+      const candidate = sentence(segment.text);
+      const prefix = outputSegments.length ? " " : "";
+      if (!limit || outputSegments.join(" ").length + prefix.length + candidate.length <= limit) {
+        outputSegments.push(candidate);
+        segment.tags.forEach(tag => included.add(tag));
+        continue;
+      }
+
+      const remaining = limit - outputSegments.join(" ").length - prefix.length;
+      if (segment.essential && remaining >= 64) {
+        const shortened = sentence(compact(segment.text, remaining - 1));
+        if (shortened.length <= remaining) outputSegments.push(shortened);
+      }
+      truncated = true;
+    }
+
+    let text = outputSegments.join(" ").trim();
+    if (limit && text.length > limit) {
+      text = compact(text, limit);
+      truncated = true;
+    }
+
+    lastCompile = {
+      includedTags: included.size,
+      totalTags: state.selected.length,
+      truncated
+    };
+    return text;
+  }
+
+  function forgePrompt(options = {}) {
+    state.output = compilePrompt();
+    nodes.promptOutput.value = state.output;
+    outputDirty = false;
+    renderCount();
+    renderExclude();
+    renderQuality();
+    updateStepSummaries();
+    markDirty();
+
+    if (state.output) {
+      const tagStatus = lastCompile.totalTags
+        ? `${lastCompile.includedTags} of ${lastCompile.totalTags} selected sound choices represented`
+        : "No sound choices selected";
+      nodes.outputStatus.textContent = lastCompile.truncated
+        ? `Built to the character limit. ${tagStatus}; review before copying.`
+        : `Built locally. ${tagStatus}.`;
+      if (options.addHistory) addHistory();
+      if (options.announce !== false) toast("Prompt regenerated");
+    } else {
+      nodes.outputStatus.textContent = "Add a brief or sound choices, then regenerate.";
+    }
+  }
+
+  function renderCount() {
+    const limit = Number(state.limit) || 0;
+    const length = String(state.output || "").length;
+    nodes.promptCount.textContent = limit ? `${length} / ${limit}` : `${length} characters`;
+    nodes.promptCount.style.borderColor = limit && length > limit ? "var(--danger)" : "";
+    nodes.outputModeBadge.textContent = MODE_CONFIG[state.promptMode]?.label || "Balanced";
+  }
+
+  function calculateQuality() {
+    const grouped = groupSelected();
+    const count = state.selected.length;
+    let score = 0;
+
+    if (state.brief.length >= 20) score += 15;
+    if (state.brief.length >= 80) score += 10;
+    if (grouped.has("Genre")) score += 12;
+    if (grouped.has("Mood")) score += 8;
+    if (grouped.has("Instruments")) score += 9;
+    if (grouped.has("Vocals") || state.vocalPlan === "instrumental") score += 8;
+    if (count >= 5 && count <= 14) score += 14;
+    else if (count > 0) score += 6;
+    if (state.production.length >= 25) score += 12;
+    if (state.structure) score += 5;
+    if (state.exclude) score += 4;
+    if (state.bpm && state.key && state.mode && state.meter) score += 8;
+
+    if (count > 22) score -= 8;
+    return Math.max(0, Math.min(100, score));
+  }
+
+  function renderQuality() {
+    const score = calculateQuality();
+    nodes.qualityScore.textContent = String(score);
+
+    let heading = "A focused production brief";
+    let hint = "Add a brief and a few sound choices to strengthen the prompt.";
+
+    if (!state.brief) {
+      heading = "Start with a clear idea";
+      hint = "Describe the sound, emotion, or production goal in the Brief step.";
+    } else if (!state.selected.length) {
+      heading = "Give the idea a sound";
+      hint = "Choose a style, mood, and a few instruments or vocal traits.";
+    } else if (!state.production) {
+      heading = "Add production movement";
+      hint = "A short note about dynamics, recording character, or the final section will make this more specific.";
+    } else if (state.selected.length > 22) {
+      heading = "Trim competing choices";
+      hint = "The palette is overloaded. Remove repeated or conflicting traits for a cleaner result.";
+    } else if (score >= 85) {
+      heading = "Studio-ready direction";
+      hint = "The prompt has clear style, movement, and production detail without obvious gaps.";
+    } else if (score >= 65) {
+      heading = "Strong working prompt";
+      hint = "This is ready to try. Fine-tune only the details that materially change the song.";
+    }
+
+    nodes.qualityHeading.textContent = heading;
+    nodes.qualityHint.textContent = hint;
+  }
+
+  function renderExclude() {
+    const value = state.exclude.trim();
+    nodes.excludePreview.textContent = value
+      ? compact(value, 220)
+      : "Nothing excluded yet.";
+    nodes.copyExcludeBtn.disabled = !value;
+  }
+
+  async function copyText(value, success) {
+    const text = String(value || "").trim();
+    if (!text) {
+      toast("There is nothing to copy yet.");
+      return false;
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const box = document.createElement("textarea");
+      box.value = text;
+      box.setAttribute("readonly", "");
+      box.style.position = "fixed";
+      box.style.opacity = "0";
+      document.body.appendChild(box);
+      box.select();
+      document.execCommand("copy");
+      box.remove();
+    }
+
+    toast(success);
+    return true;
+  }
+
+  function makeId() {
+    return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
   function addHistory() {
     if (!state.output) return;
-    const item = { id: makeId(), at: Date.now(), prompt: state.output, state: snapshot() };
-    history = history.filter(entry => entry.prompt !== item.prompt);
-    history.unshift(item);
-    history = history.slice(0, 30);
-    saveJson(HISTORY_KEY, history);
+    const item = {
+      id: makeId(),
+      at: Date.now(),
+      prompt: state.output,
+      state: snapshot()
+    };
+    promptHistory = promptHistory.filter(entry => entry?.prompt !== item.prompt);
+    promptHistory.unshift(item);
+    promptHistory = promptHistory.slice(0, 30);
+    saveJson(HISTORY_KEY, promptHistory);
     renderSaved();
   }
 
   function savePreset() {
     pullControls();
     const name = nodes.presetNameInput.value.trim() || `Preset ${presets.length + 1}`;
-    presets.unshift({ id: makeId(), name, at: Date.now(), state: snapshot() });
+    presets.unshift({
+      id: makeId(),
+      name: compact(name, 70),
+      at: Date.now(),
+      state: snapshot()
+    });
     presets = presets.slice(0, 50);
     saveJson(PRESET_KEY, presets);
     nodes.presetNameInput.value = "";
@@ -570,110 +941,133 @@
   }
 
   function loadSnapshot(value) {
-    state = {
-      ...DEFAULT_STATE,
-      ...(value || {}),
-      selected: Array.isArray(value?.selected) ? unique(value.selected).slice(0, MAX_SELECTED) : []
-    };
+    state = normalizeState(value);
+    outputDirty = !state.output;
     syncControls();
     renderSelected();
     refreshCategoryButtons();
     refreshCategoryCounts();
     renderCount();
-    setStep(state.activeStep || "brief", { scroll: false, forge: false });
+    renderExclude();
+    renderQuality();
+    updateStepSummaries();
+    setStep(state.activeStep || "brief", {
+      scroll: true,
+      forge: false
+    });
     markDirty();
-    toast("Loaded");
+    toast("Saved project loaded");
   }
 
   function renderSaved() {
     const buildItem = (title, subtitle, onLoad, onDelete) => {
       const item = document.createElement("div");
-      item.className = "saved-item";
+      const copy = document.createElement("div");
       const strong = document.createElement("strong");
-      strong.textContent = title;
       const small = document.createElement("small");
-      small.textContent = subtitle;
       const actions = document.createElement("div");
-      actions.className = "saved-item-actions";
       const load = document.createElement("button");
+      const remove = document.createElement("button");
+
+      item.className = "saved-item";
+      copy.className = "saved-item-copy";
+      actions.className = "saved-item-actions";
+      strong.textContent = title;
+      small.textContent = subtitle;
       load.type = "button";
       load.textContent = "Load";
       load.addEventListener("click", onLoad);
-      const remove = document.createElement("button");
       remove.type = "button";
       remove.textContent = "Delete";
       remove.addEventListener("click", onDelete);
+      copy.append(strong, small);
       actions.append(load, remove);
-      item.append(strong, small, actions);
+      item.append(copy, actions);
       return item;
     };
 
     nodes.presetList.replaceChildren();
     presets.forEach(preset => {
+      if (!preset?.state) return;
       nodes.presetList.appendChild(buildItem(
-        preset.name,
-        preset.state?.output || preset.state?.brief || "Saved Forge preset",
+        String(preset.name || "Saved preset"),
+        String(preset.state.output || preset.state.brief || "Saved prompt preset"),
         () => loadSnapshot(preset.state),
         () => {
           presets = presets.filter(item => item.id !== preset.id);
           saveJson(PRESET_KEY, presets);
           renderSaved();
+          toast("Preset deleted");
         }
       ));
     });
-    if (!presets.length) nodes.presetList.textContent = "No presets saved.";
 
     nodes.historyList.replaceChildren();
-    history.forEach(entry => {
+    promptHistory.forEach(entry => {
+      if (!entry?.state || !entry?.prompt) return;
+      const date = Number.isFinite(Number(entry.at))
+        ? new Date(Number(entry.at)).toLocaleString()
+        : "Recent prompt";
       nodes.historyList.appendChild(buildItem(
-        new Date(entry.at).toLocaleString(),
-        entry.prompt,
+        date,
+        String(entry.prompt),
         () => loadSnapshot(entry.state),
         () => {
-          history = history.filter(item => item.id !== entry.id);
-          saveJson(HISTORY_KEY, history);
+          promptHistory = promptHistory.filter(item => item.id !== entry.id);
+          saveJson(HISTORY_KEY, promptHistory);
           renderSaved();
+          toast("History item deleted");
         }
       ));
     });
-    if (!history.length) nodes.historyList.textContent = "No prompt history yet.";
-    nodes.savedCount.textContent = String(presets.length + history.length);
+
+    nodes.savedCount.textContent = String(presets.length + promptHistory.length);
   }
 
   function exportBackup() {
     const payload = {
-      app: "Forge Studio Prompt Generator",
-      version: 2,
+      app: "Suno Forge",
+      version: 3,
       exportedAt: new Date().toISOString(),
       current: snapshot(),
       presets,
-      history
+      history: promptHistory
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `forge-studio-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `suno-forge-backup-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
-    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1200);
   }
 
   async function importBackup(file) {
+    if (!file || file.size > 2_000_000) {
+      toast("Choose a Suno Forge backup smaller than 2 MB.");
+      return;
+    }
+
     try {
       const payload = JSON.parse(await file.text());
+      if (!payload || typeof payload !== "object") throw new Error("Invalid backup");
       if (payload.current) loadSnapshot(payload.current);
-      if (Array.isArray(payload.presets)) presets = payload.presets.slice(0, 50);
-      if (Array.isArray(payload.history)) history = payload.history.slice(0, 30);
+      if (Array.isArray(payload.presets)) {
+        presets = payload.presets.filter(item => item?.state).slice(0, 50);
+      }
+      if (Array.isArray(payload.history)) {
+        promptHistory = payload.history.filter(item => item?.state && item?.prompt).slice(0, 30);
+      }
       saveJson(PRESET_KEY, presets);
-      saveJson(HISTORY_KEY, history);
+      saveJson(HISTORY_KEY, promptHistory);
       renderSaved();
       toast("Backup imported");
     } catch {
-      toast("That backup file could not be read.");
+      toast("That backup could not be read.");
     }
   }
 
   async function refineWithAi() {
-    if (!state.output) forgePrompt({ scroll: false });
+    if (outputDirty || !state.output) forgePrompt({ addHistory: false, announce: false });
     const prompt = String(state.output || "").trim();
     if (!prompt) {
       toast("Build a prompt first.");
@@ -698,6 +1092,7 @@
       if (!refined) throw new Error("Prompt AI returned an empty result.");
       state.output = refined;
       nodes.promptOutput.value = refined;
+      outputDirty = false;
       renderCount();
       addHistory();
       markDirty();
@@ -712,8 +1107,9 @@
   }
 
   function pullControls() {
+    if (!nodes.briefInput) return;
     state.brief = nodes.briefInput.value.trim();
-    state.bpm = Number(nodes.bpmRange.value) || 120;
+    state.bpm = clampNumber(nodes.bpmRange.value, 50, 220, 120);
     state.energy = nodes.energySelect.value;
     state.length = nodes.lengthSelect.value;
     state.key = nodes.keySelect.value;
@@ -724,11 +1120,13 @@
     state.production = nodes.productionInput.value.trim();
     state.exclude = nodes.excludeInput.value.trim();
     state.limit = Number(nodes.limitSelect.value) || 0;
+    state.promptMode = document.querySelector('input[name="promptMode"]:checked')?.value || "balanced";
   }
 
   function syncControls() {
     nodes.briefInput.value = state.brief;
-    nodes.bpmRange.value = state.bpm;
+    nodes.briefCount.textContent = `${state.brief.length} / 1200`;
+    nodes.bpmRange.value = String(state.bpm);
     nodes.bpmOutput.textContent = `${state.bpm} BPM`;
     nodes.energySelect.value = state.energy;
     nodes.lengthSelect.value = state.length;
@@ -740,6 +1138,8 @@
     nodes.productionInput.value = state.production;
     nodes.excludeInput.value = state.exclude;
     nodes.limitSelect.value = String(state.limit);
+    const modeInput = document.querySelector(`input[name="promptMode"][value="${CSS.escape(state.promptMode)}"]`);
+    if (modeInput) modeInput.checked = true;
     nodes.promptOutput.value = state.output;
   }
 
@@ -747,39 +1147,54 @@
     node.addEventListener("input", () => {
       state[key] = transform(node.value);
       if (key === "bpm") nodes.bpmOutput.textContent = `${state.bpm} BPM`;
-      refreshOutput();
+      if (key === "brief") nodes.briefCount.textContent = `${node.value.length} / 1200`;
+      markOutputDirty();
+      renderExclude();
+      renderQuality();
+      updateStepSummaries();
       markDirty();
     });
   }
 
   function resetProject() {
-    if (!window.confirm("Start a new prompt and clear the current project? Saved presets and history will stay.")) return;
     state = clone(DEFAULT_STATE);
+    outputDirty = true;
+    nodes.tagSearch.value = "";
+    nodes.searchResults.hidden = true;
     syncControls();
     renderSelected();
     refreshCategoryButtons();
     refreshCategoryCounts();
     renderCount();
+    renderExclude();
+    renderQuality();
+    updateStepSummaries();
     setStep("brief", { scroll: true, forge: false });
     markDirty();
-    toast("New project ready");
+    toast("New prompt ready");
   }
 
   function cacheNodes() {
     [
-      "toolsBtn","aiToolBtn","newProjectBtn","clearBriefBtn","briefInput","recipeRow",
-      "selectedCount","tagSearch","searchResults","selectedTags","clearTagsBtn","categoryList",
-      "bpmOutput","bpmRange","energySelect","lengthSelect","keySelect","modeSelect",
-      "meterSelect","vocalPlanSelect","structureInput","structurePresets","productionInput",
-      "excludeInput","limitSelect","outputCard","promptCount","promptOutput","forgeBtn",
-      "copyBtn","copyExcludeBtn","shareBtn","savePresetBtn","outputStatus","savedWork",
-      "savedCount","presetNameInput","exportBackupBtn","importBackupInput","presetList",
-      "historyList","aiAssist","aiDirectionInput","aiRefineBtn","aiStatus","toast"
+      "workspace", "saveState", "installBtn", "newProjectBtn", "summaryBrief", "summarySound",
+      "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeRow",
+      "selectedCount", "tagSearch", "searchResults", "selectedTags", "selectionGuidance",
+      "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
+      "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
+      "modeSelect", "meterSelect", "vocalPlanSelect", "structureInput", "structurePresets",
+      "productionInput", "excludeInput", "limitSelect", "outputCard", "promptCount",
+      "outputModeBadge", "promptOutput", "forgeBtn", "copyBtn", "copyExcludeBtn",
+      "excludePreview", "shareBtn", "outputStatus", "qualityScore", "qualityHeading",
+      "qualityHint", "savedWork", "savedCount", "presetNameInput", "savePresetBtn",
+      "savePresetFooterBtn", "exportBackupBtn", "importBackupInput", "presetList",
+      "historyList", "aiAssist", "aiDirectionInput", "aiRefineBtn", "aiStatus",
+      "resetDialog", "confirmResetBtn", "toast"
     ].forEach(id => nodes[id] = document.getElementById(id));
+    nodes.workspaceMain = document.querySelector(".workspace-main");
   }
 
   function initKeys() {
-    const keys = ["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
+    const keys = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
     nodes.keySelect.replaceChildren();
     keys.forEach(key => {
       const option = document.createElement("option");
@@ -792,13 +1207,26 @@
   function bindEvents() {
     document.querySelectorAll("[data-step]").forEach(button => {
       button.addEventListener("click", () => setStep(button.dataset.step));
+      button.addEventListener("keydown", event => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        const current = STEP_ORDER.indexOf(button.dataset.step);
+        const index = event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? STEP_ORDER.length - 1
+            : (current + (event.key === "ArrowRight" ? 1 : -1) + STEP_ORDER.length) % STEP_ORDER.length;
+        document.querySelector(`[data-step="${STEP_ORDER[index]}"]`)?.focus();
+        setStep(STEP_ORDER[index]);
+      });
     });
+
     document.querySelectorAll("[data-go]").forEach(button => {
       button.addEventListener("click", () => setStep(button.dataset.go));
     });
 
     bindStateControl(nodes.briefInput, "brief");
-    bindStateControl(nodes.bpmRange, "bpm", value => Number(value));
+    bindStateControl(nodes.bpmRange, "bpm", value => clampNumber(value, 50, 220, 120));
     bindStateControl(nodes.energySelect, "energy");
     bindStateControl(nodes.lengthSelect, "length");
     bindStateControl(nodes.keySelect, "key");
@@ -808,54 +1236,159 @@
     bindStateControl(nodes.structureInput, "structure");
     bindStateControl(nodes.productionInput, "production");
     bindStateControl(nodes.excludeInput, "exclude");
-    bindStateControl(nodes.limitSelect, "limit", value => Number(value));
+    bindStateControl(nodes.limitSelect, "limit", value => Number(value) || 0);
+
+    document.querySelectorAll('input[name="promptMode"]').forEach(input => {
+      input.addEventListener("change", () => {
+        state.promptMode = input.value;
+        markOutputDirty();
+        renderCount();
+        markDirty();
+      });
+    });
 
     nodes.tagSearch.addEventListener("input", renderSearch);
+    nodes.tagSearch.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        nodes.tagSearch.value = "";
+        renderSearch();
+      }
+    });
+
     nodes.clearBriefBtn.addEventListener("click", () => {
       state.brief = "";
       nodes.briefInput.value = "";
-      refreshOutput();
+      nodes.briefCount.textContent = "0 / 1200";
+      markOutputDirty();
+      renderQuality();
+      updateStepSummaries();
       markDirty();
+      nodes.briefInput.focus();
     });
+
     nodes.clearTagsBtn.addEventListener("click", () => {
+      if (!state.selected.length) return;
       state.selected = [];
       afterTagChange();
-      toast("Sound options cleared");
+      toast("Sound palette cleared");
     });
-    nodes.forgeBtn.addEventListener("click", () => forgePrompt());
-    nodes.copyBtn.addEventListener("click", () => copyText(nodes.promptOutput.value, "Prompt copied"));
-    nodes.copyExcludeBtn.addEventListener("click", () => copyText(nodes.excludeInput.value, "Exclude list copied"));
+
+    nodes.categoryJump.addEventListener("change", () => {
+      const details = document.getElementById(nodes.categoryJump.value);
+      if (!details) return;
+      details.open = true;
+      const tags = categories()[details.dataset.category] || [];
+      fillCategory(details, Array.isArray(tags) ? tags : []);
+      details.scrollIntoView({
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start"
+      });
+      nodes.categoryJump.value = "";
+    });
+
+    nodes.forgeBtn.addEventListener("click", () => forgePrompt({ addHistory: true }));
+    nodes.promptOutput.addEventListener("input", () => {
+      state.output = nodes.promptOutput.value;
+      outputDirty = false;
+      nodes.outputStatus.textContent = "Manual edits saved on this device.";
+      renderCount();
+      updateStepSummaries();
+      markDirty();
+    });
+
+    nodes.copyBtn.addEventListener("click", async () => {
+      if (!state.output) forgePrompt({ addHistory: false, announce: false });
+      const copied = await copyText(nodes.promptOutput.value, "Style prompt copied");
+      if (copied) addHistory();
+    });
+
+    nodes.copyExcludeBtn.addEventListener("click", () => {
+      copyText(nodes.excludeInput.value, "Exclusions copied");
+    });
+
     nodes.shareBtn.addEventListener("click", async () => {
-      if (!state.output) forgePrompt({ scroll: false });
+      if (!state.output) forgePrompt({ addHistory: false, announce: false });
+      if (!state.output) return;
       if (navigator.share) {
         try {
-          await navigator.share({ title: "Forge Studio Prompt", text: state.output });
-        } catch {
-          // User canceled.
+          await navigator.share({
+            title: "Suno Forge prompt",
+            text: state.output
+          });
+          addHistory();
+        } catch (error) {
+          if (error?.name !== "AbortError") toast("Sharing is unavailable.");
         }
       } else {
-        await copyText(state.output, "Prompt copied");
+        const copied = await copyText(state.output, "Prompt copied for sharing");
+        if (copied) addHistory();
       }
     });
+
     nodes.savePresetBtn.addEventListener("click", savePreset);
+    nodes.savePresetFooterBtn.addEventListener("click", savePreset);
     nodes.exportBackupBtn.addEventListener("click", exportBackup);
     nodes.importBackupInput.addEventListener("change", () => {
       const file = nodes.importBackupInput.files?.[0];
       if (file) importBackup(file);
       nodes.importBackupInput.value = "";
     });
-    nodes.newProjectBtn.addEventListener("click", resetProject);
-    nodes.toolsBtn.addEventListener("click", () => {
-      setStep("export", { forge: false });
-      nodes.savedWork.open = true;
-      nodes.savedWork.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    nodes.newProjectBtn.addEventListener("click", () => {
+      if (typeof nodes.resetDialog.showModal === "function") {
+        nodes.resetDialog.showModal();
+      } else if (window.confirm("Start a new prompt and clear the current project?")) {
+        resetProject();
+      }
     });
-    nodes.aiToolBtn.addEventListener("click", () => {
-      setStep("export");
-      nodes.aiAssist.open = true;
-      nodes.aiAssist.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    nodes.confirmResetBtn.addEventListener("click", event => {
+      event.preventDefault();
+      resetProject();
+      nodes.resetDialog.close?.();
     });
     nodes.aiRefineBtn.addEventListener("click", refineWithAi);
+
+    nodes.installBtn.addEventListener("click", async () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      installPrompt = null;
+      nodes.installBtn.hidden = true;
+    });
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      installPrompt = event;
+      nodes.installBtn.hidden = false;
+    });
+
+    window.addEventListener("hashchange", () => {
+      const step = location.hash.slice(1);
+      if (STEP_ORDER.includes(step) && step !== state.activeStep) {
+        setStep(step, { history: false });
+      }
+    });
+
+    document.addEventListener("keydown", event => {
+      const target = event.target;
+      const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
+
+      if (event.key === "/" && !isTyping && state.activeStep === "sound") {
+        event.preventDefault();
+        nodes.tagSearch.focus();
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        const current = STEP_ORDER.indexOf(state.activeStep);
+        if (state.activeStep === "export") {
+          forgePrompt({ addHistory: true });
+        } else {
+          setStep(STEP_ORDER[Math.min(current + 1, STEP_ORDER.length - 1)]);
+        }
+      }
+    });
   }
 
   function init() {
@@ -863,17 +1396,34 @@
     buildCategoryIndex();
     initKeys();
     renderRecipes();
+    renderQuickPicks();
     renderStructures();
-    renderSelected();
     renderCategories();
-    renderSaved();
     syncControls();
+    renderSelected();
+    refreshCategoryButtons();
+    refreshCategoryCounts();
+    renderSaved();
     renderCount();
+    renderExclude();
+    renderQuality();
+    updateStepSummaries();
     bindEvents();
-    setStep(state.activeStep || "brief", { scroll: false, forge: false });
+
+    const hashStep = location.hash.slice(1);
+    const initialStep = STEP_ORDER.includes(hashStep) ? hashStep : state.activeStep;
+    setStep(initialStep, {
+      scroll: false,
+      forge: false,
+      history: false
+    });
 
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}), { once: true });
+      window.addEventListener(
+        "load",
+        () => navigator.serviceWorker.register("/sw.js").catch(() => {}),
+        { once: true }
+      );
     }
   }
 
