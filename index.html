@@ -8,7 +8,7 @@
   <meta name="color-scheme" content="dark light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/prompt-style.css?v=3.0.2">
+  <link rel="stylesheet" href="/prompt-style.css?v=3.0.3">
   <title>Suno Forge — AI Music Prompt Studio</title>
 </head>
 <body>
@@ -105,6 +105,11 @@
               </div>
               <span class="section-note">6 recipes</span>
             </div>
+            <label class="recipe-mobile-picker" for="recipeSelect">
+              <span>Quick Start direction</span>
+              <select id="recipeSelect" aria-describedby="recipePickerHint"></select>
+              <small id="recipePickerHint">Choose any recipe; you can change every detail afterward.</small>
+            </label>
             <div class="recipe-grid" id="recipeRow" aria-label="Starting recipes"></div>
           </section>
 
@@ -439,6 +444,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/data.js" defer></script>
-  <script src="/prompt-app.js?v=3.0.2" defer></script>
+  <script src="/prompt-app.js?v=3.0.3" defer></script>
 </body>
 </html>
