@@ -75,8 +75,35 @@ assert.equal(document.querySelectorAll(".recipe-card").length, 6, "All starter r
 assert.equal(document.querySelectorAll(".category").length, 20, "Every sound category should render.");
 assert.equal(document.querySelectorAll(".category-grid").length, 0, "Sound options should load lazily.");
 
-const firstRecipe = document.querySelector(".recipe-card");
-click(firstRecipe);
+const recipeExpectations = [
+  ["Appalachian folk", "82 BPM"],
+  ["alternative rock", "112 BPM"],
+  ["dark cinematic", "76 BPM"],
+  ["Modern soul", "92 BPM"],
+  ["outlaw country", "126 BPM"],
+  ["post-punk", "132 BPM"]
+];
+const recipeButtons = [...document.querySelectorAll(".recipe-card")];
+recipeButtons.forEach((button, index) => {
+  click(button);
+  assert.match(document.getElementById("briefInput").value, new RegExp(recipeExpectations[index][0], "i"));
+  assert.equal(document.getElementById("bpmOutput").textContent, recipeExpectations[index][1]);
+  assert.equal(document.getElementById("recipeSelect").value, String(index));
+  assert.equal(button.getAttribute("aria-pressed"), "true");
+});
+
+const recipeSelect = document.getElementById("recipeSelect");
+const briefBeforeEmptyChoice = document.getElementById("briefInput").value;
+recipeSelect.value = "";
+recipeSelect.dispatchEvent(new window.Event("change", { bubbles: true }));
+assert.equal(document.getElementById("briefInput").value, briefBeforeEmptyChoice);
+
+recipeSelect.value = "1";
+recipeSelect.dispatchEvent(new window.Event("change", { bubbles: true }));
+assert.match(document.getElementById("briefInput").value, /alternative rock/i);
+assert.equal(document.getElementById("bpmOutput").textContent, "112 BPM");
+
+click(recipeButtons[0]);
 assert.match(document.getElementById("briefInput").value, /Appalachian folk/i);
 assert.equal(document.getElementById("selectedCount").textContent, "8 selected");
 assert.equal(document.getElementById("bpmOutput").textContent, "82 BPM");
