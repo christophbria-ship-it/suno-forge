@@ -39,6 +39,12 @@ if (!css.includes("@media (prefers-reduced-motion: reduce)")) {
   fail("Reduced-motion support is missing.");
 }
 if (!css.includes(":focus-visible")) fail("Visible keyboard focus styles are missing.");
+if (!css.includes("-webkit-text-size-adjust: 100%")) {
+  fail("Mobile text sizing guard is missing.");
+}
+if (/min-width:\s*420px/.test(css)) {
+  fail("Mobile navigation can force the page wider than the viewport.");
+}
 
 const localAssets = new Set(
   [...html.matchAll(/(?:src|href)="\/([^"#?]+)(?:\?[^"]*)?"/g)]
@@ -92,4 +98,3 @@ if (html.includes("v=2.1.0") || worker.includes("v=2.1.0")) {
 }
 
 console.log(`Project checks passed: ${ids.length} unique UI ids, ${Object.keys(categories).length} sound categories, ${tagCount} sound options.`);
-
