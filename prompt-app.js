@@ -1045,7 +1045,7 @@
 
   function exportBackup() {
     const payload = {
-      app: "Suno Forge",
+      app: "The Simplest Prompt Builder",
       version: 3,
       exportedAt: new Date().toISOString(),
       current: snapshot(),
@@ -1055,14 +1055,14 @@
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `suno-forge-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `simplest-prompt-builder-backup-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(link.href), 1200);
   }
 
   async function importBackup(file) {
     if (!file || file.size > 2_000_000) {
-      toast("Choose a Suno Forge backup smaller than 2 MB.");
+      toast("Choose a Simplest Prompt Builder backup smaller than 2 MB.");
       return;
     }
 
@@ -1337,7 +1337,7 @@
       if (navigator.share) {
         try {
           await navigator.share({
-            title: "Suno Forge prompt",
+            title: "The Simplest Prompt Builder prompt",
             text: state.output
           });
           addHistory();
