@@ -1,11 +1,34 @@
 {
-  "name": "The Simplest Prompt Maker for AI Music",
-  "short_name": "Prompt Maker",
-  "description": "The easiest AI music prompt builder you'll ever need.",
-  "start_url": "/",
+  "id": "/",
+  "name": "Suno Forge — AI Music Prompt Studio",
+  "short_name": "Suno Forge",
+  "description": "Build production-ready prompts for Suno and other AI music tools.",
+  "start_url": "/#brief",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f3f1ed",
-  "theme_color": "#111111",
-  "icons": []
+  "orientation": "any",
+  "background_color": "#0d0d10",
+  "theme_color": "#0d0d10",
+  "categories": ["music", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New prompt",
+      "short_name": "New prompt",
+      "url": "/#brief"
+    },
+    {
+      "name": "Open saved work",
+      "short_name": "Saved work",
+      "url": "/#export"
+    }
+  ]
 }
+

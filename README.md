@@ -1,25 +1,27 @@
-# The Simplest Prompt Maker for AI Music
+# Suno Forge
 
-**The easiest AI music prompt builder you'll ever need.**
+A fast, local-first AI music prompt studio for Suno and other generative music tools.
 
-The Simplest Prompt Maker is a professional, mobile-first music prompt generator.
+## What it does
 
-## Current release
+- Guides a song idea through four focused steps: Brief, Sound, Shape, and Export.
+- Searches a large sound library without rendering every option at once.
+- Builds compact, balanced, or detailed production prompts within a chosen character limit.
+- Keeps Exclude Styles separate for direct use in Suno.
+- Supports keyboard navigation, mobile layouts, reduced motion, strong focus states, and screen-reader-friendly controls.
+- Saves the current project, presets, and prompt history on the device.
+- Works offline after the first visit and can be installed as a PWA.
+- Optionally refines an existing production prompt through the server-side Prompt AI endpoint.
 
-- Four focused steps: Brief, Sound, Shape, and Export.
-- Full searchable sound library with genres, instruments, vocals, moods, arrangement, effects, and production controls.
-- Up to 100 selected sound options per project.
-- Tempo, energy, length, key, mode, meter, vocal plan, arrangement, production direction, and exclusions.
-- Character-limit controls for music-platform style boxes.
-- Copy, share, presets, history, backup, autosave, and offline PWA support.
-- Optional prompt-only AI refinement. AI does not write lyrics and is never required.
+## Privacy
 
-## Deferred modules
+The local generator, projects, presets, and prompt history stay in browser storage. Prompt AI sends only the finished prompt and optional refinement direction when the user explicitly selects that feature.
 
-Lyric generation, stem separation, and Studio Remote are not part of this release. The previous full workstation remains preserved on the `archive/full-studio-before-prompt-only` branch.
-
-## Test
+## Verification
 
 ```bash
 npm test
 ```
+
+The test suite checks JavaScript syntax, UI/JavaScript wiring, asset integrity, manifest and service-worker consistency, accessibility essentials, and sound-library loading.
+
