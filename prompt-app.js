@@ -1142,11 +1142,18 @@
     state.promptMode = document.querySelector('input[name="promptMode"]:checked')?.value || "balanced";
   }
 
+  function updateBpmDisplay() {
+    const label = `${state.bpm} BPM`;
+    nodes.bpmOutput.textContent = label;
+    nodes.bpmLiveOutput.textContent = label;
+    nodes.bpmRange.setAttribute("aria-valuetext", `${state.bpm} beats per minute`);
+  }
+
   function syncControls() {
     nodes.briefInput.value = state.brief;
     nodes.briefCount.textContent = `${state.brief.length} / 1200`;
     nodes.bpmRange.value = String(state.bpm);
-    nodes.bpmOutput.textContent = `${state.bpm} BPM`;
+    updateBpmDisplay();
     nodes.energySelect.value = state.energy;
     nodes.lengthSelect.value = state.length;
     nodes.keySelect.value = state.key;
@@ -1165,7 +1172,7 @@
   function bindStateControl(node, key, transform = value => value) {
     node.addEventListener("input", () => {
       state[key] = transform(node.value);
-      if (key === "bpm") nodes.bpmOutput.textContent = `${state.bpm} BPM`;
+      if (key === "bpm") updateBpmDisplay();
       if (key === "brief") nodes.briefCount.textContent = `${node.value.length} / 1200`;
       markOutputDirty();
       renderExclude();
@@ -1199,7 +1206,7 @@
       "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeSelect", "recipeRow",
       "selectedCount", "tagSearch", "searchResults", "selectedTags", "selectionGuidance",
       "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
-      "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
+      "categoryList", "bpmOutput", "bpmLiveOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
       "modeSelect", "meterSelect", "vocalPlanSelect", "structureInput", "structurePresets",
       "productionInput", "excludeInput", "limitSelect", "outputCard", "promptCount",
       "outputModeBadge", "promptOutput", "forgeBtn", "copyBtn", "copyExcludeBtn",
