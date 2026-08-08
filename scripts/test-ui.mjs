@@ -74,6 +74,11 @@ await wait(20);
 assert.equal(document.querySelectorAll(".recipe-card").length, 6, "All starter recipes should render.");
 assert.equal(document.querySelectorAll(".category").length, 20, "Every sound category should render.");
 assert.equal(document.querySelectorAll(".category-grid").length, 0, "Sound options should load lazily.");
+assert.equal(document.querySelectorAll('input[name="outputFormat"]').length, 3, "All output styles should be available.");
+assert.match(document.getElementById("libraryStats").textContent, /1,336 tags available/);
+assert.match(document.getElementById("libraryStats").textContent, /312 genres/);
+assert.match(document.getElementById("libraryStats").textContent, /176 instruments/);
+assert.match(document.getElementById("libraryStats").textContent, /select up to 100/);
 
 const recipeExpectations = [
   ["Appalachian folk", "82 BPM"],
@@ -158,13 +163,48 @@ assert.match(document.getElementById("excludePreview").textContent, /glossy pop 
 assert.equal(document.getElementById("copyExcludeBtn").disabled, false);
 assert.ok(Number(document.getElementById("qualityScore").textContent) >= 65);
 
+const sunoFormat = document.querySelector('input[name="outputFormat"][value="suno"]');
+sunoFormat.checked = true;
+sunoFormat.dispatchEvent(new window.Event("change", { bubbles: true }));
+click(document.getElementById("forgeBtn"));
+const sunoOutput = document.getElementById("promptOutput").value;
+assert.equal(sunoOutput.split("\n").length, 6, "Suno Fields should always use the six organized lines.");
+assert.match(sunoOutput, /^GENRE: Appalachian Folk, Dark Folk$/m);
+assert.match(sunoOutput, /^ERA:$/m);
+assert.match(sunoOutput, /^MOOD\/EMOTION: Haunting, Defiant$/m);
+assert.match(sunoOutput, /^INSTRUMENTS: Banjo, Fiddle$/m);
+assert.match(sunoOutput, /^VOCAL STYLE: Raspy Vocals$/m);
+assert.match(sunoOutput, /^PRODUCTION: 95 BPM, D minor, 4\/4, medium energy;/m);
+assert.ok(sunoOutput.length < 600, "Suno Fields should stay focused instead of filling the selected limit.");
+assert.match(document.getElementById("outputStatus").textContent, /six Suno-ready fields/);
+
+const shortFormat = document.querySelector('input[name="outputFormat"][value="short"]');
+shortFormat.checked = true;
+shortFormat.dispatchEvent(new window.Event("change", { bubbles: true }));
+click(document.getElementById("forgeBtn"));
+const shortOutput = document.getElementById("promptOutput").value;
+assert.equal(shortOutput.includes("\n"), false, "Short & Sweet should be one line.");
+assert.ok(shortOutput.length <= 220, "Short & Sweet should stay under its focused target.");
+assert.match(shortOutput, /Appalachian Folk \/ Dark Folk/);
+assert.match(shortOutput, /Haunting and Defiant/);
+assert.match(shortOutput, /Banjo, Fiddle, and Upright Bass/);
+assert.match(shortOutput, /Raspy Vocals/);
+assert.equal(document.getElementById("promptModeControl").disabled, true);
+assert.match(document.getElementById("promptCount").textContent, /\/ 220 target$/);
+
+const forgeFormat = document.querySelector('input[name="outputFormat"][value="forge"]');
+forgeFormat.checked = true;
+forgeFormat.dispatchEvent(new window.Event("change", { bubbles: true }));
+assert.equal(document.getElementById("promptModeControl").disabled, false);
+
 input(document.getElementById("promptOutput"), "A manually edited studio prompt.");
 assert.equal(document.getElementById("promptCount").textContent, "32 / 600");
 assert.match(document.getElementById("outputStatus").textContent, /Manual edits saved/);
 
+const savedBeforePreset = Number(document.getElementById("savedCount").textContent);
 input(document.getElementById("presetNameInput"), "Test preset");
 click(document.getElementById("savePresetBtn"));
-assert.equal(document.getElementById("savedCount").textContent, "1");
+assert.equal(document.getElementById("savedCount").textContent, String(savedBeforePreset + 1));
 assert.equal(document.querySelectorAll("#presetList .saved-item").length, 1);
 
 click(document.getElementById("newProjectBtn"));
