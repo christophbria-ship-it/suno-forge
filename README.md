@@ -1,4 +1,4 @@
-# Suno Forge
+# The Simplest Prompt Builder
 
 A fast, local-first AI music prompt studio for Suno and other generative music tools.
 
