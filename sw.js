@@ -1,4 +1,4 @@
-const CACHE_NAME = "suno-forge-v3-3-rootbeer-20260808";
+const CACHE_NAME = "simplest-prompt-builder-v3-3-rootbeer-20260808";
 const APP_SHELL = [
   "/",
   "/index.html",
