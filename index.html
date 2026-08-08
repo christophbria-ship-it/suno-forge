@@ -8,7 +8,7 @@
   <meta name="color-scheme" content="dark light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/prompt-style.css?v=3.0.3-rootbeer">
+  <link rel="stylesheet" href="/prompt-style.css?v=3.0.4">
   <title>Suno Forge — AI Music Prompt Studio</title>
 </head>
 <body>
@@ -211,9 +211,9 @@
             </div>
 
             <label class="range-field" for="bpmRange">
-              <span>Tempo</span>
-              <input id="bpmRange" type="range" min="50" max="220" value="120">
-              <span class="range-scale" aria-hidden="true"><small>50 · slow</small><small>220 · fast</small></span>
+              <span class="range-heading"><span>Tempo</span><output id="bpmLiveOutput" class="range-value" for="bpmRange" aria-live="polite">120 BPM</output></span>
+              <input id="bpmRange" type="range" min="50" max="220" step="1" value="120" aria-describedby="bpmLiveOutput bpmScale" aria-valuetext="120 beats per minute">
+              <span id="bpmScale" class="range-scale" aria-hidden="true"><small>50 · slow</small><small>220 · fast</small></span>
             </label>
 
             <div class="control-grid">
@@ -444,6 +444,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/data.js" defer></script>
-  <script src="/prompt-app.js?v=3.0.3" defer></script>
+  <script src="/prompt-app.js?v=3.0.4" defer></script>
 </body>
 </html>
