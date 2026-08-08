@@ -8,7 +8,7 @@
   <meta name="color-scheme" content="dark light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/prompt-style.css?v=3.0.3-rootbeer">
+  <link rel="stylesheet" href="/prompt-style.css?v=3.1.0-rootbeer">
   <title>The Simplest Prompt Builder for AI Music</title>
 </head>
 <body>
@@ -135,6 +135,7 @@
               <input id="tagSearch" type="search" autocomplete="off" placeholder="Search genres, instruments, vocals, moods, effects…">
               <kbd>/</kbd>
             </label>
+            <p id="libraryStats" class="library-stats" aria-live="polite">Loading the full sound library…</p>
             <div id="searchResults" class="search-results" role="listbox" aria-label="Sound search results" hidden></div>
           </section>
 
@@ -173,7 +174,7 @@
               <div>
                 <p class="overline">FULL LIBRARY</p>
                 <h2 id="libraryHeading">Explore every option</h2>
-                <p>Categories stay closed until you need them, keeping the workspace fast and focused.</p>
+                <p>Every category and every tag is available here. Open one below or jump directly to it.</p>
               </div>
               <label class="jump-field">
                 <span class="sr-only">Jump to category</span>
@@ -298,15 +299,28 @@
             <div>
               <p class="overline">OUTPUT</p>
               <h2 id="outputSettingsHeading">Prompt format</h2>
-              <p>Balanced is the best default. Compact saves space; Detailed preserves more production language.</p>
+              <p>Keep the full Forge brief, organize it into Suno-friendly fields, or make one short GMIV line.</p>
             </div>
             <div class="output-setting-controls">
-              <fieldset class="segment-control" id="promptModeControl">
-                <legend class="sr-only">Prompt detail</legend>
-                <label><input type="radio" name="promptMode" value="compact"><span>Compact</span></label>
-                <label><input type="radio" name="promptMode" value="balanced" checked><span>Balanced</span></label>
-                <label><input type="radio" name="promptMode" value="detailed"><span>Detailed</span></label>
-              </fieldset>
+              <div class="setting-group">
+                <span class="setting-label">Output style</span>
+                <fieldset class="segment-control" id="outputFormatControl" aria-describedby="formatHint">
+                  <legend class="sr-only">Output style</legend>
+                  <label><input type="radio" name="outputFormat" value="forge" checked><span>Forge Brief</span></label>
+                  <label><input type="radio" name="outputFormat" value="suno"><span>Suno Fields</span></label>
+                  <label><input type="radio" name="outputFormat" value="short"><span>Short &amp; Sweet</span></label>
+                </fieldset>
+                <small id="formatHint" class="setting-hint">The current full production brief.</small>
+              </div>
+              <div class="setting-group">
+                <span class="setting-label">Detail level</span>
+                <fieldset class="segment-control" id="promptModeControl">
+                  <legend class="sr-only">Prompt detail</legend>
+                  <label><input type="radio" name="promptMode" value="compact"><span>Compact</span></label>
+                  <label><input type="radio" name="promptMode" value="balanced" checked><span>Balanced</span></label>
+                  <label><input type="radio" name="promptMode" value="detailed"><span>Detailed</span></label>
+                </fieldset>
+              </div>
               <label class="field compact-field"><span>Character limit</span>
                 <select id="limitSelect">
                   <option value="600">600 characters</option>
@@ -444,6 +458,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/data.js" defer></script>
-  <script src="/prompt-app.js?v=3.0.3" defer></script>
+  <script src="/prompt-app.js?v=3.1.0" defer></script>
 </body>
 </html>

@@ -7,7 +7,7 @@
   const LEGACY_STORAGE_KEY = "forgePromptGeneratorV2";
   const LEGACY_HISTORY_KEY = "forgePromptHistoryV2";
   const LEGACY_PRESET_KEY = "forgePromptPresetsV2";
-  const MAX_SELECTED = 32;
+  const MAX_SELECTED = 100;
   const STEP_ORDER = ["brief", "sound", "shape", "export"];
 
   const RECIPES = [
@@ -161,6 +161,24 @@
     }
   };
 
+  const OUTPUT_FORMATS = {
+    forge: {
+      label: "Forge Brief",
+      hint: "The current full production brief."
+    },
+    suno: {
+      label: "Suno Fields",
+      hint: "Six labeled lines that keep Suno's main style signals easy to scan."
+    },
+    short: {
+      label: "Short & Sweet",
+      hint: "One focused GMIV line, intentionally kept under 220 characters."
+    }
+  };
+
+  const SHORT_PROMPT_TARGET = 220;
+  const SUNO_FIELDS_TARGET = 580;
+
   const DEFAULT_STATE = Object.freeze({
     brief: "",
     selected: [],
@@ -175,6 +193,7 @@
     production: "",
     exclude: "",
     limit: 1000,
+    outputFormat: "forge",
     promptMode: "balanced",
     output: "",
     activeStep: "brief"
@@ -234,6 +253,7 @@
       : [];
     next.bpm = clampNumber(next.bpm, 50, 220, 120);
     next.limit = [0, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
+    next.outputFormat = OUTPUT_FORMATS[next.outputFormat] ? next.outputFormat : "forge";
     next.promptMode = MODE_CONFIG[next.promptMode] ? next.promptMode : "balanced";
     next.activeStep = STEP_ORDER.includes(next.activeStep) ? next.activeStep : "brief";
     [
@@ -279,6 +299,13 @@
       });
     });
     state.selected = state.selected.filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
+    const available = categories();
+    const genreCount = Array.isArray(available.Genre) ? available.Genre.length : 0;
+    const instrumentCount = Array.isArray(available.Instruments) ? available.Instruments.length : 0;
+    const totalCount = Object.values(available)
+      .filter(Array.isArray)
+      .reduce((total, tags) => total + tags.length, 0);
+    nodes.libraryStats.textContent = `${totalCount.toLocaleString()} tags available · ${genreCount} genres · ${instrumentCount} instruments · select up to ${MAX_SELECTED}`;
   }
 
   function sentence(value) {
@@ -353,6 +380,7 @@
       production: state.production,
       exclude: state.exclude,
       limit: state.limit,
+      outputFormat: state.outputFormat,
       promptMode: state.promptMode,
       output: state.output,
       activeStep: state.activeStep
@@ -573,7 +601,7 @@
         const rightStarts = right.tag.toLowerCase().startsWith(query) ? 0 : 1;
         return leftStarts - rightStarts || left.tag.localeCompare(right.tag);
       })
-      .slice(0, 40);
+      .slice(0, 100);
 
     matches.forEach(({ tag, category }) => {
       const button = document.createElement("button");
@@ -655,7 +683,7 @@
       nodes.categoryList.appendChild(details);
 
       option.value = id;
-      option.textContent = category;
+      option.textContent = `${category} (${tags.length})`;
       nodes.categoryJump.appendChild(option);
     });
 
@@ -712,7 +740,7 @@
     return grouped;
   }
 
-  function compilePrompt() {
+  function compileForgePrompt() {
     pullControls();
     const config = MODE_CONFIG[state.promptMode] || MODE_CONFIG.balanced;
     const grouped = groupSelected();
@@ -806,6 +834,158 @@
     return text;
   }
 
+  function categoryValues(grouped, categoryNames) {
+    return unique(categoryNames.flatMap(category => grouped.get(category) || []));
+  }
+
+  function takeWithin(values, maximumItems, maximumCharacters, included) {
+    const chosen = [];
+    for (const value of unique(values).slice(0, maximumItems)) {
+      const candidate = [...chosen, value].join(", ");
+      if (candidate.length > maximumCharacters && chosen.length) break;
+      chosen.push(candidate.length > maximumCharacters ? compact(value, maximumCharacters) : value);
+      if (state.selected.includes(value)) included.add(value);
+    }
+    return chosen;
+  }
+
+  function naturalList(values) {
+    if (values.length < 2) return values[0] || "";
+    if (values.length === 2) return `${values[0]} and ${values[1]}`;
+    return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+  }
+
+  function compileSunoFieldsPrompt() {
+    pullControls();
+    const grouped = groupSelected();
+    const included = new Set();
+    const itemLimit = state.promptMode === "compact" ? 2 : state.promptMode === "detailed" ? 4 : 3;
+
+    const genres = takeWithin(grouped.get("Genre") || [], Math.min(itemLimit, 3), 58, included);
+    const eras = takeWithin(grouped.get("Era") || [], 1, 24, included);
+    const moods = takeWithin(grouped.get("Mood") || [], Math.min(itemLimit, 3), 50, included);
+    const instruments = takeWithin(grouped.get("Instruments") || [], Math.min(itemLimit, 3), 78, included);
+
+    const vocalSource = state.vocalPlan === "instrumental"
+      ? ["Instrumental"]
+      : [
+          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
+          ...categoryValues(grouped, [
+            "Vocals",
+            "Vocal Delivery",
+            "Vocal Range & Register",
+            "Vocal Arrangement",
+            "Harmony & Choir"
+          ])
+        ];
+    const vocals = takeWithin(vocalSource, Math.min(itemLimit + 1, 4), 95, included);
+
+    const productionTags = takeWithin(
+      categoryValues(grouped, [
+        "Production",
+        "Mix & Master",
+        "Effects",
+        "Rhythm & Groove",
+        "Recording Space",
+        "Texture & Atmosphere"
+      ]),
+      Math.min(itemLimit + 1, 5),
+      92,
+      included
+    );
+    const productionParts = [
+      `${state.bpm} BPM, ${state.key} ${state.mode}, ${state.meter}, ${state.energy} energy`
+    ];
+    if (productionTags.length) productionParts.push(productionTags.join(", "));
+    if (state.production) {
+      const noteLimit = state.promptMode === "compact" ? 72 : state.promptMode === "detailed" ? 120 : 96;
+      productionParts.push(compact(state.production, noteLimit));
+    }
+
+    const lines = [
+      ["GENRE", genres.join(", ")],
+      ["ERA", eras.join(", ")],
+      ["MOOD/EMOTION", moods.join(", ")],
+      ["INSTRUMENTS", instruments.join(", ")],
+      ["VOCAL STYLE", vocals.join(", ")],
+      ["PRODUCTION", compact(productionParts.join("; "), 190)]
+    ].map(([label, value]) => `${label}: ${value}`.trimEnd());
+
+    const requestedLimit = Number(state.limit) || 0;
+    const effectiveLimit = requestedLimit
+      ? Math.min(requestedLimit, SUNO_FIELDS_TARGET)
+      : SUNO_FIELDS_TARGET;
+    let text = lines.join("\n");
+    let truncated = false;
+    if (text.length > effectiveLimit) {
+      text = compact(text, effectiveLimit);
+      truncated = true;
+    }
+
+    lastCompile = {
+      includedTags: included.size,
+      totalTags: state.selected.length,
+      truncated
+    };
+    return text;
+  }
+
+  function compileShortPrompt() {
+    pullControls();
+    const grouped = groupSelected();
+    const included = new Set();
+    const genres = takeWithin(grouped.get("Genre") || [], 2, 42, included);
+    const eras = takeWithin(grouped.get("Era") || [], 1, 16, included);
+    const moods = takeWithin(grouped.get("Mood") || [], 3, 34, included);
+    const instruments = takeWithin(grouped.get("Instruments") || [], 3, 54, included);
+
+    const vocalSource = state.vocalPlan === "instrumental"
+      ? ["Instrumental"]
+      : [
+          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
+          ...categoryValues(grouped, ["Vocals", "Vocal Delivery", "Vocal Range & Register"])
+        ];
+    const vocals = takeWithin(vocalSource, 3, 58, included);
+
+    const style = compact(
+      [eras[0] || "", genres.join(" / ")].filter(Boolean).join(" "),
+      52
+    );
+    const clauses = [
+      style,
+      naturalList(moods),
+      naturalList(instruments),
+      naturalList(vocals)
+    ].filter(Boolean);
+
+    let text = clauses.join(", ");
+    if (!text && state.brief) text = compact(state.brief, 180);
+    if (!text) text = `${state.bpm} BPM, ${state.key} ${state.mode}, ${state.energy} energy`;
+
+    const requestedLimit = Number(state.limit) || 0;
+    const effectiveLimit = requestedLimit
+      ? Math.min(requestedLimit, SHORT_PROMPT_TARGET)
+      : SHORT_PROMPT_TARGET;
+    let truncated = false;
+    if (text.length > effectiveLimit) {
+      text = compact(text, effectiveLimit);
+      truncated = true;
+    }
+
+    lastCompile = {
+      includedTags: included.size,
+      totalTags: state.selected.length,
+      truncated
+    };
+    return text;
+  }
+
+  function compilePrompt() {
+    if (state.outputFormat === "suno") return compileSunoFieldsPrompt();
+    if (state.outputFormat === "short") return compileShortPrompt();
+    return compileForgePrompt();
+  }
+
   function forgePrompt(options = {}) {
     state.output = compilePrompt();
     nodes.promptOutput.value = state.output;
@@ -820,9 +1000,15 @@
       const tagStatus = lastCompile.totalTags
         ? `${lastCompile.includedTags} of ${lastCompile.totalTags} selected sound choices represented`
         : "No sound choices selected";
-      nodes.outputStatus.textContent = lastCompile.truncated
-        ? `Built to the character limit. ${tagStatus}; review before copying.`
-        : `Built locally. ${tagStatus}.`;
+      if (state.outputFormat === "short") {
+        nodes.outputStatus.textContent = `Kept short and focused. ${tagStatus}.`;
+      } else if (state.outputFormat === "suno") {
+        nodes.outputStatus.textContent = `Organized into six Suno-ready fields. ${tagStatus}.`;
+      } else {
+        nodes.outputStatus.textContent = lastCompile.truncated
+          ? `Built to the character limit. ${tagStatus}; review before copying.`
+          : `Built locally. ${tagStatus}.`;
+      }
       if (options.addHistory) addHistory();
       if (options.announce !== false) toast("Prompt regenerated");
     } else {
@@ -833,9 +1019,18 @@
   function renderCount() {
     const limit = Number(state.limit) || 0;
     const length = String(state.output || "").length;
-    nodes.promptCount.textContent = limit ? `${length} / ${limit}` : `${length} characters`;
+    nodes.promptCount.textContent = state.outputFormat === "short"
+      ? `${length} / ${SHORT_PROMPT_TARGET} target`
+      : limit ? `${length} / ${limit}` : `${length} characters`;
     nodes.promptCount.style.borderColor = limit && length > limit ? "var(--danger)" : "";
-    nodes.outputModeBadge.textContent = MODE_CONFIG[state.promptMode]?.label || "Balanced";
+
+    const format = OUTPUT_FORMATS[state.outputFormat] || OUTPUT_FORMATS.forge;
+    const detail = MODE_CONFIG[state.promptMode]?.label || "Balanced";
+    nodes.outputModeBadge.textContent = state.outputFormat === "short"
+      ? format.label
+      : `${format.label} · ${detail}`;
+    nodes.formatHint.textContent = format.hint;
+    nodes.promptModeControl.disabled = state.outputFormat === "short";
   }
 
   function calculateQuality() {
@@ -1102,7 +1297,10 @@
         body: JSON.stringify({
           prompt,
           direction: nodes.aiDirectionInput.value.trim(),
-          limit: Number(state.limit) || 0
+          limit: state.outputFormat === "short"
+            ? SHORT_PROMPT_TARGET
+            : Number(state.limit) || 0,
+          format: state.outputFormat
         })
       });
       const data = await response.json().catch(() => ({}));
@@ -1139,6 +1337,7 @@
     state.production = nodes.productionInput.value.trim();
     state.exclude = nodes.excludeInput.value.trim();
     state.limit = Number(nodes.limitSelect.value) || 0;
+    state.outputFormat = document.querySelector('input[name="outputFormat"]:checked')?.value || "forge";
     state.promptMode = document.querySelector('input[name="promptMode"]:checked')?.value || "balanced";
   }
 
@@ -1157,6 +1356,8 @@
     nodes.productionInput.value = state.production;
     nodes.excludeInput.value = state.exclude;
     nodes.limitSelect.value = String(state.limit);
+    const formatInput = document.querySelector(`input[name="outputFormat"][value="${CSS.escape(state.outputFormat)}"]`);
+    if (formatInput) formatInput.checked = true;
     const modeInput = document.querySelector(`input[name="promptMode"][value="${CSS.escape(state.promptMode)}"]`);
     if (modeInput) modeInput.checked = true;
     nodes.promptOutput.value = state.output;
@@ -1197,11 +1398,12 @@
     [
       "workspace", "saveState", "installBtn", "newProjectBtn", "summaryBrief", "summarySound",
       "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeSelect", "recipeRow",
-      "selectedCount", "tagSearch", "searchResults", "selectedTags", "selectionGuidance",
+      "selectedCount", "tagSearch", "libraryStats", "searchResults", "selectedTags", "selectionGuidance",
       "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
       "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
       "modeSelect", "meterSelect", "vocalPlanSelect", "structureInput", "structurePresets",
-      "productionInput", "excludeInput", "limitSelect", "outputCard", "promptCount",
+      "productionInput", "excludeInput", "limitSelect", "outputFormatControl", "formatHint",
+      "promptModeControl", "outputCard", "promptCount",
       "outputModeBadge", "promptOutput", "forgeBtn", "copyBtn", "copyExcludeBtn",
       "excludePreview", "shareBtn", "outputStatus", "qualityScore", "qualityHeading",
       "qualityHint", "savedWork", "savedCount", "presetNameInput", "savePresetBtn",
@@ -1256,6 +1458,15 @@
     bindStateControl(nodes.productionInput, "production");
     bindStateControl(nodes.excludeInput, "exclude");
     bindStateControl(nodes.limitSelect, "limit", value => Number(value) || 0);
+
+    document.querySelectorAll('input[name="outputFormat"]').forEach(input => {
+      input.addEventListener("change", () => {
+        state.outputFormat = input.value;
+        markOutputDirty();
+        renderCount();
+        markDirty();
+      });
+    });
 
     document.querySelectorAll('input[name="promptMode"]').forEach(input => {
       input.addEventListener("change", () => {

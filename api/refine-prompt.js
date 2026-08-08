@@ -62,14 +62,24 @@ export default async function handler(req, res) {
 
   const prompt = clean(body.prompt, 5000);
   const direction = clean(body.direction, 300);
+  const format = ["forge", "suno", "short"].includes(body.format) ? body.format : "forge";
   const limit = Math.max(0, Math.min(5000, Number(body.limit) || 0));
   if (!prompt) return json(res, 400, { error: "Build a prompt before using Prompt AI." });
 
   const instructions = [
     "Refine a music-production prompt for a generative music platform.",
     "Do not write lyrics, song titles, explanations, analysis, or markdown.",
-    "Preserve the user's genres, instruments, vocal direction, mood, arrangement, production details, and exclusions.",
+    "Preserve the user's chosen musical identity and do not invent unrelated styles.",
+    format === "forge"
+      ? "Preserve the user's genres, instruments, vocal direction, mood, arrangement, production details, and exclusions."
+      : "",
     "Remove repetition and vague filler. Make the prompt specific, professional, and easy for a music model to follow.",
+    format === "suno"
+      ? "Preserve exactly these six labels and their order: GENRE, ERA, MOOD/EMOTION, INSTRUMENTS, VOCAL STYLE, PRODUCTION. Return one field per line."
+      : "",
+    format === "short"
+      ? "Return one short comma-separated GMIV line: genre and era, mood, instruments, then vocal style. Do not add labels or extra prose."
+      : "",
     limit ? `The final response must be no longer than ${limit} characters.` : "",
     direction ? `User refinement direction: ${direction}` : ""
   ].filter(Boolean).join("\n");

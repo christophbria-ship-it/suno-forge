@@ -30,6 +30,12 @@ for (const step of ["brief", "sound", "shape", "export"]) {
   if (!html.includes(`data-panel="${step}"`)) fail(`Missing ${step} step panel.`);
 }
 
+for (const format of ["forge", "suno", "short"]) {
+  if (!html.includes(`name="outputFormat" value="${format}"`)) {
+    fail(`Missing ${format} output format.`);
+  }
+}
+
 if (!html.includes('role="tablist"') || !html.includes('role="tabpanel"')) {
   fail("Step navigation is missing tab accessibility roles.");
 }

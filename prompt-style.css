@@ -795,6 +795,14 @@ select:focus {
   padding: 17px;
 }
 
+.library-stats {
+  margin: 10px 2px 0;
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
 .search-field {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) auto;
@@ -1166,6 +1174,25 @@ input[type="range"]:focus {
   gap: 12px;
 }
 
+.setting-group {
+  display: grid;
+  gap: 6px;
+}
+
+.setting-label {
+  color: var(--ink);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.setting-hint {
+  color: var(--muted);
+  font-size: .67rem;
+  line-height: 1.45;
+}
+
 .segment-control {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1192,10 +1219,13 @@ input[type="range"]:focus {
   display: grid;
   min-height: 41px;
   place-items: center;
+  padding: 5px 7px;
   border-radius: 9px;
   color: var(--muted);
   font-size: .68rem;
   font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .segment-control input:checked + span {
@@ -1206,6 +1236,14 @@ input[type="range"]:focus {
 
 .segment-control input:focus-visible + span {
   box-shadow: var(--focus);
+}
+
+.segment-control:disabled {
+  opacity: .48;
+}
+
+.segment-control:disabled label {
+  cursor: not-allowed;
 }
 
 .compact-field {

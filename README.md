@@ -6,7 +6,8 @@ A fast, local-first AI music prompt studio for Suno and other generative music t
 
 - Guides a song idea through four focused steps: Brief, Sound, Shape, and Export.
 - Searches a large sound library without rendering every option at once.
-- Builds compact, balanced, or detailed production prompts within a chosen character limit.
+- Builds the original Forge production brief, six organized Suno fields, or one short GMIV line.
+- Keeps compact, balanced, and detailed controls for longer formats without filling the character limit unnecessarily.
 - Keeps Exclude Styles separate for direct use in Suno.
 - Supports keyboard navigation, mobile layouts, reduced motion, strong focus states, and screen-reader-friendly controls.
 - Saves the current project, presets, and prompt history on the device.
