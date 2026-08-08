@@ -134,6 +134,9 @@ assert.ok(document.getElementById(firstCategoryOption.value).querySelector(".cat
 
 click(document.querySelector('#panel-sound [data-go="shape"]'));
 input(document.getElementById("bpmRange"), "95");
+assert.equal(document.getElementById("bpmLiveOutput").textContent, "95 BPM");
+assert.equal(document.getElementById("bpmOutput").textContent, "95 BPM");
+assert.equal(document.getElementById("bpmRange").getAttribute("aria-valuetext"), "95 beats per minute");
 input(
   document.getElementById("productionInput"),
   "Close vocal, narrow verses, live drums entering late, then a wide final chorus."
