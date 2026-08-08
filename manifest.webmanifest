@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Suno Forge — AI Music Prompt Studio",
-  "short_name": "Suno Forge",
-  "description": "Build production-ready prompts for Suno and other AI music tools.",
+  "name": "The Simplest Prompt Builder for AI Music",
+  "short_name": "The Simplest Prompt Builder",
+  "description": "The simplest way to build production-ready prompts for Suno and other AI music tools.",
   "start_url": "/#brief",
   "scope": "/",
   "display": "standalone",
