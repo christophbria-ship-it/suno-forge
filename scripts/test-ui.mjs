@@ -75,9 +75,9 @@ assert.equal(document.querySelectorAll(".recipe-card").length, 6, "All starter r
 assert.equal(document.querySelectorAll(".category").length, 20, "Every sound category should render.");
 assert.equal(document.querySelectorAll(".category-grid").length, 0, "Sound options should load lazily.");
 assert.equal(document.querySelectorAll('input[name="outputFormat"]').length, 3, "All output styles should be available.");
-assert.match(document.getElementById("libraryStats").textContent, /1,336 tags available/);
-assert.match(document.getElementById("libraryStats").textContent, /312 genres/);
-assert.match(document.getElementById("libraryStats").textContent, /176 instruments/);
+assert.match(document.getElementById("libraryStats").textContent, /1,940 tags available/);
+assert.match(document.getElementById("libraryStats").textContent, /569 genres/);
+assert.match(document.getElementById("libraryStats").textContent, /523 instruments/);
 assert.match(document.getElementById("libraryStats").textContent, /select up to 100/);
 
 const recipeExpectations = [
@@ -227,3 +227,4 @@ assert.deepEqual(
 
 console.log("UI flow passed: recipe → sound search → production → export → edit → preset → reset.");
 dom.window.close();
+
