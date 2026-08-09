@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplest-prompt-builder-v3-4-rootbeer-20260808";
+const CACHE_NAME = "simplest-prompt-builder-v3-5-expanded-library-20260809";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -64,3 +64,4 @@ self.addEventListener("fetch", event => {
     })
   );
 });
+

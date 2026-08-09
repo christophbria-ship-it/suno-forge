@@ -5,7 +5,7 @@ A fast, local-first AI music prompt studio for Suno and other generative music t
 ## What it does
 
 - Guides a song idea through four focused steps: Brief, Sound, Shape, and Export.
-- Searches a large sound library without rendering every option at once.
+- Searches 1,940 organized sound tags—including 569 genres and 523 instruments—without rendering every option at once.
 - Builds the original Forge production brief, six organized Suno fields, or one short GMIV line.
 - Keeps compact, balanced, and detailed controls for longer formats without filling the character limit unnecessarily.
 - Keeps Exclude Styles separate for direct use in Suno.
@@ -25,4 +25,5 @@ npm test
 ```
 
 The test suite checks JavaScript syntax, UI/JavaScript wiring, asset integrity, manifest and service-worker consistency, accessibility essentials, and sound-library loading.
+
 
