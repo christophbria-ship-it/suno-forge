@@ -97,7 +97,14 @@ if (!categories || Object.keys(categories).length < 10) fail("Sound library did 
 const tagCount = Object.values(categories)
   .filter(Array.isArray)
   .reduce((total, tags) => total + tags.length, 0);
-if (tagCount < 500) fail(`Sound library is unexpectedly small: ${tagCount} tags.`);
+if (tagCount < 1940) fail(`Sound library is unexpectedly small: ${tagCount} tags.`);
+if (categories.Genre.length !== 569) fail(`Expected 569 genres, found ${categories.Genre.length}.`);
+if (categories.Instruments.length !== 523) fail(`Expected 523 instruments, found ${categories.Instruments.length}.`);
+for (const [category, tags] of [["Genre", categories.Genre], ["Instruments", categories.Instruments]]) {
+  const normalized = tags.map(tag => String(tag).normalize("NFKD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim());
+  const duplicates = tags.filter((tag, index) => normalized.indexOf(normalized[index]) !== index);
+  if (duplicates.length) fail(`Duplicate ${category} tags: ${duplicates.join(", ")}`);
+}
 
 if (html.includes("v=2.1.0") || worker.includes("v=2.1.0")) {
   fail("Old asset version remains in the app shell.");
