@@ -1,7 +1,40 @@
 "use strict";
 
 const DATA = Object.freeze({
-  version: "3.2.0",
+  version: "3.3.0",
+
+  categoryGroups: {
+    Genre: [
+      { label: "Pop, Vocal & Accessible", start: "Pop" },
+      { label: "Rock, Punk & Alternative", start: "Soft Rock" },
+      { label: "Metal & Extreme", start: "Metal" },
+      { label: "Hip-Hop, Rap & Beat Styles", start: "Hip-Hop" },
+      { label: "R&B, Soul, Funk, Disco & Gospel", start: "R&B" },
+      { label: "Electronic Dance & Club", start: "Electropop" },
+      { label: "Ambient, Experimental, Industrial & Noise", start: "Glitch Hop" },
+      { label: "Country, Folk, Roots & Acoustic", start: "Country" },
+      { label: "Jazz & Blues", start: "Blues" },
+      { label: "Reggae & Caribbean", start: "Reggae" },
+      { label: "Latin & Iberian", start: "Latin Jazz" },
+      { label: "African & Afro-Diasporic", start: "Afrobeats" },
+      { label: "Asian, Middle Eastern & Global", start: "Celtic Folk" },
+      { label: "Classical, Orchestral & Cinematic", start: "Baroque Pop" },
+      { label: "Theatrical, Novelty & Other Hybrids", start: "Poetry" }
+    ],
+    Instruments: [
+      { label: "Guitars, Bass Guitars & Fretted Strings", start: "Acoustic Guitar" },
+      { label: "Bowed Strings, Harps & Zithers", start: "Upright Bass" },
+      { label: "Pianos, Keyboards & Organs", start: "Piano" },
+      { label: "Synthesizers, Samplers & Electronic Instruments", start: "Synth Bass" },
+      { label: "Drums & Hand Percussion", start: "Double Bass Drum Pedal" },
+      { label: "Mallets, Bells & Tuned Percussion", start: "Music Box" },
+      { label: "Woodwinds, Reeds & Free Reeds", start: "Jaw Harp" },
+      { label: "Brass & Horns", start: "Trumpet" },
+      { label: "Ensembles, Voice & Orchestral Sections", start: "Woodwind Section" },
+      { label: "Sound Objects, Effects & Experimental", start: "Rainstick" },
+      { label: "Other Traditional Instruments", start: "Jug (Bass)" }
+    ]
+  },
 
   categories: {
     Genre: [

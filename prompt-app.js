@@ -282,6 +282,23 @@
       : {};
   }
 
+  function groupedCategoryTags(category, tags) {
+    const definitions = typeof DATA !== "undefined" && Array.isArray(DATA?.categoryGroups?.[category])
+      ? DATA.categoryGroups[category]
+      : [];
+    if (!definitions.length) return [];
+
+    const starts = definitions.map(group => tags.indexOf(group.start));
+    if (starts.some((start, index) => start < 0 || (index > 0 && start <= starts[index - 1]))) {
+      return [];
+    }
+
+    return definitions.map((group, index) => ({
+      label: group.label,
+      tags: tags.slice(starts[index], starts[index + 1] ?? tags.length)
+    }));
+  }
+
   function buildCategoryIndex() {
     categoryIndex.clear();
     allTagRecords.length = 0;
@@ -645,7 +662,28 @@
     if (grid) return;
     grid = document.createElement("div");
     grid.className = "category-grid";
-    tags.forEach(tag => grid.appendChild(makeTagButton(tag)));
+    const groups = groupedCategoryTags(details.dataset.category, tags);
+    if (groups.length) {
+      grid.classList.add("category-grid-grouped");
+      groups.forEach(group => {
+        const section = document.createElement("section");
+        const heading = document.createElement("div");
+        const title = document.createElement("h3");
+        const count = document.createElement("span");
+        const buttons = document.createElement("div");
+        section.className = "category-subgroup";
+        heading.className = "category-subgroup-heading";
+        buttons.className = "category-subgroup-tags";
+        title.textContent = group.label;
+        count.textContent = `${group.tags.length} options`;
+        group.tags.forEach(tag => buttons.appendChild(makeTagButton(tag)));
+        heading.append(title, count);
+        section.append(heading, buttons);
+        grid.appendChild(section);
+      });
+    } else {
+      tags.forEach(tag => grid.appendChild(makeTagButton(tag)));
+    }
     details.appendChild(grid);
   }
 

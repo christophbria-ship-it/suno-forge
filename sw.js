@@ -1,10 +1,10 @@
-const CACHE_NAME = "simplest-prompt-builder-v3-5-expanded-library-20260809";
+const CACHE_NAME = "simplest-prompt-builder-v3-6-organized-library-20260809";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/prompt-style.css?v=3.1.0-rootbeer",
-  "/prompt-app.js?v=3.1.0",
-  "/data.js",
+  "/prompt-style.css?v=3.3.0",
+  "/prompt-app.js?v=3.3.0",
+  "/data.js?v=3.3.0",
   "/manifest.webmanifest",
   "/icon.svg"
 ];
@@ -64,4 +64,3 @@ self.addEventListener("fetch", event => {
     })
   );
 });
-

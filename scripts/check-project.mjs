@@ -93,6 +93,7 @@ vm.runInContext(`${dataSource}\nglobalThis.__FORGE_DATA__ = DATA;`, context, {
   timeout: 2000
 });
 const categories = context.__FORGE_DATA__?.categories;
+const categoryGroups = context.__FORGE_DATA__?.categoryGroups;
 if (!categories || Object.keys(categories).length < 10) fail("Sound library did not load.");
 const tagCount = Object.values(categories)
   .filter(Array.isArray)
@@ -104,6 +105,17 @@ for (const [category, tags] of [["Genre", categories.Genre], ["Instruments", cat
   const normalized = tags.map(tag => String(tag).normalize("NFKD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/&/g, " and ").replace(/[^a-z0-9]+/g, " ").trim());
   const duplicates = tags.filter((tag, index) => normalized.indexOf(normalized[index]) !== index);
   if (duplicates.length) fail(`Duplicate ${category} tags: ${duplicates.join(", ")}`);
+
+  const groups = categoryGroups?.[category];
+  if (!Array.isArray(groups) || groups.length < 2) fail(`${category} musical-family groups are missing.`);
+  const starts = groups.map(group => tags.indexOf(group.start));
+  if (starts[0] !== 0) fail(`${category} musical-family groups do not start with the first option.`);
+  starts.forEach((start, index) => {
+    if (start < 0) fail(`${category} group ${groups[index].label} starts at a missing tag.`);
+    if (index > 0 && start <= starts[index - 1]) {
+      fail(`${category} musical-family groups are out of library order.`);
+    }
+  });
 }
 
 if (html.includes("v=2.1.0") || worker.includes("v=2.1.0")) {
