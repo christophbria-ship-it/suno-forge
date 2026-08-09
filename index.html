@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#0d0d10">
+  <meta name="theme-color" content="#121216">
   <meta name="description" content="Build production-ready prompts for Suno and other AI music tools with guided sound, arrangement, and mix controls.">
   <meta name="color-scheme" content="dark light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/prompt-style.css?v=3.3.0">
+  <link rel="stylesheet" href="/prompt-style.css?v=3.3.1">
   <title>The Simplest Prompt Builder for AI Music</title>
 </head>
 <body>
@@ -149,6 +149,19 @@
               <button id="clearTagsBtn" class="text-button" type="button">Clear all</button>
             </div>
             <div id="selectedTags" class="selected-tags" aria-live="polite"></div>
+            <section class="tag-priority" aria-labelledby="tagPriorityHeading">
+              <div class="tag-priority-heading">
+                <div>
+                  <p class="overline">TAG PRIORITY</p>
+                  <h3 id="tagPriorityHeading">Rank Suno’s strongest signals</h3>
+                </div>
+                <span class="priority-rule">Earlier = stronger</span>
+              </div>
+              <p id="tagPriorityInstructions" class="tag-priority-help">Move the most important sound to #1. Focus a row and press Arrow Up or Arrow Down, or use its buttons.</p>
+              <ol id="tagPriorityList" class="tag-priority-list" aria-describedby="tagPriorityInstructions"></ol>
+              <p id="tagPriorityEmpty" class="tag-priority-empty">Selected tags will appear here in their final prompt order.</p>
+              <p id="tagPriorityStatus" class="sr-only" aria-live="polite"></p>
+            </section>
             <div class="readiness">
               <div class="readiness-copy">
                 <span>Palette focus</span>
@@ -299,7 +312,7 @@
             <div>
               <p class="overline">OUTPUT</p>
               <h2 id="outputSettingsHeading">Prompt format</h2>
-              <p>Keep the full Forge brief, organize it into Suno-friendly fields, or make one short GMIV line.</p>
+              <p>Keep the full Forge brief, generate Suno-native ranked tags, or make one short GMIV line.</p>
             </div>
             <div class="output-setting-controls">
               <div class="setting-group">
@@ -307,7 +320,7 @@
                 <fieldset class="segment-control" id="outputFormatControl" aria-describedby="formatHint">
                   <legend class="sr-only">Output style</legend>
                   <label><input type="radio" name="outputFormat" value="forge" checked><span>Forge Brief</span></label>
-                  <label><input type="radio" name="outputFormat" value="suno"><span>Suno Fields</span></label>
+                  <label><input type="radio" name="outputFormat" value="suno"><span>Suno Style Tags</span></label>
                   <label><input type="radio" name="outputFormat" value="short"><span>Short &amp; Sweet</span></label>
                 </fieldset>
                 <small id="formatHint" class="setting-hint">The current full production brief.</small>
@@ -323,6 +336,7 @@
               </div>
               <label class="field compact-field"><span>Character limit</span>
                 <select id="limitSelect">
+                  <option value="280">280 characters · Suno recommended</option>
                   <option value="600">600 characters</option>
                   <option value="800">800 characters</option>
                   <option value="1000" selected>1,000 characters</option>
@@ -458,6 +472,6 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/data.js?v=3.3.0" defer></script>
-  <script src="/prompt-app.js?v=3.3.0" defer></script>
+  <script src="/prompt-app.js?v=3.3.1" defer></script>
 </body>
 </html>

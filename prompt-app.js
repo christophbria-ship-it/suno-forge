@@ -9,6 +9,35 @@
   const LEGACY_PRESET_KEY = "forgePromptPresetsV2";
   const MAX_SELECTED = 100;
   const STEP_ORDER = ["brief", "sound", "shape", "export"];
+  const SUNO_CATEGORY_PRIORITY = [
+    "Genre",
+    "Era",
+    "Mood",
+    "Vocals",
+    "Vocal Delivery",
+    "Vocal Range & Register",
+    "Vocal Arrangement",
+    "Harmony & Choir",
+    "Instruments",
+    "Production",
+    "Mix & Master",
+    "Effects",
+    "Rhythm & Groove",
+    "Recording Space",
+    "Texture & Atmosphere",
+    "Language",
+    "Writing",
+    "Arrangement",
+    "Performance"
+  ];
+  const VOCAL_CATEGORIES = [
+    "Vocals",
+    "Vocal Delivery",
+    "Vocal Range & Register",
+    "Vocal Arrangement",
+    "Harmony & Choir"
+  ];
+  const SUNO_FILLER_WORDS = /\b(?:amazing|beautiful|great|awesome|incredible|stunning|wonderful|fantastic|very|really|extremely)\b/gi;
 
   const RECIPES = [
     {
@@ -167,8 +196,8 @@
       hint: "The current full production brief."
     },
     suno: {
-      label: "Suno Fields",
-      hint: "Six labeled lines that keep Suno's main style signals easy to scan."
+      label: "Suno Style Tags",
+      hint: "One ranked, comma-separated Style of Music list with no labels or filler."
     },
     short: {
       label: "Short & Sweet",
@@ -177,11 +206,12 @@
   };
 
   const SHORT_PROMPT_TARGET = 220;
-  const SUNO_FIELDS_TARGET = 580;
+  const SUNO_NATIVE_TARGET = 280;
 
   const DEFAULT_STATE = Object.freeze({
     brief: "",
     selected: [],
+    priorityCustomized: false,
     bpm: 120,
     energy: "medium",
     length: "standard",
@@ -251,8 +281,9 @@
     next.selected = Array.isArray(next.selected)
       ? unique(next.selected.map(item => String(item || "").trim())).slice(0, MAX_SELECTED)
       : [];
+    next.priorityCustomized = Boolean(next.priorityCustomized);
     next.bpm = clampNumber(next.bpm, 50, 220, 120);
-    next.limit = [0, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
+    next.limit = [0, 280, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
     next.outputFormat = OUTPUT_FORMATS[next.outputFormat] ? next.outputFormat : "forge";
     next.promptMode = MODE_CONFIG[next.promptMode] ? next.promptMode : "balanced";
     next.activeStep = STEP_ORDER.includes(next.activeStep) ? next.activeStep : "brief";
@@ -316,6 +347,7 @@
       });
     });
     state.selected = state.selected.filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
+    if (!state.priorityCustomized) state.selected = rankTagsBySunoPriority(state.selected);
     const available = categories();
     const genreCount = Array.isArray(available.Genre) ? available.Genre.length : 0;
     const instrumentCount = Array.isArray(available.Instruments) ? available.Instruments.length : 0;
@@ -323,6 +355,18 @@
       .filter(Array.isArray)
       .reduce((total, tags) => total + tags.length, 0);
     nodes.libraryStats.textContent = `${totalCount.toLocaleString()} tags available · ${genreCount} genres · ${instrumentCount} instruments · select up to ${MAX_SELECTED}`;
+  }
+
+  function rankTagsBySunoPriority(tags) {
+    const categoryRanks = new Map(SUNO_CATEGORY_PRIORITY.map((category, index) => [category, index]));
+    return unique(tags)
+      .map((tag, index) => ({
+        tag,
+        index,
+        rank: categoryRanks.get(categoryIndex.get(tag)) ?? SUNO_CATEGORY_PRIORITY.length
+      }))
+      .sort((left, right) => left.rank - right.rank || left.index - right.index)
+      .map(item => item.tag);
   }
 
   function sentence(value) {
@@ -386,6 +430,7 @@
     return {
       brief: state.brief,
       selected: [...state.selected],
+      priorityCustomized: state.priorityCustomized,
       bpm: state.bpm,
       energy: state.energy,
       length: state.length,
@@ -498,7 +543,10 @@
   function applyRecipe(recipe) {
     const recipeIndex = RECIPES.indexOf(recipe);
     state.brief = recipe.brief;
-    state.selected = unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
+    state.priorityCustomized = false;
+    state.selected = rankTagsBySunoPriority(
+      unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED)
+    );
     state.bpm = recipe.bpm;
     state.energy = recipe.energy;
     state.key = recipe.key;
@@ -528,7 +576,9 @@
       toast(`Keep the palette focused: up to ${MAX_SELECTED} choices.`);
       return;
     }
-    state.selected.push(tag);
+    state.selected = state.priorityCustomized
+      ? [...state.selected, tag]
+      : rankTagsBySunoPriority([...state.selected, tag]);
     afterTagChange();
   }
 
@@ -539,6 +589,22 @@
 
   function toggleTag(tag) {
     state.selected.includes(tag) ? removeTag(tag) : addTag(tag);
+  }
+
+  function moveTag(tag, direction) {
+    const from = state.selected.indexOf(tag);
+    const to = from + direction;
+    if (from < 0 || to < 0 || to >= state.selected.length) return;
+
+    [state.selected[from], state.selected[to]] = [state.selected[to], state.selected[from]];
+    state.priorityCustomized = true;
+    afterTagChange();
+    nodes.tagPriorityStatus.textContent = `${tag} moved to priority ${to + 1} of ${state.selected.length}.`;
+    window.requestAnimationFrame(() => {
+      nodes.tagPriorityList
+        .querySelector(`[data-priority-tag="${CSS.escape(tag)}"]`)
+        ?.focus();
+    });
   }
 
   function afterTagChange() {
@@ -564,6 +630,8 @@
       nodes.selectedTags.appendChild(button);
     });
 
+    renderTagPriority();
+
     const count = state.selected.length;
     nodes.selectedCount.textContent = `${count} selected`;
     const percentage = Math.min(100, Math.round((count / 12) * 100));
@@ -585,6 +653,71 @@
       nodes.paletteLabel.textContent = "Overloaded";
       nodes.selectionGuidance.textContent = "Too many choices can fight each other. Trim to the essentials.";
     }
+  }
+
+  function renderTagPriority() {
+    nodes.tagPriorityList.replaceChildren();
+    const hasTags = state.selected.length > 0;
+    nodes.tagPriorityList.hidden = !hasTags;
+    nodes.tagPriorityEmpty.hidden = hasTags;
+
+    state.selected.forEach((tag, index) => {
+      const row = document.createElement("li");
+      const rank = document.createElement("span");
+      const copy = document.createElement("span");
+      const name = document.createElement("strong");
+      const detail = document.createElement("small");
+      const controls = document.createElement("span");
+      const up = document.createElement("button");
+      const down = document.createElement("button");
+      const position = index + 1;
+      const total = state.selected.length;
+      const category = CATEGORY_LABELS[categoryIndex.get(tag)] || categoryIndex.get(tag) || "Sound";
+
+      row.className = `tag-priority-row${index === 0 ? " strongest" : ""}`;
+      row.tabIndex = 0;
+      row.dataset.priorityTag = tag;
+      row.setAttribute("aria-posinset", String(position));
+      row.setAttribute("aria-setsize", String(total));
+      row.setAttribute(
+        "aria-label",
+        `${tag}, priority ${position} of ${total}${index === 0 ? ", strongest influence" : ""}. Use Arrow Up or Arrow Down to reorder.`
+      );
+
+      rank.className = "priority-rank";
+      rank.textContent = String(position);
+      copy.className = "priority-copy";
+      name.textContent = tag;
+      detail.textContent = index === 0 ? `${category} · Strongest influence` : category;
+      controls.className = "priority-controls";
+
+      up.type = "button";
+      up.className = "priority-move";
+      up.innerHTML = '<span aria-hidden="true">↑</span>';
+      up.setAttribute("aria-label", `Move ${tag} up`);
+      up.title = `Move ${tag} up`;
+      up.disabled = index === 0;
+      up.addEventListener("click", () => moveTag(tag, -1));
+
+      down.type = "button";
+      down.className = "priority-move";
+      down.innerHTML = '<span aria-hidden="true">↓</span>';
+      down.setAttribute("aria-label", `Move ${tag} down`);
+      down.title = `Move ${tag} down`;
+      down.disabled = index === total - 1;
+      down.addEventListener("click", () => moveTag(tag, 1));
+
+      row.addEventListener("keydown", event => {
+        if (event.target !== row || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
+        event.preventDefault();
+        moveTag(tag, event.key === "ArrowUp" ? -1 : 1);
+      });
+
+      copy.append(name, detail);
+      controls.append(up, down);
+      row.append(rank, copy, controls);
+      nodes.tagPriorityList.appendChild(row);
+    });
   }
 
   function renderQuickPicks() {
@@ -778,11 +911,20 @@
     return grouped;
   }
 
+  function fitRankedTags(tags, maximumCharacters = Infinity) {
+    const chosen = [];
+    for (const tag of unique(tags)) {
+      const candidate = [...chosen, tag].join(", ");
+      if (candidate.length > maximumCharacters) break;
+      chosen.push(tag);
+    }
+    return chosen;
+  }
+
   function compileForgePrompt() {
     pullControls();
     const config = MODE_CONFIG[state.promptMode] || MODE_CONFIG.balanced;
-    const grouped = groupSelected();
-    const usedCategories = new Set();
+    const limit = Number(state.limit) || 0;
     const segments = [];
 
     const add = (text, tags = [], essential = false) => {
@@ -790,16 +932,16 @@
       if (clean) segments.push({ text: clean, tags, essential });
     };
 
-    const addCategory = (category, maximum = config.maxCategoryItems) => {
-      const values = grouped.get(category) || [];
-      if (!values.length) return;
-      usedCategories.add(category);
-      const tags = values.slice(0, maximum);
-      add(`${CATEGORY_LABELS[category] || category}: ${tags.join(", ")}`, tags, category === "Genre");
-    };
-
-    addCategory("Genre");
-    addCategory("Mood");
+    const paletteBudget = limit
+      ? Math.max(72, Math.min(limit - 24, Math.floor(limit * .5)))
+      : Infinity;
+    const prioritySource = state.vocalPlan === "instrumental"
+      ? state.selected.filter(tag => !VOCAL_CATEGORIES.includes(categoryIndex.get(tag)))
+      : state.selected;
+    const priorityTags = fitRankedTags(prioritySource, paletteBudget);
+    if (priorityTags.length) {
+      add(`Sound priority: ${priorityTags.join(", ")}`, priorityTags, true);
+    }
 
     if (state.brief) {
       add(`Creative direction: ${compact(state.brief, config.briefLimit)}`, [], true);
@@ -813,21 +955,9 @@
 
     if (state.vocalPlan === "instrumental") {
       add("Vocals: instrumental; no lead or backing vocals", [], true);
-      usedCategories.add("Vocals");
-      usedCategories.add("Vocal Delivery");
-      usedCategories.add("Vocal Arrangement");
-      usedCategories.add("Harmony & Choir");
     } else if (state.vocalPlan !== "follow selected vocal tags") {
       add(`Vocal plan: ${state.vocalPlan}`);
     }
-
-    CATEGORY_ORDER.forEach(category => {
-      if (!usedCategories.has(category)) addCategory(category);
-    });
-
-    [...grouped.keys()]
-      .filter(category => !usedCategories.has(category) && category !== "Key")
-      .forEach(category => addCategory(category));
 
     if (state.structure) {
       add(`Structure: ${compact(state.structure, config.structureLimit)}`);
@@ -836,10 +966,9 @@
       add(`Production direction: ${compact(state.production, config.productionLimit)}`);
     }
 
-    const limit = Number(state.limit) || 0;
     const included = new Set();
     const outputSegments = [];
-    let truncated = false;
+    let truncated = priorityTags.length < prioritySource.length;
 
     for (const segment of segments) {
       const candidate = sentence(segment.text);
@@ -873,149 +1002,129 @@
   }
 
   function categoryValues(grouped, categoryNames) {
-    return unique(categoryNames.flatMap(category => grouped.get(category) || []));
+    const allowed = new Set(categoryNames);
+    return state.selected.filter(tag => {
+      const category = categoryIndex.get(tag);
+      return allowed.has(category) && (grouped.get(category) || []).includes(tag);
+    });
   }
 
-  function takeWithin(values, maximumItems, maximumCharacters, included) {
-    const chosen = [];
-    for (const value of unique(values).slice(0, maximumItems)) {
-      const candidate = [...chosen, value].join(", ");
-      if (candidate.length > maximumCharacters && chosen.length) break;
-      chosen.push(candidate.length > maximumCharacters ? compact(value, maximumCharacters) : value);
-      if (state.selected.includes(value)) included.add(value);
+  function cleanSunoToken(value) {
+    return String(value || "")
+      .replace(SUNO_FILLER_WORDS, " ")
+      .replace(/[.;:!?]+/g, " ")
+      .replace(/\s*,\s*/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/^[-–—]+|[-–—]+$/g, "")
+      .trim();
+  }
+
+  function buildSunoTokenEntries() {
+    const grouped = groupSelected();
+    const supportedTags = new Set(categoryValues(grouped, SUNO_CATEGORY_PRIORITY));
+    const vocalCategories = new Set(VOCAL_CATEGORIES);
+    const entries = state.selected
+      .filter(tag => supportedTags.has(tag))
+      .filter(tag => state.vocalPlan !== "instrumental" || !vocalCategories.has(categoryIndex.get(tag)))
+      .map(tag => ({
+        text: tag,
+        source: tag,
+        category: categoryIndex.get(tag)
+      }));
+
+    const appendUnique = entry => {
+      const clean = cleanSunoToken(entry.text);
+      if (!clean) return;
+      const key = clean.toLocaleLowerCase();
+      if (entries.some(item => cleanSunoToken(item.text).toLocaleLowerCase() === key)) return;
+      entries.push({ ...entry, text: clean });
+    };
+
+    if (state.vocalPlan !== "follow selected vocal tags") {
+      const vocalText = state.vocalPlan === "instrumental"
+        ? "Instrumental"
+        : titleCase(state.vocalPlan);
+      const clean = cleanSunoToken(vocalText);
+      const key = clean.toLocaleLowerCase();
+      if (clean && !entries.some(item => cleanSunoToken(item.text).toLocaleLowerCase() === key)) {
+        const anchorCategories = new Set(["Genre", "Era", "Mood", ...VOCAL_CATEGORIES]);
+        let insertionIndex = 0;
+        entries.forEach((entry, index) => {
+          if (anchorCategories.has(entry.category)) insertionIndex = index + 1;
+        });
+        entries.splice(insertionIndex, 0, {
+          text: clean,
+          source: null,
+          category: "Vocals"
+        });
+      }
     }
-    return chosen;
+
+    appendUnique({ text: `${titleCase(state.energy)} energy`, source: null, category: "Production" });
+    appendUnique({ text: `${state.bpm} BPM`, source: null, category: "Track" });
+    appendUnique({ text: `${state.key} ${state.mode}`, source: null, category: "Track" });
+    appendUnique({ text: state.meter, source: null, category: "Track" });
+    return entries;
   }
 
-  function naturalList(values) {
-    if (values.length < 2) return values[0] || "";
-    if (values.length === 2) return `${values[0]} and ${values[1]}`;
-    return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
+  function compileTokenList(entries, maximumCharacters) {
+    const parts = [];
+    const included = new Set();
+    const seen = new Set();
+    let truncated = false;
+
+    for (const entry of entries) {
+      const text = cleanSunoToken(entry.text);
+      const key = text.toLocaleLowerCase();
+      if (!text || seen.has(key)) continue;
+      const candidate = [...parts, text].join(", ");
+      if (Number.isFinite(maximumCharacters) && candidate.length > maximumCharacters) {
+        truncated = true;
+        break;
+      }
+      parts.push(text);
+      seen.add(key);
+      if (entry.source) included.add(entry.source);
+    }
+
+    return {
+      text: parts.join(", "),
+      included,
+      truncated
+    };
   }
 
   function compileSunoFieldsPrompt() {
     pullControls();
-    const grouped = groupSelected();
-    const included = new Set();
-    const itemLimit = state.promptMode === "compact" ? 2 : state.promptMode === "detailed" ? 4 : 3;
-
-    const genres = takeWithin(grouped.get("Genre") || [], Math.min(itemLimit, 3), 58, included);
-    const eras = takeWithin(grouped.get("Era") || [], 1, 24, included);
-    const moods = takeWithin(grouped.get("Mood") || [], Math.min(itemLimit, 3), 50, included);
-    const instruments = takeWithin(grouped.get("Instruments") || [], Math.min(itemLimit, 3), 78, included);
-
-    const vocalSource = state.vocalPlan === "instrumental"
-      ? ["Instrumental"]
-      : [
-          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
-          ...categoryValues(grouped, [
-            "Vocals",
-            "Vocal Delivery",
-            "Vocal Range & Register",
-            "Vocal Arrangement",
-            "Harmony & Choir"
-          ])
-        ];
-    const vocals = takeWithin(vocalSource, Math.min(itemLimit + 1, 4), 95, included);
-
-    const productionTags = takeWithin(
-      categoryValues(grouped, [
-        "Production",
-        "Mix & Master",
-        "Effects",
-        "Rhythm & Groove",
-        "Recording Space",
-        "Texture & Atmosphere"
-      ]),
-      Math.min(itemLimit + 1, 5),
-      92,
-      included
-    );
-    const productionParts = [
-      `${state.bpm} BPM, ${state.key} ${state.mode}, ${state.meter}, ${state.energy} energy`
-    ];
-    if (productionTags.length) productionParts.push(productionTags.join(", "));
-    if (state.production) {
-      const noteLimit = state.promptMode === "compact" ? 72 : state.promptMode === "detailed" ? 120 : 96;
-      productionParts.push(compact(state.production, noteLimit));
-    }
-
-    const lines = [
-      ["GENRE", genres.join(", ")],
-      ["ERA", eras.join(", ")],
-      ["MOOD/EMOTION", moods.join(", ")],
-      ["INSTRUMENTS", instruments.join(", ")],
-      ["VOCAL STYLE", vocals.join(", ")],
-      ["PRODUCTION", compact(productionParts.join("; "), 190)]
-    ].map(([label, value]) => `${label}: ${value}`.trimEnd());
-
     const requestedLimit = Number(state.limit) || 0;
-    const effectiveLimit = requestedLimit
-      ? Math.min(requestedLimit, SUNO_FIELDS_TARGET)
-      : SUNO_FIELDS_TARGET;
-    let text = lines.join("\n");
-    let truncated = false;
-    if (text.length > effectiveLimit) {
-      text = compact(text, effectiveLimit);
-      truncated = true;
-    }
+    const effectiveLimit = state.limit === 0
+      ? Infinity
+      : requestedLimit || SUNO_NATIVE_TARGET;
+    const compiled = compileTokenList(buildSunoTokenEntries(), effectiveLimit);
 
     lastCompile = {
-      includedTags: included.size,
+      includedTags: compiled.included.size,
       totalTags: state.selected.length,
-      truncated
+      truncated: compiled.truncated
     };
-    return text;
+    return compiled.text;
   }
 
   function compileShortPrompt() {
     pullControls();
-    const grouped = groupSelected();
-    const included = new Set();
-    const genres = takeWithin(grouped.get("Genre") || [], 2, 42, included);
-    const eras = takeWithin(grouped.get("Era") || [], 1, 16, included);
-    const moods = takeWithin(grouped.get("Mood") || [], 3, 34, included);
-    const instruments = takeWithin(grouped.get("Instruments") || [], 3, 54, included);
-
-    const vocalSource = state.vocalPlan === "instrumental"
-      ? ["Instrumental"]
-      : [
-          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
-          ...categoryValues(grouped, ["Vocals", "Vocal Delivery", "Vocal Range & Register"])
-        ];
-    const vocals = takeWithin(vocalSource, 3, 58, included);
-
-    const style = compact(
-      [eras[0] || "", genres.join(" / ")].filter(Boolean).join(" "),
-      52
-    );
-    const clauses = [
-      style,
-      naturalList(moods),
-      naturalList(instruments),
-      naturalList(vocals)
-    ].filter(Boolean);
-
-    let text = clauses.join(", ");
-    if (!text && state.brief) text = compact(state.brief, 180);
-    if (!text) text = `${state.bpm} BPM, ${state.key} ${state.mode}, ${state.energy} energy`;
-
     const requestedLimit = Number(state.limit) || 0;
     const effectiveLimit = requestedLimit
       ? Math.min(requestedLimit, SHORT_PROMPT_TARGET)
       : SHORT_PROMPT_TARGET;
-    let truncated = false;
-    if (text.length > effectiveLimit) {
-      text = compact(text, effectiveLimit);
-      truncated = true;
-    }
+    const compiled = compileTokenList(buildSunoTokenEntries(), effectiveLimit);
 
     lastCompile = {
-      includedTags: included.size,
+      includedTags: compiled.included.size,
       totalTags: state.selected.length,
-      truncated
+      truncated: compiled.truncated
     };
-    return text;
+    return compiled.text;
   }
 
   function compilePrompt() {
@@ -1041,7 +1150,7 @@
       if (state.outputFormat === "short") {
         nodes.outputStatus.textContent = `Kept short and focused. ${tagStatus}.`;
       } else if (state.outputFormat === "suno") {
-        nodes.outputStatus.textContent = `Organized into six Suno-ready fields. ${tagStatus}.`;
+        nodes.outputStatus.textContent = `Built as one ranked Suno Style of Music tag list. ${tagStatus}.`;
       } else {
         nodes.outputStatus.textContent = lastCompile.truncated
           ? `Built to the character limit. ${tagStatus}; review before copying.`
@@ -1064,11 +1173,11 @@
 
     const format = OUTPUT_FORMATS[state.outputFormat] || OUTPUT_FORMATS.forge;
     const detail = MODE_CONFIG[state.promptMode]?.label || "Balanced";
-    nodes.outputModeBadge.textContent = state.outputFormat === "short"
+    nodes.outputModeBadge.textContent = ["short", "suno"].includes(state.outputFormat)
       ? format.label
       : `${format.label} · ${detail}`;
     nodes.formatHint.textContent = format.hint;
-    nodes.promptModeControl.disabled = state.outputFormat === "short";
+    nodes.promptModeControl.disabled = state.outputFormat !== "forge";
   }
 
   function calculateQuality() {
@@ -1437,6 +1546,7 @@
       "workspace", "saveState", "installBtn", "newProjectBtn", "summaryBrief", "summarySound",
       "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeSelect", "recipeRow",
       "selectedCount", "tagSearch", "libraryStats", "searchResults", "selectedTags", "selectionGuidance",
+      "tagPriorityList", "tagPriorityEmpty", "tagPriorityStatus",
       "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
       "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
       "modeSelect", "meterSelect", "vocalPlanSelect", "structureInput", "structurePresets",
@@ -1500,6 +1610,10 @@
     document.querySelectorAll('input[name="outputFormat"]').forEach(input => {
       input.addEventListener("change", () => {
         state.outputFormat = input.value;
+        if (state.outputFormat === "suno" && state.limit === 1000) {
+          state.limit = SUNO_NATIVE_TARGET;
+          nodes.limitSelect.value = String(SUNO_NATIVE_TARGET);
+        }
         markOutputDirty();
         renderCount();
         markDirty();
@@ -1543,6 +1657,7 @@
     nodes.clearTagsBtn.addEventListener("click", () => {
       if (!state.selected.length) return;
       state.selected = [];
+      state.priorityCustomized = false;
       afterTagChange();
       toast("Sound palette cleared");
     });
