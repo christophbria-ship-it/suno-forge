@@ -1103,6 +1103,48 @@ select:focus {
   overscroll-behavior: contain;
 }
 
+.category-grid-grouped {
+  display: grid;
+  align-items: start;
+  gap: 20px;
+}
+
+.category-subgroup {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+}
+
+.category-subgroup-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--line);
+}
+
+.category-subgroup-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: .72rem;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.category-subgroup-heading span {
+  flex: none;
+  color: var(--muted);
+  font-size: .62rem;
+  font-weight: 750;
+}
+
+.category-subgroup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
 .range-field {
   display: grid;
   gap: 10px;
