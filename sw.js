@@ -1,10 +1,10 @@
-const CACHE_NAME = "simplest-prompt-builder-v3-6-organized-library-20260809";
+const CACHE_NAME = "simplest-prompt-builder-v3-7-priority-suno-20260809";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/prompt-style.css?v=3.3.0",
-  "/prompt-app.js?v=3.3.0",
-  "/data.js?v=3.3.0",
+  "/prompt-style.css?v=3.3.1",
+  "/prompt-app.js?v=3.3.1",
+  "/data.js?v=3.3.1",
   "/manifest.webmanifest",
   "/icon.svg"
 ];

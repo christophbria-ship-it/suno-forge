@@ -9,35 +9,6 @@
   const LEGACY_PRESET_KEY = "forgePromptPresetsV2";
   const MAX_SELECTED = 100;
   const STEP_ORDER = ["brief", "sound", "shape", "export"];
-  const SUNO_CATEGORY_PRIORITY = [
-    "Genre",
-    "Era",
-    "Mood",
-    "Vocals",
-    "Vocal Delivery",
-    "Vocal Range & Register",
-    "Vocal Arrangement",
-    "Harmony & Choir",
-    "Instruments",
-    "Production",
-    "Mix & Master",
-    "Effects",
-    "Rhythm & Groove",
-    "Recording Space",
-    "Texture & Atmosphere",
-    "Language",
-    "Writing",
-    "Arrangement",
-    "Performance"
-  ];
-  const VOCAL_CATEGORIES = [
-    "Vocals",
-    "Vocal Delivery",
-    "Vocal Range & Register",
-    "Vocal Arrangement",
-    "Harmony & Choir"
-  ];
-  const SUNO_FILLER_WORDS = /\b(?:amazing|beautiful|great|awesome|incredible|stunning|wonderful|fantastic|very|really|extremely)\b/gi;
 
   const RECIPES = [
     {
@@ -193,25 +164,24 @@
   const OUTPUT_FORMATS = {
     forge: {
       label: "Forge Brief",
-      hint: "The current full production brief."
+      hint: "Full labeled production brief. Use when you want maximum detail."
     },
     suno: {
-      label: "Suno Style Tags",
-      hint: "One ranked, comma-separated Style of Music list with no labels or filler."
+      label: "Suno Fields",
+      hint: "Six clean labeled lines (Genre / Mood / Instruments / Vocals / Production) ready for Suno Custom."
     },
     short: {
       label: "Short & Sweet",
-      hint: "One focused GMIV line, intentionally kept under 220 characters."
+      hint: "One tight Suno-native style string — genre, mood, instruments, vocals, BPM. Default and usually the strongest."
     }
   };
 
-  const SHORT_PROMPT_TARGET = 220;
-  const SUNO_NATIVE_TARGET = 280;
+  const SHORT_PROMPT_TARGET = 280;
+  const SUNO_FIELDS_TARGET = 580;
 
   const DEFAULT_STATE = Object.freeze({
     brief: "",
     selected: [],
-    priorityCustomized: false,
     bpm: 120,
     energy: "medium",
     length: "standard",
@@ -223,7 +193,7 @@
     production: "",
     exclude: "",
     limit: 1000,
-    outputFormat: "forge",
+    outputFormat: "short",
     promptMode: "balanced",
     output: "",
     activeStep: "brief"
@@ -281,10 +251,9 @@
     next.selected = Array.isArray(next.selected)
       ? unique(next.selected.map(item => String(item || "").trim())).slice(0, MAX_SELECTED)
       : [];
-    next.priorityCustomized = Boolean(next.priorityCustomized);
     next.bpm = clampNumber(next.bpm, 50, 220, 120);
-    next.limit = [0, 280, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
-    next.outputFormat = OUTPUT_FORMATS[next.outputFormat] ? next.outputFormat : "forge";
+    next.limit = [0, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
+    next.outputFormat = OUTPUT_FORMATS[next.outputFormat] ? next.outputFormat : "short";
     next.promptMode = MODE_CONFIG[next.promptMode] ? next.promptMode : "balanced";
     next.activeStep = STEP_ORDER.includes(next.activeStep) ? next.activeStep : "brief";
     [
@@ -347,7 +316,6 @@
       });
     });
     state.selected = state.selected.filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
-    if (!state.priorityCustomized) state.selected = rankTagsBySunoPriority(state.selected);
     const available = categories();
     const genreCount = Array.isArray(available.Genre) ? available.Genre.length : 0;
     const instrumentCount = Array.isArray(available.Instruments) ? available.Instruments.length : 0;
@@ -355,18 +323,6 @@
       .filter(Array.isArray)
       .reduce((total, tags) => total + tags.length, 0);
     nodes.libraryStats.textContent = `${totalCount.toLocaleString()} tags available · ${genreCount} genres · ${instrumentCount} instruments · select up to ${MAX_SELECTED}`;
-  }
-
-  function rankTagsBySunoPriority(tags) {
-    const categoryRanks = new Map(SUNO_CATEGORY_PRIORITY.map((category, index) => [category, index]));
-    return unique(tags)
-      .map((tag, index) => ({
-        tag,
-        index,
-        rank: categoryRanks.get(categoryIndex.get(tag)) ?? SUNO_CATEGORY_PRIORITY.length
-      }))
-      .sort((left, right) => left.rank - right.rank || left.index - right.index)
-      .map(item => item.tag);
   }
 
   function sentence(value) {
@@ -420,8 +376,9 @@
 
   function markOutputDirty() {
     outputDirty = true;
-    if (state.output && state.activeStep === "export") {
-      nodes.outputStatus.textContent = "Your settings changed. Regenerate when you are ready to replace the edited prompt.";
+    // Live-rebuild the moment any control that affects the prompt changes
+    if (state.activeStep === "export" || state.output) {
+      forgePrompt({ addHistory: false, announce: false });
     }
   }
 
@@ -430,7 +387,6 @@
     return {
       brief: state.brief,
       selected: [...state.selected],
-      priorityCustomized: state.priorityCustomized,
       bpm: state.bpm,
       energy: state.energy,
       length: state.length,
@@ -543,10 +499,7 @@
   function applyRecipe(recipe) {
     const recipeIndex = RECIPES.indexOf(recipe);
     state.brief = recipe.brief;
-    state.priorityCustomized = false;
-    state.selected = rankTagsBySunoPriority(
-      unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED)
-    );
+    state.selected = unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
     state.bpm = recipe.bpm;
     state.energy = recipe.energy;
     state.key = recipe.key;
@@ -576,9 +529,7 @@
       toast(`Keep the palette focused: up to ${MAX_SELECTED} choices.`);
       return;
     }
-    state.selected = state.priorityCustomized
-      ? [...state.selected, tag]
-      : rankTagsBySunoPriority([...state.selected, tag]);
+    state.selected.push(tag);
     afterTagChange();
   }
 
@@ -591,132 +542,205 @@
     state.selected.includes(tag) ? removeTag(tag) : addTag(tag);
   }
 
-  function moveTag(tag, direction) {
-    const from = state.selected.indexOf(tag);
-    const to = from + direction;
-    if (from < 0 || to < 0 || to >= state.selected.length) return;
-
-    [state.selected[from], state.selected[to]] = [state.selected[to], state.selected[from]];
-    state.priorityCustomized = true;
-    afterTagChange();
-    nodes.tagPriorityStatus.textContent = `${tag} moved to priority ${to + 1} of ${state.selected.length}.`;
-    window.requestAnimationFrame(() => {
-      nodes.tagPriorityList
-        .querySelector(`[data-priority-tag="${CSS.escape(tag)}"]`)
-        ?.focus();
-    });
-  }
-
   function afterTagChange() {
-    markOutputDirty();
     renderSelected();
     renderSearch();
     refreshCategoryButtons();
     refreshCategoryCounts();
     updateStepSummaries();
     renderQuality();
+    // markOutputDirty already triggers the live rebuild
+    markOutputDirty();
     markDirty();
   }
 
-  function renderSelected() {
-    nodes.selectedTags.replaceChildren();
-    state.selected.forEach(tag => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = `${tag} ×`;
-      button.title = `Remove ${tag}`;
-      button.setAttribute("aria-label", `Remove ${tag}`);
-      button.addEventListener("click", () => removeTag(tag));
-      nodes.selectedTags.appendChild(button);
-    });
+  function announcePriority(message) {
+    const live = nodes.tagPriorityStatus || document.getElementById("selected-priority-live");
+    if (live) {
+      live.textContent = "";
+      window.setTimeout(() => {
+        live.textContent = message;
+      }, 20);
+      return;
+    }
+    // Fallback live region
+    let fallback = document.getElementById("selected-priority-live");
+    if (!fallback) {
+      fallback = document.createElement("div");
+      fallback.id = "selected-priority-live";
+      fallback.className = "sr-only";
+      fallback.setAttribute("aria-live", "polite");
+      fallback.setAttribute("aria-atomic", "true");
+      document.body.appendChild(fallback);
+    }
+    fallback.textContent = "";
+    window.setTimeout(() => {
+      fallback.textContent = message;
+    }, 20);
+  }
 
-    renderTagPriority();
-
-    const count = state.selected.length;
-    nodes.selectedCount.textContent = `${count} selected`;
-    const percentage = Math.min(100, Math.round((count / 12) * 100));
-    nodes.paletteBar.style.width = `${percentage}%`;
-
-    if (!count) {
-      nodes.paletteLabel.textContent = "Open canvas";
-      nodes.selectionGuidance.textContent = "Aim for 6–14 choices across a few categories.";
-    } else if (count < 5) {
-      nodes.paletteLabel.textContent = "Still broad";
-      nodes.selectionGuidance.textContent = "Add a mood, instrument, and vocal or production choice.";
-    } else if (count <= 14) {
-      nodes.paletteLabel.textContent = "Focused";
-      nodes.selectionGuidance.textContent = "This is a strong range. Add only details that change the result.";
-    } else if (count <= 22) {
-      nodes.paletteLabel.textContent = "Highly detailed";
-      nodes.selectionGuidance.textContent = "The palette is dense. Remove anything that repeats another choice.";
-    } else {
-      nodes.paletteLabel.textContent = "Overloaded";
-      nodes.selectionGuidance.textContent = "Too many choices can fight each other. Trim to the essentials.";
+  function moveTag(tag, direction, options = {}) {
+    const index = state.selected.indexOf(tag);
+    if (index < 0) return;
+    const target = index + direction;
+    if (target < 0 || target >= state.selected.length) return;
+    const next = [...state.selected];
+    [next[index], next[target]] = [next[target], next[index]];
+    state.selected = next;
+    afterTagChange();
+    announcePriority(`${tag} moved to position ${target + 1} of ${state.selected.length}`);
+    if (options.focus !== false) {
+      window.setTimeout(() => {
+        const row = nodes.tagPriorityList?.querySelector(`[data-tag="${CSS.escape(tag)}"]`);
+        const btn = row?.querySelector(direction < 0 ? ".priority-up" : ".priority-down");
+        (btn || row)?.focus();
+      }, 0);
     }
   }
 
-  function renderTagPriority() {
-    nodes.tagPriorityList.replaceChildren();
+  function renderSelected() {
+    // 1) Simple selected chips (add/remove only — no drag clutter)
+    if (nodes.selectedTags) {
+      nodes.selectedTags.replaceChildren();
+      nodes.selectedTags.setAttribute("role", "list");
+      nodes.selectedTags.setAttribute("aria-label", "Selected sound tags");
+
+      state.selected.forEach(tag => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "selected-chip";
+        chip.textContent = `${tag} ×`;
+        chip.title = `Remove ${tag}`;
+        chip.setAttribute("aria-label", `Remove ${tag}`);
+        chip.addEventListener("click", () => {
+          removeTag(tag);
+          announcePriority(`${tag} removed`);
+        });
+        nodes.selectedTags.appendChild(chip);
+      });
+    }
+
+    // 2) Priority ordered list (the real ranking UI)
+    renderPriorityList();
+
+    const count = state.selected.length;
+    if (nodes.selectedCount) nodes.selectedCount.textContent = `${count} selected`;
+    if (nodes.paletteBar) {
+      nodes.paletteBar.style.width = `${Math.min(100, Math.round((count / 12) * 100))}%`;
+    }
+
+    if (!count) {
+      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Open canvas";
+      if (nodes.selectionGuidance) {
+        nodes.selectionGuidance.textContent = "Aim for 6–14 choices. Put the strongest signals at the top of the priority list.";
+      }
+    } else if (count < 5) {
+      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Still broad";
+      if (nodes.selectionGuidance) {
+        nodes.selectionGuidance.textContent = "Add mood, instrument, and vocal. Rank what matters most with ↑ ↓.";
+      }
+    } else if (count <= 14) {
+      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Focused";
+      if (nodes.selectionGuidance) {
+        nodes.selectionGuidance.textContent = "Strong range. Keep the most important tags at the top.";
+      }
+    } else if (count <= 22) {
+      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Highly detailed";
+      if (nodes.selectionGuidance) {
+        nodes.selectionGuidance.textContent = "Dense. Raise the signals that matter; drop the rest.";
+      }
+    } else {
+      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Overloaded";
+      if (nodes.selectionGuidance) {
+        nodes.selectionGuidance.textContent = "Too many choices fight each other. Trim, then rank.";
+      }
+    }
+  }
+
+  function renderPriorityList() {
+    const list = nodes.tagPriorityList;
+    const empty = nodes.tagPriorityEmpty;
+    if (!list) return; // Older HTML without priority section — chips alone still work
+
+    list.replaceChildren();
     const hasTags = state.selected.length > 0;
-    nodes.tagPriorityList.hidden = !hasTags;
-    nodes.tagPriorityEmpty.hidden = hasTags;
+
+    if (empty) empty.hidden = hasTags;
+    list.hidden = !hasTags;
 
     state.selected.forEach((tag, index) => {
       const row = document.createElement("li");
-      const rank = document.createElement("span");
-      const copy = document.createElement("span");
-      const name = document.createElement("strong");
-      const detail = document.createElement("small");
-      const controls = document.createElement("span");
-      const up = document.createElement("button");
-      const down = document.createElement("button");
-      const position = index + 1;
-      const total = state.selected.length;
-      const category = CATEGORY_LABELS[categoryIndex.get(tag)] || categoryIndex.get(tag) || "Sound";
-
-      row.className = `tag-priority-row${index === 0 ? " strongest" : ""}`;
+      row.className = "tag-priority-item";
+      row.dataset.tag = tag;
       row.tabIndex = 0;
-      row.dataset.priorityTag = tag;
-      row.setAttribute("aria-posinset", String(position));
-      row.setAttribute("aria-setsize", String(total));
       row.setAttribute(
         "aria-label",
-        `${tag}, priority ${position} of ${total}${index === 0 ? ", strongest influence" : ""}. Use Arrow Up or Arrow Down to reorder.`
+        `${tag}, priority ${index + 1} of ${state.selected.length}`
       );
 
-      rank.className = "priority-rank";
-      rank.textContent = String(position);
-      copy.className = "priority-copy";
+      const rank = document.createElement("span");
+      rank.className = "tag-priority-rank";
+      rank.textContent = String(index + 1);
+      rank.setAttribute("aria-hidden", "true");
+
+      const name = document.createElement("span");
+      name.className = "tag-priority-name";
       name.textContent = tag;
-      detail.textContent = index === 0 ? `${category} · Strongest influence` : category;
-      controls.className = "priority-controls";
 
+      const controls = document.createElement("div");
+      controls.className = "tag-priority-controls";
+
+      const up = document.createElement("button");
       up.type = "button";
-      up.className = "priority-move";
-      up.innerHTML = '<span aria-hidden="true">↑</span>';
+      up.className = "priority-up";
+      up.textContent = "↑";
       up.setAttribute("aria-label", `Move ${tag} up`);
-      up.title = `Move ${tag} up`;
       up.disabled = index === 0;
-      up.addEventListener("click", () => moveTag(tag, -1));
-
-      down.type = "button";
-      down.className = "priority-move";
-      down.innerHTML = '<span aria-hidden="true">↓</span>';
-      down.setAttribute("aria-label", `Move ${tag} down`);
-      down.title = `Move ${tag} down`;
-      down.disabled = index === total - 1;
-      down.addEventListener("click", () => moveTag(tag, 1));
-
-      row.addEventListener("keydown", event => {
-        if (event.target !== row || !["ArrowUp", "ArrowDown"].includes(event.key)) return;
-        event.preventDefault();
-        moveTag(tag, event.key === "ArrowUp" ? -1 : 1);
+      up.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveTag(tag, -1);
       });
 
-      copy.append(name, detail);
-      controls.append(up, down);
-      row.append(rank, copy, controls);
-      nodes.tagPriorityList.appendChild(row);
+      const down = document.createElement("button");
+      down.type = "button";
+      down.className = "priority-down";
+      down.textContent = "↓";
+      down.setAttribute("aria-label", `Move ${tag} down`);
+      down.disabled = index === state.selected.length - 1;
+      down.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveTag(tag, 1);
+      });
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "priority-remove";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `Remove ${tag}`);
+      remove.addEventListener("click", (e) => {
+        e.stopPropagation();
+        removeTag(tag);
+        announcePriority(`${tag} removed`);
+      });
+
+      // Keyboard on the row itself
+      row.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          moveTag(tag, -1);
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          moveTag(tag, 1);
+        } else if (e.key === "Delete" || e.key === "Backspace") {
+          e.preventDefault();
+          removeTag(tag);
+          announcePriority(`${tag} removed`);
+        }
+      });
+
+      controls.append(up, down, remove);
+      row.append(rank, name, controls);
+      list.appendChild(row);
     });
   }
 
@@ -911,20 +935,11 @@
     return grouped;
   }
 
-  function fitRankedTags(tags, maximumCharacters = Infinity) {
-    const chosen = [];
-    for (const tag of unique(tags)) {
-      const candidate = [...chosen, tag].join(", ");
-      if (candidate.length > maximumCharacters) break;
-      chosen.push(tag);
-    }
-    return chosen;
-  }
-
   function compileForgePrompt() {
     pullControls();
     const config = MODE_CONFIG[state.promptMode] || MODE_CONFIG.balanced;
-    const limit = Number(state.limit) || 0;
+    const grouped = groupSelected();
+    const usedCategories = new Set();
     const segments = [];
 
     const add = (text, tags = [], essential = false) => {
@@ -932,16 +947,16 @@
       if (clean) segments.push({ text: clean, tags, essential });
     };
 
-    const paletteBudget = limit
-      ? Math.max(72, Math.min(limit - 24, Math.floor(limit * .5)))
-      : Infinity;
-    const prioritySource = state.vocalPlan === "instrumental"
-      ? state.selected.filter(tag => !VOCAL_CATEGORIES.includes(categoryIndex.get(tag)))
-      : state.selected;
-    const priorityTags = fitRankedTags(prioritySource, paletteBudget);
-    if (priorityTags.length) {
-      add(`Sound priority: ${priorityTags.join(", ")}`, priorityTags, true);
-    }
+    const addCategory = (category, maximum = config.maxCategoryItems) => {
+      const values = grouped.get(category) || [];
+      if (!values.length) return;
+      usedCategories.add(category);
+      const tags = values.slice(0, maximum);
+      add(`${CATEGORY_LABELS[category] || category}: ${tags.join(", ")}`, tags, category === "Genre");
+    };
+
+    addCategory("Genre");
+    addCategory("Mood");
 
     if (state.brief) {
       add(`Creative direction: ${compact(state.brief, config.briefLimit)}`, [], true);
@@ -955,9 +970,21 @@
 
     if (state.vocalPlan === "instrumental") {
       add("Vocals: instrumental; no lead or backing vocals", [], true);
+      usedCategories.add("Vocals");
+      usedCategories.add("Vocal Delivery");
+      usedCategories.add("Vocal Arrangement");
+      usedCategories.add("Harmony & Choir");
     } else if (state.vocalPlan !== "follow selected vocal tags") {
       add(`Vocal plan: ${state.vocalPlan}`);
     }
+
+    CATEGORY_ORDER.forEach(category => {
+      if (!usedCategories.has(category)) addCategory(category);
+    });
+
+    [...grouped.keys()]
+      .filter(category => !usedCategories.has(category) && category !== "Key")
+      .forEach(category => addCategory(category));
 
     if (state.structure) {
       add(`Structure: ${compact(state.structure, config.structureLimit)}`);
@@ -966,9 +993,10 @@
       add(`Production direction: ${compact(state.production, config.productionLimit)}`);
     }
 
+    const limit = Number(state.limit) || 0;
     const included = new Set();
     const outputSegments = [];
-    let truncated = priorityTags.length < prioritySource.length;
+    let truncated = false;
 
     for (const segment of segments) {
       const candidate = sentence(segment.text);
@@ -1002,129 +1030,179 @@
   }
 
   function categoryValues(grouped, categoryNames) {
-    const allowed = new Set(categoryNames);
-    return state.selected.filter(tag => {
-      const category = categoryIndex.get(tag);
-      return allowed.has(category) && (grouped.get(category) || []).includes(tag);
-    });
+    return unique(categoryNames.flatMap(category => grouped.get(category) || []));
   }
 
-  function cleanSunoToken(value) {
-    return String(value || "")
-      .replace(SUNO_FILLER_WORDS, " ")
-      .replace(/[.;:!?]+/g, " ")
-      .replace(/\s*,\s*/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .replace(/^[-–—]+|[-–—]+$/g, "")
-      .trim();
-  }
-
-  function buildSunoTokenEntries() {
-    const grouped = groupSelected();
-    const supportedTags = new Set(categoryValues(grouped, SUNO_CATEGORY_PRIORITY));
-    const vocalCategories = new Set(VOCAL_CATEGORIES);
-    const entries = state.selected
-      .filter(tag => supportedTags.has(tag))
-      .filter(tag => state.vocalPlan !== "instrumental" || !vocalCategories.has(categoryIndex.get(tag)))
-      .map(tag => ({
-        text: tag,
-        source: tag,
-        category: categoryIndex.get(tag)
-      }));
-
-    const appendUnique = entry => {
-      const clean = cleanSunoToken(entry.text);
-      if (!clean) return;
-      const key = clean.toLocaleLowerCase();
-      if (entries.some(item => cleanSunoToken(item.text).toLocaleLowerCase() === key)) return;
-      entries.push({ ...entry, text: clean });
-    };
-
-    if (state.vocalPlan !== "follow selected vocal tags") {
-      const vocalText = state.vocalPlan === "instrumental"
-        ? "Instrumental"
-        : titleCase(state.vocalPlan);
-      const clean = cleanSunoToken(vocalText);
-      const key = clean.toLocaleLowerCase();
-      if (clean && !entries.some(item => cleanSunoToken(item.text).toLocaleLowerCase() === key)) {
-        const anchorCategories = new Set(["Genre", "Era", "Mood", ...VOCAL_CATEGORIES]);
-        let insertionIndex = 0;
-        entries.forEach((entry, index) => {
-          if (anchorCategories.has(entry.category)) insertionIndex = index + 1;
-        });
-        entries.splice(insertionIndex, 0, {
-          text: clean,
-          source: null,
-          category: "Vocals"
-        });
-      }
+  function takeWithin(values, maximumItems, maximumCharacters, included) {
+    const chosen = [];
+    for (const value of unique(values).slice(0, maximumItems)) {
+      const candidate = [...chosen, value].join(", ");
+      if (candidate.length > maximumCharacters && chosen.length) break;
+      chosen.push(candidate.length > maximumCharacters ? compact(value, maximumCharacters) : value);
+      if (state.selected.includes(value)) included.add(value);
     }
-
-    appendUnique({ text: `${titleCase(state.energy)} energy`, source: null, category: "Production" });
-    appendUnique({ text: `${state.bpm} BPM`, source: null, category: "Track" });
-    appendUnique({ text: `${state.key} ${state.mode}`, source: null, category: "Track" });
-    appendUnique({ text: state.meter, source: null, category: "Track" });
-    return entries;
+    return chosen;
   }
 
-  function compileTokenList(entries, maximumCharacters) {
-    const parts = [];
-    const included = new Set();
-    const seen = new Set();
-    let truncated = false;
-
-    for (const entry of entries) {
-      const text = cleanSunoToken(entry.text);
-      const key = text.toLocaleLowerCase();
-      if (!text || seen.has(key)) continue;
-      const candidate = [...parts, text].join(", ");
-      if (Number.isFinite(maximumCharacters) && candidate.length > maximumCharacters) {
-        truncated = true;
-        break;
-      }
-      parts.push(text);
-      seen.add(key);
-      if (entry.source) included.add(entry.source);
-    }
-
-    return {
-      text: parts.join(", "),
-      included,
-      truncated
-    };
+  function naturalList(values) {
+    if (values.length < 2) return values[0] || "";
+    if (values.length === 2) return `${values[0]} and ${values[1]}`;
+    return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
   }
 
   function compileSunoFieldsPrompt() {
+    // Clean labeled fields that paste cleanly into Suno Custom Mode.
+    // Order and limits tuned for what actually moves the generation.
     pullControls();
+    const grouped = groupSelected();
+    const included = new Set();
+    const itemLimit = state.promptMode === "compact" ? 2 : state.promptMode === "detailed" ? 5 : 3;
+
+    const genres = takeWithin(grouped.get("Genre") || [], Math.min(itemLimit, 3), 60, included);
+    const eras = takeWithin(grouped.get("Era") || [], 1, 22, included);
+    const moods = takeWithin(grouped.get("Mood") || [], Math.min(itemLimit, 3), 48, included);
+    const instruments = takeWithin(grouped.get("Instruments") || [], Math.min(itemLimit + 1, 5), 90, included);
+
+    const vocalSource = state.vocalPlan === "instrumental"
+      ? ["Instrumental"]
+      : [
+          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
+          ...categoryValues(grouped, [
+            "Vocals",
+            "Vocal Delivery",
+            "Vocal Range & Register",
+            "Vocal Arrangement",
+            "Harmony & Choir"
+          ])
+        ];
+    const vocals = takeWithin(vocalSource, Math.min(itemLimit + 1, 5), 100, included);
+
+    const productionTags = takeWithin(
+      categoryValues(grouped, [
+        "Production",
+        "Mix & Master",
+        "Effects",
+        "Rhythm & Groove",
+        "Recording Space",
+        "Texture & Atmosphere"
+      ]),
+      Math.min(itemLimit + 1, 5),
+      100,
+      included
+    );
+
+    const productionParts = [
+      `${state.bpm} BPM`,
+      `${state.key} ${state.mode}`,
+      state.meter,
+      `${state.energy} energy`
+    ];
+    if (productionTags.length) productionParts.push(productionTags.join(", "));
+    if (state.production) {
+      const noteLimit = state.promptMode === "compact" ? 70 : state.promptMode === "detailed" ? 130 : 100;
+      productionParts.push(compact(state.production, noteLimit));
+    }
+
+    // Only emit a field if it actually has content so the paste stays clean
+    const lines = [
+      ["GENRE", [eras[0], ...genres].filter(Boolean).join(", ")],
+      ["MOOD", moods.join(", ")],
+      ["INSTRUMENTS", instruments.join(", ")],
+      ["VOCALS", vocals.join(", ")],
+      ["PRODUCTION", productionParts.filter(Boolean).join("; ")]
+    ]
+      .filter(([, value]) => value && value.trim())
+      .map(([label, value]) => `${label}: ${value}`.trimEnd());
+
     const requestedLimit = Number(state.limit) || 0;
-    const effectiveLimit = state.limit === 0
-      ? Infinity
-      : requestedLimit || SUNO_NATIVE_TARGET;
-    const compiled = compileTokenList(buildSunoTokenEntries(), effectiveLimit);
+    const effectiveLimit = requestedLimit
+      ? Math.min(requestedLimit, SUNO_FIELDS_TARGET)
+      : SUNO_FIELDS_TARGET;
+    let text = lines.join("\n");
+    let truncated = false;
+    if (text.length > effectiveLimit) {
+      text = compact(text, effectiveLimit);
+      truncated = true;
+    }
 
     lastCompile = {
-      includedTags: compiled.included.size,
+      includedTags: included.size,
       totalTags: state.selected.length,
-      truncated: compiled.truncated
+      truncated
     };
-    return compiled.text;
+    return text;
   }
 
   function compileShortPrompt() {
+    // Suno-native style string: genre + mood + instruments + vocals + tempo/energy + short production notes.
+    // Comma-separated, no labels, prioritizes the signals Suno actually weights highest.
     pullControls();
+    const grouped = groupSelected();
+    const included = new Set();
+    const itemLimit = state.promptMode === "compact" ? 2 : state.promptMode === "detailed" ? 4 : 3;
+
+    const genres = takeWithin(grouped.get("Genre") || [], Math.min(itemLimit, 3), 48, included);
+    const eras = takeWithin(grouped.get("Era") || [], 1, 18, included);
+    const moods = takeWithin(grouped.get("Mood") || [], Math.min(itemLimit, 3), 40, included);
+    const instruments = takeWithin(grouped.get("Instruments") || [], Math.min(itemLimit + 1, 4), 70, included);
+
+    const vocalSource = state.vocalPlan === "instrumental"
+      ? ["Instrumental"]
+      : [
+          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
+          ...categoryValues(grouped, ["Vocals", "Vocal Delivery", "Vocal Range & Register", "Vocal Arrangement"])
+        ];
+    const vocals = takeWithin(vocalSource, Math.min(itemLimit + 1, 4), 70, included);
+
+    const productionTags = takeWithin(
+      categoryValues(grouped, ["Production", "Mix & Master", "Effects", "Texture & Atmosphere", "Recording Space"]),
+      2,
+      45,
+      included
+    );
+
+    // Build in the order Suno responds to best
+    const parts = [];
+    if (eras[0]) parts.push(eras[0]);
+    if (genres.length) parts.push(genres.join(" "));
+    if (moods.length) parts.push(naturalList(moods));
+    if (instruments.length) parts.push(naturalList(instruments));
+    if (vocals.length) parts.push(naturalList(vocals));
+    if (productionTags.length) parts.push(naturalList(productionTags));
+
+    // Always surface tempo + energy + key when we have space
+    const core = `${state.bpm} BPM, ${state.key} ${state.mode}, ${state.energy} energy`;
+    parts.push(core);
+
+    if (state.production) {
+      const noteLimit = state.promptMode === "compact" ? 55 : state.promptMode === "detailed" ? 90 : 70;
+      parts.push(compact(state.production, noteLimit));
+    }
+
+    // Fall back to the brief if the user has written nothing else
+    let text = parts.filter(Boolean).join(", ");
+    if ((!genres.length && !instruments.length && !vocals.length) && state.brief) {
+      text = compact(state.brief, 180);
+      if (text && !text.includes("BPM")) text += `, ${core}`;
+    }
+    if (!text) text = core;
+
     const requestedLimit = Number(state.limit) || 0;
     const effectiveLimit = requestedLimit
       ? Math.min(requestedLimit, SHORT_PROMPT_TARGET)
       : SHORT_PROMPT_TARGET;
-    const compiled = compileTokenList(buildSunoTokenEntries(), effectiveLimit);
+    let truncated = false;
+    if (text.length > effectiveLimit) {
+      text = compact(text, effectiveLimit);
+      truncated = true;
+    }
 
     lastCompile = {
-      includedTags: compiled.included.size,
+      includedTags: included.size,
       totalTags: state.selected.length,
-      truncated: compiled.truncated
+      truncated
     };
-    return compiled.text;
+    return text;
   }
 
   function compilePrompt() {
@@ -1148,9 +1226,9 @@
         ? `${lastCompile.includedTags} of ${lastCompile.totalTags} selected sound choices represented`
         : "No sound choices selected";
       if (state.outputFormat === "short") {
-        nodes.outputStatus.textContent = `Kept short and focused. ${tagStatus}.`;
+        nodes.outputStatus.textContent = `Suno-native style string. ${tagStatus}. Live-updates when you change tags.`;
       } else if (state.outputFormat === "suno") {
-        nodes.outputStatus.textContent = `Built as one ranked Suno Style of Music tag list. ${tagStatus}.`;
+        nodes.outputStatus.textContent = `Organized into six Suno-ready fields. ${tagStatus}.`;
       } else {
         nodes.outputStatus.textContent = lastCompile.truncated
           ? `Built to the character limit. ${tagStatus}; review before copying.`
@@ -1173,11 +1251,11 @@
 
     const format = OUTPUT_FORMATS[state.outputFormat] || OUTPUT_FORMATS.forge;
     const detail = MODE_CONFIG[state.promptMode]?.label || "Balanced";
-    nodes.outputModeBadge.textContent = ["short", "suno"].includes(state.outputFormat)
+    nodes.outputModeBadge.textContent = state.outputFormat === "short"
       ? format.label
       : `${format.label} · ${detail}`;
     nodes.formatHint.textContent = format.hint;
-    nodes.promptModeControl.disabled = state.outputFormat !== "forge";
+    nodes.promptModeControl.disabled = state.outputFormat === "short";
   }
 
   function calculateQuality() {
@@ -1484,7 +1562,7 @@
     state.production = nodes.productionInput.value.trim();
     state.exclude = nodes.excludeInput.value.trim();
     state.limit = Number(nodes.limitSelect.value) || 0;
-    state.outputFormat = document.querySelector('input[name="outputFormat"]:checked')?.value || "forge";
+    state.outputFormat = document.querySelector('input[name="outputFormat"]:checked')?.value || "short";
     state.promptMode = document.querySelector('input[name="promptMode"]:checked')?.value || "balanced";
   }
 
@@ -1546,7 +1624,6 @@
       "workspace", "saveState", "installBtn", "newProjectBtn", "summaryBrief", "summarySound",
       "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeSelect", "recipeRow",
       "selectedCount", "tagSearch", "libraryStats", "searchResults", "selectedTags", "selectionGuidance",
-      "tagPriorityList", "tagPriorityEmpty", "tagPriorityStatus",
       "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
       "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
       "modeSelect", "meterSelect", "vocalPlanSelect", "structureInput", "structurePresets",
@@ -1557,7 +1634,9 @@
       "qualityHint", "savedWork", "savedCount", "presetNameInput", "savePresetBtn",
       "savePresetFooterBtn", "exportBackupBtn", "importBackupInput", "presetList",
       "historyList", "aiAssist", "aiDirectionInput", "aiRefineBtn", "aiStatus",
-      "resetDialog", "confirmResetBtn", "toast"
+      "resetDialog", "confirmResetBtn", "toast",
+      // Priority list nodes (newer HTML)
+      "tagPriorityList", "tagPriorityEmpty", "tagPriorityStatus", "tagPriorityInstructions", "tagPriorityHeading"
     ].forEach(id => nodes[id] = document.getElementById(id));
     nodes.workspaceMain = document.querySelector(".workspace-main");
   }
@@ -1610,10 +1689,6 @@
     document.querySelectorAll('input[name="outputFormat"]').forEach(input => {
       input.addEventListener("change", () => {
         state.outputFormat = input.value;
-        if (state.outputFormat === "suno" && state.limit === 1000) {
-          state.limit = SUNO_NATIVE_TARGET;
-          nodes.limitSelect.value = String(SUNO_NATIVE_TARGET);
-        }
         markOutputDirty();
         renderCount();
         markDirty();
@@ -1657,7 +1732,6 @@
     nodes.clearTagsBtn.addEventListener("click", () => {
       if (!state.selected.length) return;
       state.selected = [];
-      state.priorityCustomized = false;
       afterTagChange();
       toast("Sound palette cleared");
     });
@@ -1780,7 +1854,123 @@
     });
   }
 
+  function injectSelectedChipStyles() {
+    if (document.getElementById("selected-chip-styles")) return;
+    const style = document.createElement("style");
+    style.id = "selected-chip-styles";
+    style.textContent = `
+      .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+      }
+      .tag-priority {
+        margin-top: 14px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line, #293244);
+      }
+      .tag-priority-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+      .tag-priority-heading h3 {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+      .priority-rule {
+        color: var(--muted, #9ca8b8);
+        font-size: 0.72rem;
+        font-weight: 800;
+        white-space: nowrap;
+      }
+      .tag-priority-help {
+        margin: 0 0 10px;
+        color: var(--muted, #9ca8b8);
+        font-size: 0.82rem;
+        line-height: 1.4;
+      }
+      .tag-priority-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+      }
+      .tag-priority-item {
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 6px 8px 6px 10px;
+        border: 1px solid var(--line, #293244);
+        border-radius: 12px;
+        background: var(--field, #0b0f16);
+      }
+      .tag-priority-item:focus {
+        outline: none;
+      }
+      .tag-priority-item:focus-visible {
+        outline: 2px solid var(--accent, #ff7a18);
+        outline-offset: 2px;
+      }
+      .tag-priority-rank {
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        background: rgba(255, 122, 24, 0.15);
+        color: var(--accent-2, #ffb347);
+        font-size: 0.75rem;
+        font-weight: 900;
+      }
+      .tag-priority-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.88rem;
+        font-weight: 700;
+      }
+      .tag-priority-controls {
+        display: inline-flex;
+        gap: 4px;
+      }
+      .tag-priority-controls button {
+        width: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        padding: 0;
+        border-radius: 10px;
+        font-size: 0.9rem;
+      }
+      .tag-priority-controls button:disabled {
+        opacity: 0.28;
+      }
+      .tag-priority-empty {
+        margin: 0;
+        padding: 12px;
+        border: 1px dashed var(--line, #293244);
+        border-radius: 12px;
+        color: var(--muted, #9ca8b8);
+        font-size: 0.84rem;
+        text-align: center;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function init() {
+    injectSelectedChipStyles();
     cacheNodes();
     buildCategoryIndex();
     initKeys();
@@ -1822,3 +2012,4 @@
     init();
   }
 })();
+
