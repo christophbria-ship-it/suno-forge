@@ -131,11 +131,22 @@ const selectedAfterQuickPick = Number(document.getElementById("selectedCount").t
 assert.notEqual(selectedAfterQuickPick, selectedBeforeQuickPick, "Quick picks should toggle sound choices.");
 
 const categoryJump = document.getElementById("categoryJump");
-const firstCategoryOption = categoryJump.querySelector("option:nth-child(2)");
-categoryJump.value = firstCategoryOption.value;
+const genreOption = [...categoryJump.options].find(option => option.textContent.startsWith("Genre "));
+categoryJump.value = genreOption.value;
 categoryJump.dispatchEvent(new window.Event("change", { bubbles: true }));
-assert.equal(document.getElementById(firstCategoryOption.value).open, true);
-assert.ok(document.getElementById(firstCategoryOption.value).querySelector(".category-grid"));
+const genreCategory = document.getElementById(genreOption.value);
+assert.equal(genreCategory.open, true);
+assert.equal(genreCategory.querySelectorAll(".category-subgroup").length, 15, "Genres should render in visible musical families.");
+assert.equal(genreCategory.querySelector(".category-subgroup-heading h3").textContent, "Pop, Vocal & Accessible");
+assert.equal(genreCategory.querySelectorAll(".category-subgroup-tags [data-tag]").length, 569);
+
+const instrumentOption = [...categoryJump.options].find(option => option.textContent.startsWith("Instruments "));
+categoryJump.value = instrumentOption.value;
+categoryJump.dispatchEvent(new window.Event("change", { bubbles: true }));
+const instrumentCategory = document.getElementById(instrumentOption.value);
+assert.equal(instrumentCategory.querySelectorAll(".category-subgroup").length, 11, "Instruments should render in visible musical families.");
+assert.equal(instrumentCategory.querySelector(".category-subgroup-heading h3").textContent, "Guitars, Bass Guitars & Fretted Strings");
+assert.equal(instrumentCategory.querySelectorAll(".category-subgroup-tags [data-tag]").length, 523);
 
 click(document.querySelector('#panel-sound [data-go="shape"]'));
 input(document.getElementById("bpmRange"), "95");
@@ -227,4 +238,3 @@ assert.deepEqual(
 
 console.log("UI flow passed: recipe → sound search → production → export → edit → preset → reset.");
 dom.window.close();
-
