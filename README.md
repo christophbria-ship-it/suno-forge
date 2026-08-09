@@ -1,22 +1,18 @@
-# The Simplest Prompt Builder
+# Suno Forge Tag Studio
 
-A fast, local-first AI music prompt studio for Suno and other generative music tools.
+A focused, local-first Suno style prompt builder that keeps the full 1,940-tag sound library visible and usable.
 
-## What it does
+## What makes it different
 
-- Guides a song idea through four focused steps: Brief, Sound, Shape, and Export.
-- Searches 1,940 sound tags—including 569 genres and 523 instruments—with genres and instruments visibly grouped by musical family.
-- Builds the original Forge production brief, six organized Suno fields, or one short GMIV line.
-- Keeps compact, balanced, and detailed controls for longer formats without filling the character limit unnecessarily.
-- Keeps Exclude Styles separate for direct use in Suno.
-- Supports keyboard navigation, mobile layouts, reduced motion, strong focus states, and screen-reader-friendly controls.
-- Saves the current project, presets, and prompt history on the device.
-- Works offline after the first visit and can be installed as a PWA.
-- Optionally refines an existing production prompt through the server-side Prompt AI endpoint.
-
-## Privacy
-
-The local generator, projects, presets, and prompt history stay in browser storage. Prompt AI sends only the finished prompt and optional refinement direction when the user explicitly selects that feature.
+- Preserves all 20 categories and every existing tag, including 569 genres and 523 instruments.
+- Organizes large libraries into compact musical-family boxes instead of one long scrolling page.
+- Pages through each family without removing or hiding choices from the library.
+- Uses Suno-oriented main categories: Genre, Mood, Vocals, Vocal Delivery, Vocal Range, Instruments, and Production.
+- Keeps all remaining categories behind the Options button.
+- Defaults to two choices per category and automatically advances through the main categories.
+- Includes an optional 1,000-character mode for larger prompts.
+- Produces one clean, comma-separated Suno Style prompt with one-tap copying.
+- Saves selections locally and works offline after the first visit.
 
 ## Verification
 
@@ -24,5 +20,4 @@ The local generator, projects, presets, and prompt history stay in browser stora
 npm test
 ```
 
-The test suite checks JavaScript syntax, UI/JavaScript wiring, asset integrity, manifest and service-worker consistency, accessibility essentials, and sound-library loading.
-
+The test suite checks JavaScript syntax, all 1,940 tags, family-group completeness, focused and extended selection rules, pagination, copying, accessibility wiring, and offline assets.

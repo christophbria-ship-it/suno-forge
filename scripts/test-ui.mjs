@@ -6,13 +6,14 @@ const html = fs.readFileSync("index.html", "utf8");
 const dataSource = fs.readFileSync("data.js", "utf8");
 const appSource = fs.readFileSync("prompt-app.js", "utf8");
 const reportedErrors = [];
+const copied = [];
 const virtualConsole = new VirtualConsole();
 
 virtualConsole.on("jsdomError", error => reportedErrors.push(error));
 virtualConsole.on("error", error => reportedErrors.push(error));
 
 const dom = new JSDOM(html, {
-  url: "https://suno-forge.test/#brief",
+  url: "https://suno-forge.test/",
   runScripts: "outside-only",
   pretendToBeVisual: true,
   virtualConsole
@@ -21,22 +22,8 @@ const dom = new JSDOM(html, {
 const { window } = dom;
 const { document } = window;
 
-window.matchMedia = query => ({
-  matches: query.includes("prefers-reduced-motion") ? false : false,
-  media: query,
-  onchange: null,
-  addEventListener() {},
-  removeEventListener() {},
-  addListener() {},
-  removeListener() {},
-  dispatchEvent() {
-    return true;
-  }
-});
-
-window.HTMLElement.prototype.scrollIntoView = function scrollIntoView() {};
-window.CSS ??= {};
-window.CSS.escape = value => String(value).replace(/[\\"']/g, "\\$&");
+Object.defineProperty(window, "innerWidth", { configurable: true, value: 1024 });
+Object.defineProperty(window, "innerHeight", { configurable: true, value: 768 });
 window.confirm = () => true;
 
 if (window.HTMLDialogElement) {
@@ -47,194 +34,110 @@ if (window.HTMLDialogElement) {
     this.removeAttribute("open");
   };
 }
-window.HTMLFormElement.prototype.requestSubmit = function requestSubmit() {};
 
 Object.defineProperty(window.navigator, "clipboard", {
   configurable: true,
   value: {
-    async writeText() {}
+    async writeText(value) {
+      copied.push(value);
+    }
   }
 });
 
 const wait = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
-const input = (node, value) => {
-  node.value = value;
-  node.dispatchEvent(new window.Event("input", { bubbles: true }));
-};
 const click = node => {
   assert.ok(node, "Expected a clickable element.");
   node.click();
 };
+const byText = (selector, text) => [...document.querySelectorAll(selector)]
+  .find(node => node.textContent.includes(text));
 
 window.eval(dataSource + "\nwindow.DATA = DATA;");
 window.eval(appSource);
 document.dispatchEvent(new window.Event("DOMContentLoaded", { bubbles: true }));
-await wait(20);
+await wait(30);
 
-assert.equal(document.querySelectorAll(".recipe-card").length, 6, "All starter recipes should render.");
-assert.equal(document.querySelectorAll(".category").length, 20, "Every sound category should render.");
-assert.equal(document.querySelectorAll(".category-grid").length, 0, "Sound options should load lazily.");
-assert.equal(document.querySelectorAll('input[name="outputFormat"]').length, 3, "All output styles should be available.");
-assert.match(document.getElementById("libraryStats").textContent, /1,940 tags available/);
-assert.match(document.getElementById("libraryStats").textContent, /569 genres/);
-assert.match(document.getElementById("libraryStats").textContent, /523 instruments/);
-assert.match(document.getElementById("libraryStats").textContent, /select up to 100/);
+assert.equal(reportedErrors.length, 0, `Initialization errors: ${reportedErrors.map(error => error.message).join(" | ")}`);
+assert.match(document.getElementById("libraryStats").textContent, /1,940 tags/);
+assert.match(document.getElementById("libraryStats").textContent, /20 categories/);
+assert.match(document.getElementById("libraryStats").textContent, /nothing removed/);
+assert.equal(document.querySelectorAll("#mainCategoryTabs .category-tab").length, 7, "Seven Suno-focused categories should stay on the main rail.");
+assert.equal(document.querySelectorAll("#optionalCategoryGrid .optional-category-button").length, 13, "All remaining categories should stay in Options.");
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Genre");
 
-const recipeExpectations = [
-  ["Appalachian folk", "82 BPM"],
-  ["alternative rock", "112 BPM"],
-  ["dark cinematic", "76 BPM"],
-  ["Modern soul", "92 BPM"],
-  ["outlaw country", "126 BPM"],
-  ["post-punk", "132 BPM"]
-];
-const recipeButtons = [...document.querySelectorAll(".recipe-card")];
-recipeButtons.forEach((button, index) => {
-  click(button);
-  assert.match(document.getElementById("briefInput").value, new RegExp(recipeExpectations[index][0], "i"));
-  assert.equal(document.getElementById("bpmOutput").textContent, recipeExpectations[index][1]);
-  assert.equal(document.getElementById("recipeSelect").value, String(index));
-  assert.equal(button.getAttribute("aria-pressed"), "true");
-});
+const genreFamilies = [...document.querySelectorAll("#familyBoard .family-button")];
+assert.equal(genreFamilies.length, 16, "Genre should show all reorganized musical families at once.");
+assert.match(genreFamilies[0].textContent, /Vocalized & Harmony/);
+assert.match(document.getElementById("familySummary").textContent, /569 total choices/);
+assert.ok(byText("#tagGrid .tag-button", "A Cappella"), "Vocalized genres should include A Cappella.");
+assert.ok(byText("#tagGrid .tag-button", "Barbershop"), "Vocalized genres should include Barbershop.");
+assert.ok(byText("#tagGrid .tag-button", "Doo-Wop"), "Vocalized genres should include Doo-Wop.");
 
-const recipeSelect = document.getElementById("recipeSelect");
-const briefBeforeEmptyChoice = document.getElementById("briefInput").value;
-recipeSelect.value = "";
-recipeSelect.dispatchEvent(new window.Event("change", { bubbles: true }));
-assert.equal(document.getElementById("briefInput").value, briefBeforeEmptyChoice);
+click(byText("#tagGrid .tag-button", "A Cappella"));
+click(byText("#tagGrid .tag-button", "Barbershop"));
+assert.equal(document.getElementById("categorySelectionStatus").textContent, "2 / 2 selected");
+assert.match(document.getElementById("styleOutput").value, /A Cappella, Barbershop/);
+assert.ok([...document.querySelectorAll("#tagGrid .tag-button")].filter(button => button.getAttribute("aria-pressed") === "false").every(button => button.disabled));
 
-recipeSelect.value = "1";
-recipeSelect.dispatchEvent(new window.Event("change", { bubbles: true }));
-assert.match(document.getElementById("briefInput").value, /alternative rock/i);
-assert.equal(document.getElementById("bpmOutput").textContent, "112 BPM");
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Mood", "Focused mode should advance after two choices.");
+assert.equal(document.querySelectorAll("#familyBoard .family-button").length, 5, "Mood should be organized from mellow to extreme.");
+assert.match(document.querySelector("#familyBoard .family-button").textContent, /Mellow & Gentle/);
 
-click(recipeButtons[0]);
-assert.match(document.getElementById("briefInput").value, /Appalachian folk/i);
-assert.equal(document.getElementById("selectedCount").textContent, "8 selected");
-assert.equal(document.getElementById("bpmOutput").textContent, "82 BPM");
+const firstMood = document.querySelector("#tagGrid .tag-button");
+const firstMoodName = firstMood.textContent;
+click(firstMood);
+click([...document.querySelectorAll("#tagGrid .tag-button")].find(button => button.textContent !== firstMoodName));
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Vocals");
 
-click(document.querySelector('#panel-brief [data-go="sound"]'));
-assert.equal(document.getElementById("panel-brief").hidden, true);
-assert.equal(document.getElementById("panel-sound").hidden, false);
-assert.equal(window.location.hash, "#sound");
+click(document.getElementById("optionsBtn"));
+assert.equal(document.getElementById("optionsDialog").open, true, "Options should open as a compact dialog.");
+click(byText("#optionalCategoryGrid .optional-category-button", "Effects"));
+assert.equal(document.getElementById("optionsDialog").open, false);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Effects");
+assert.match(document.getElementById("optionsActiveLabel").textContent, /Effects/);
+assert.match(document.getElementById("familySummary").textContent, /62 total choices/);
 
-const search = document.getElementById("tagSearch");
-input(search, "grunge");
-const searchResults = document.getElementById("searchResults");
-assert.equal(searchResults.hidden, false);
-assert.ok(searchResults.querySelectorAll("button").length >= 1, "Sound search should return matching tags.");
+const extended = document.querySelector('input[name="promptSize"][value="extended"]');
+extended.checked = true;
+extended.dispatchEvent(new window.Event("change", { bubbles: true }));
+assert.match(document.getElementById("characterCount").textContent, /\/ 1000/);
 
-const quickPick = document.querySelector("#quickPickGrid [data-tag]");
-const selectedBeforeQuickPick = Number(document.getElementById("selectedCount").textContent.match(/\d+/)?.[0]);
-click(quickPick);
-const selectedAfterQuickPick = Number(document.getElementById("selectedCount").textContent.match(/\d+/)?.[0]);
-assert.notEqual(selectedAfterQuickPick, selectedBeforeQuickPick, "Quick picks should toggle sound choices.");
+const activeBeforeExtendedChoices = document.getElementById("activeCategoryTitle").textContent;
+const firstThreeEffects = [...document.querySelectorAll("#tagGrid .tag-button")].slice(0, 3);
+firstThreeEffects.forEach(click);
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, activeBeforeExtendedChoices, "1,000-character mode must stay on the active category.");
+assert.ok(document.getElementById("styleOutput").value.split(", ").length >= 7, "Extended mode should allow more than two tags in a category.");
 
-const categoryJump = document.getElementById("categoryJump");
-const genreOption = [...categoryJump.options].find(option => option.textContent.startsWith("Genre "));
-categoryJump.value = genreOption.value;
-categoryJump.dispatchEvent(new window.Event("change", { bubbles: true }));
-const genreCategory = document.getElementById(genreOption.value);
-assert.equal(genreCategory.open, true);
-assert.equal(genreCategory.querySelectorAll(".category-subgroup").length, 15, "Genres should render in visible musical families.");
-assert.equal(genreCategory.querySelector(".category-subgroup-heading h3").textContent, "Pop, Vocal & Accessible");
-assert.equal(genreCategory.querySelectorAll(".category-subgroup-tags [data-tag]").length, 569);
+let safety = 0;
+while (safety++ < 30) {
+  let candidate = [...document.querySelectorAll("#tagGrid .tag-button")]
+    .find(button => button.getAttribute("aria-pressed") === "false" && !button.disabled);
+  if (candidate) {
+    click(candidate);
+    continue;
+  }
+  const next = document.getElementById("nextPageBtn");
+  if (next.disabled) break;
+  click(next);
+}
+assert.ok(document.getElementById("styleOutput").value.length <= 1000, "Extended mode must never exceed 1,000 characters.");
 
-const instrumentOption = [...categoryJump.options].find(option => option.textContent.startsWith("Instruments "));
-categoryJump.value = instrumentOption.value;
-categoryJump.dispatchEvent(new window.Event("change", { bubbles: true }));
-const instrumentCategory = document.getElementById(instrumentOption.value);
-assert.equal(instrumentCategory.querySelectorAll(".category-subgroup").length, 11, "Instruments should render in visible musical families.");
-assert.equal(instrumentCategory.querySelector(".category-subgroup-heading h3").textContent, "Guitars, Bass Guitars & Fretted Strings");
-assert.equal(instrumentCategory.querySelectorAll(".category-subgroup-tags [data-tag]").length, 523);
+click(document.getElementById("copyPromptBtn"));
+await wait(10);
+assert.equal(copied.at(-1), document.getElementById("styleOutput").value, "Copy should use the exact Suno style string.");
 
-click(document.querySelector('#panel-sound [data-go="shape"]'));
-input(document.getElementById("bpmRange"), "95");
-input(
-  document.getElementById("productionInput"),
-  "Close vocal, narrow verses, live drums entering late, then a wide final chorus."
-);
-input(document.getElementById("excludeInput"), "glossy pop polish, EDM drops");
+click(document.getElementById("mobileStyleBtn"));
+assert.equal(document.getElementById("stylePanel").classList.contains("open"), true);
+click(document.getElementById("closeStyleBtn"));
+assert.equal(document.getElementById("stylePanel").classList.contains("open"), false);
 
-const compactMode = document.querySelector('input[name="promptMode"][value="compact"]');
-compactMode.checked = true;
-compactMode.dispatchEvent(new window.Event("change", { bubbles: true }));
+click(document.getElementById("clearAllBtn"));
+assert.equal(document.getElementById("styleOutput").value, "");
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Genre");
+assert.ok(window.localStorage.getItem("sunoForgeTagStudioV4"), "The simplified project should save locally.");
 
-const limit = document.getElementById("limitSelect");
-limit.value = "600";
-limit.dispatchEvent(new window.Event("input", { bubbles: true }));
-
-click(document.querySelector('#panel-shape [data-go="export"]'));
-const output = document.getElementById("promptOutput").value;
-assert.match(output, /Track: 95 BPM/);
-assert.match(output, /Creative direction:/);
-assert.ok(output.length <= 600, "The generated prompt must respect the selected character limit.");
-assert.doesNotMatch(output, /Avoid:/, "Exclude Styles should stay out of the style prompt.");
-assert.match(document.getElementById("excludePreview").textContent, /glossy pop polish/);
-assert.equal(document.getElementById("copyExcludeBtn").disabled, false);
-assert.ok(Number(document.getElementById("qualityScore").textContent) >= 65);
-
-const sunoFormat = document.querySelector('input[name="outputFormat"][value="suno"]');
-sunoFormat.checked = true;
-sunoFormat.dispatchEvent(new window.Event("change", { bubbles: true }));
-click(document.getElementById("forgeBtn"));
-const sunoOutput = document.getElementById("promptOutput").value;
-assert.equal(sunoOutput.split("\n").length, 6, "Suno Fields should always use the six organized lines.");
-assert.match(sunoOutput, /^GENRE: Appalachian Folk, Dark Folk$/m);
-assert.match(sunoOutput, /^ERA:$/m);
-assert.match(sunoOutput, /^MOOD\/EMOTION: Haunting, Defiant$/m);
-assert.match(sunoOutput, /^INSTRUMENTS: Banjo, Fiddle$/m);
-assert.match(sunoOutput, /^VOCAL STYLE: Raspy Vocals$/m);
-assert.match(sunoOutput, /^PRODUCTION: 95 BPM, D minor, 4\/4, medium energy;/m);
-assert.ok(sunoOutput.length < 600, "Suno Fields should stay focused instead of filling the selected limit.");
-assert.match(document.getElementById("outputStatus").textContent, /six Suno-ready fields/);
-
-const shortFormat = document.querySelector('input[name="outputFormat"][value="short"]');
-shortFormat.checked = true;
-shortFormat.dispatchEvent(new window.Event("change", { bubbles: true }));
-click(document.getElementById("forgeBtn"));
-const shortOutput = document.getElementById("promptOutput").value;
-assert.equal(shortOutput.includes("\n"), false, "Short & Sweet should be one line.");
-assert.ok(shortOutput.length <= 220, "Short & Sweet should stay under its focused target.");
-assert.match(shortOutput, /Appalachian Folk \/ Dark Folk/);
-assert.match(shortOutput, /Haunting and Defiant/);
-assert.match(shortOutput, /Banjo, Fiddle, and Upright Bass/);
-assert.match(shortOutput, /Raspy Vocals/);
-assert.equal(document.getElementById("promptModeControl").disabled, true);
-assert.match(document.getElementById("promptCount").textContent, /\/ 220 target$/);
-
-const forgeFormat = document.querySelector('input[name="outputFormat"][value="forge"]');
-forgeFormat.checked = true;
-forgeFormat.dispatchEvent(new window.Event("change", { bubbles: true }));
-assert.equal(document.getElementById("promptModeControl").disabled, false);
-
-input(document.getElementById("promptOutput"), "A manually edited studio prompt.");
-assert.equal(document.getElementById("promptCount").textContent, "32 / 600");
-assert.match(document.getElementById("outputStatus").textContent, /Manual edits saved/);
-
-const savedBeforePreset = Number(document.getElementById("savedCount").textContent);
-input(document.getElementById("presetNameInput"), "Test preset");
-click(document.getElementById("savePresetBtn"));
-assert.equal(document.getElementById("savedCount").textContent, String(savedBeforePreset + 1));
-assert.equal(document.querySelectorAll("#presetList .saved-item").length, 1);
-
-click(document.getElementById("newProjectBtn"));
-assert.equal(document.getElementById("resetDialog").hasAttribute("open"), true);
-click(document.getElementById("confirmResetBtn"));
-assert.equal(document.getElementById("briefInput").value, "");
-assert.equal(document.getElementById("selectedCount").textContent, "0 selected");
-assert.equal(document.getElementById("panel-brief").hidden, false);
-
-await wait(240);
-const saved = JSON.parse(window.localStorage.getItem("sunoForgeProjectV3"));
-assert.equal(saved.brief, "");
-assert.deepEqual(saved.selected, []);
-
-assert.deepEqual(
-  reportedErrors,
-  [],
-  "Browser simulation errors: " + reportedErrors.map(error => error.message).join("; ")
-);
-
-console.log("UI flow passed: recipe → sound search → production → export → edit → preset → reset.");
-dom.window.close();
+assert.equal(reportedErrors.length, 0, `Runtime errors: ${reportedErrors.map(error => error.message).join(" | ")}`);
+console.log("UI checks passed: full tag families, focused auto-advance, Options, pagination, 1,000-character mode, copy, and clear.");

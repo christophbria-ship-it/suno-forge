@@ -1,14 +1,14 @@
 {
   "id": "/",
-  "name": "The Simplest Prompt Builder for AI Music",
-  "short_name": "The Simplest Prompt Builder",
-  "description": "The simplest way to build production-ready prompts for Suno and other AI music tools.",
-  "start_url": "/#brief",
+  "name": "Suno Forge Tag Studio",
+  "short_name": "Suno Forge",
+  "description": "Explore 1,940 music tags and build a focused Suno style prompt.",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#eadfcf",
-  "theme_color": "#eadfcf",
+  "background_color": "#f3ede4",
+  "theme_color": "#f3ede4",
   "categories": ["music", "productivity", "utilities"],
   "icons": [
     {
@@ -17,18 +17,5 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ],
-  "shortcuts": [
-    {
-      "name": "New prompt",
-      "short_name": "New prompt",
-      "url": "/#brief"
-    },
-    {
-      "name": "Open saved work",
-      "short_name": "Saved work",
-      "url": "/#export"
-    }
   ]
 }
-

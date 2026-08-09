@@ -1,224 +1,247 @@
 "use strict";
 
 (() => {
-  const STORAGE_KEY = "sunoForgeProjectV3";
-  const HISTORY_KEY = "sunoForgeHistoryV3";
-  const PRESET_KEY = "sunoForgePresetsV3";
-  const LEGACY_STORAGE_KEY = "forgePromptGeneratorV2";
-  const LEGACY_HISTORY_KEY = "forgePromptHistoryV2";
-  const LEGACY_PRESET_KEY = "forgePromptPresetsV2";
-  const MAX_SELECTED = 100;
-  const STEP_ORDER = ["brief", "sound", "shape", "export"];
+  const STORAGE_KEY = "sunoForgeTagStudioV4";
+  const LEGACY_STORAGE_KEYS = ["sunoForgeProjectV3", "forgePromptGeneratorV2"];
+  const FOCUSED_LIMIT = 2;
+  const EXTENDED_CHARACTER_LIMIT = 1000;
 
-  const RECIPES = [
-    {
-      name: "Dark Appalachian",
-      description: "Weathered folk, close vocals, and a defiant final lift.",
-      brief: "Dark Appalachian folk about finally leaving, intimate weathered vocal, restrained verses, and a defiant final chorus.",
-      tags: ["Appalachian Folk", "Dark Folk", "Banjo", "Fiddle", "Upright Bass", "Raspy Vocals", "Haunting", "Defiant"],
-      bpm: 82,
-      energy: "medium",
-      key: "D",
-      mode: "minor",
-      production: "Dry close-mic vocal, sparse verses, natural room sound, heavier live drums and stacked harmony only in the final chorus."
-    },
-    {
-      name: "Raw Grunge",
-      description: "Loud-soft dynamics, dirty guitars, and honest tension.",
-      brief: "Unpolished alternative rock with tense verses and a violent emotional release in the chorus.",
-      tags: ["Grunge", "Alternative Rock", "Distorted Guitar", "Bass Guitar", "Live Drums", "Raw Vocals", "Gritty", "Angry"],
-      bpm: 112,
-      energy: "high",
-      key: "E",
-      mode: "minor",
-      production: "Loose live-band feel, dirty guitar layers, audible pick attack, restrained verse mix, wide explosive chorus without glossy polish."
-    },
-    {
-      name: "Cinematic Fallout",
-      description: "A near-silent opening that grows to full-scale impact.",
-      brief: "A dark cinematic track that starts almost empty and becomes enormous without turning into trailer-music cliché.",
-      tags: ["Film Score", "Cinematic Rock", "String Ensemble", "Toms", "Piano", "Apocalyptic", "Powerful", "Haunting"],
-      bpm: 76,
-      energy: "explosive",
-      key: "C",
-      mode: "minor",
-      production: "Slow dynamic escalation, low strings and piano first, percussion enters late, final section reaches full scale then cuts to a bare ending."
-    },
-    {
-      name: "Soul Pressure",
-      description: "A tight pocket, worn keys, and an intimate lead vocal.",
-      brief: "Modern soul with a tight pocket, restrained confidence, and a vocal that sounds close enough to touch.",
-      tags: ["Neo-Soul", "Alternative R&B", "Rhodes", "Bass Guitar", "Live Drums", "Soulful Vocals", "Intimate", "Confident"],
-      bpm: 92,
-      energy: "medium",
-      key: "F",
-      mode: "minor",
-      production: "Warm bass-forward mix, human drum timing, Rhodes chords with space, intimate lead vocal, selective harmony stacks on the hook."
-    },
-    {
-      name: "Outlaw Drive",
-      description: "Fast, rough country with momentum and no radio gloss.",
-      brief: "Hard-driving outlaw country with grit, momentum, and no polished radio-country sheen.",
-      tags: ["Outlaw Country", "Country Rock", "Electric Guitar", "Pedal Steel", "Bass Guitar", "Live Drums", "Raspy Vocals", "Reckless"],
-      bpm: 126,
-      energy: "high",
-      key: "A",
-      mode: "mixolydian",
-      production: "Live room character, sharp snare, overdriven rhythm guitar, short pedal-steel answers, rough lead vocal and a big gang-vocal final hook."
-    },
-    {
-      name: "Cold Post-Punk",
-      description: "Nervous bass motion, clipped guitar, and emotional distance.",
-      brief: "Minimal post-punk with a nervous pulse, detached vocal, and an atmosphere that never fully opens up.",
-      tags: ["Post-Punk", "New Wave", "Bass Guitar", "Clean Electric Guitar", "Analog Synth", "Detached Delivery", "Cold", "Tense"],
-      bpm: 132,
-      energy: "medium",
-      key: "B",
-      mode: "minor",
-      production: "Bass-led arrangement, dry drums, clipped guitar, narrow synth layer, emotionally restrained vocal, no oversized chorus."
-    }
-  ];
-
-  const STRUCTURES = [
-    ["Direct", "Intro > Verse > Chorus > Verse > Chorus > Bridge > Final Chorus > Outro"],
-    ["Slow Burn", "Intro > Verse > Verse > Pre-Chorus > Chorus > Bridge > Final Chorus > Outro"],
-    ["No Chorus", "Intro > Verse > Verse > Instrumental Break > Verse > Climax > Outro"],
-    ["Short", "Intro > Verse > Chorus > Verse > Final Chorus"],
-    ["Epic", "Intro > Verse > Pre-Chorus > Chorus > Verse > Pre-Chorus > Chorus > Bridge > Breakdown > Final Chorus > Outro"]
-  ];
-
-  const QUICK_PICKS = {
-    Style: ["Indie Pop", "Neo-Soul", "Outlaw Country", "Post-Punk", "Hip-Hop", "Film Score"],
-    Mood: ["Intimate", "Dark", "Uplifting", "Haunting", "Defiant", "Energetic"],
-    Instruments: ["Acoustic Guitar", "Electric Guitar", "Piano", "Live Drums", "Analog Synth", "808 Bass"],
-    Vocals: ["Raspy Vocals", "Airy Vocals", "Soulful Vocals", "Rap Vocals", "Raw Vocals", "Instrumental"],
-    Production: ["Raw Production", "Warm Analog", "Wide Stereo", "Dry Mix", "Tape Saturation", "Lo-Fi"]
-  };
-
-  const CATEGORY_LABELS = {
-    Genre: "Style",
-    Mood: "Mood",
-    Instruments: "Instruments",
-    Vocals: "Vocals",
-    "Vocal Delivery": "Vocal delivery",
-    "Vocal Range & Register": "Vocal register",
-    "Vocal Arrangement": "Vocal arrangement",
-    "Harmony & Choir": "Harmony and choir",
-    "Rhythm & Groove": "Rhythm and groove",
-    Production: "Production",
-    "Mix & Master": "Mix",
-    Effects: "Effects",
-    Era: "Era",
-    Language: "Language",
-    Writing: "Writing",
-    Arrangement: "Arrangement",
-    Performance: "Performance",
-    "Recording Space": "Recording space",
-    "Texture & Atmosphere": "Texture and atmosphere"
-  };
-
-  const CATEGORY_ORDER = [
+  const MAIN_CATEGORIES = [
+    "Genre",
+    "Mood",
     "Vocals",
     "Vocal Delivery",
     "Vocal Range & Register",
-    "Vocal Arrangement",
-    "Harmony & Choir",
     "Instruments",
-    "Rhythm & Groove",
-    "Production",
-    "Mix & Master",
-    "Effects",
-    "Era",
-    "Language",
-    "Writing",
-    "Arrangement",
-    "Performance",
-    "Recording Space",
-    "Texture & Atmosphere"
+    "Production"
   ];
 
-  const MODE_CONFIG = {
-    compact: {
-      label: "Compact",
-      maxCategoryItems: 3,
-      briefLimit: 145,
-      structureLimit: 105,
-      productionLimit: 135
-    },
-    balanced: {
-      label: "Balanced",
-      maxCategoryItems: 5,
-      briefLimit: 230,
-      structureLimit: 170,
-      productionLimit: 240
-    },
-    detailed: {
-      label: "Detailed",
-      maxCategoryItems: 8,
-      briefLimit: 420,
-      structureLimit: 280,
-      productionLimit: 520
-    }
+  const OPTIONAL_CATEGORIES = [
+    "Vocal Arrangement",
+    "Harmony & Choir",
+    "Era",
+    "Rhythm & Groove",
+    "Effects",
+    "Mix & Master",
+    "Recording Space",
+    "Texture & Atmosphere",
+    "Language",
+    "Key",
+    "Writing",
+    "Arrangement",
+    "Performance"
+  ];
+
+  const OUTPUT_ORDER = [...MAIN_CATEGORIES, ...OPTIONAL_CATEGORIES];
+
+  const SHORT_LABELS = {
+    "Vocal Delivery": "Delivery",
+    "Vocal Range & Register": "Vocal Range",
+    "Vocal Arrangement": "Vocal Arrange",
+    "Harmony & Choir": "Harmony",
+    "Rhythm & Groove": "Groove",
+    "Mix & Master": "Mix",
+    "Recording Space": "Space",
+    "Texture & Atmosphere": "Texture"
   };
 
-  const OUTPUT_FORMATS = {
-    forge: {
-      label: "Forge Brief",
-      hint: "Full labeled production brief. Use when you want maximum detail."
+  const MOOD_FAMILIES = [
+    {
+      label: "Mellow & Gentle",
+      tags: [
+        "Calm", "Dreamy", "Hopeful", "Intimate", "Tender", "Warm", "Fragile",
+        "Grateful", "Peaceful", "Serene", "Spiritual", "Vulnerable"
+      ]
     },
-    suno: {
-      label: "Suno Fields",
-      hint: "Six clean labeled lines (Genre / Mood / Instruments / Vocals / Production) ready for Suno Custom."
+    {
+      label: "Bright & Uplifting",
+      tags: [
+        "Confident", "Energetic", "Euphoric", "Happy", "Playful", "Powerful",
+        "Triumphant", "Uplifting", "Celebratory", "Ecstatic", "Empowering", "Hilarious",
+        "Joyful", "Optimistic", "Determined"
+      ]
     },
-    short: {
-      label: "Short & Sweet",
-      hint: "One tight Suno-native style string — genre, mood, instruments, vocals, BPM. Default and usually the strongest."
+    {
+      label: "Reflective & Romantic",
+      tags: [
+        "Bittersweet", "Emotional", "Melancholic", "Nostalgic", "Romantic", "Sad",
+        "Detached", "Reflective", "Lonely", "Yearning", "Contemplative", "Flirtatious",
+        "Heartbroken", "Mournful", "Regretful", "Somber", "Wry"
+      ]
+    },
+    {
+      label: "Dark & Uneasy",
+      tags: [
+        "Dark", "Haunting", "Mysterious", "Suspenseful", "Uneasy", "Paranoid", "Cold",
+        "Anxious", "Brooding", "Creepy", "Eerie", "Menacing", "Sinister", "Tense"
+      ]
+    },
+    {
+      label: "Intense & Extreme",
+      tags: [
+        "Aggressive", "Apocalyptic", "Restless", "Defiant", "Desperate", "Reckless",
+        "Angry", "Chaotic", "Devastated", "Gritty", "Hypnotic", "Seductive"
+      ]
     }
+  ];
+
+  const GROUP_BLUEPRINTS = {
+    Vocals: [
+      ["Voice & Ensemble", 0, 16],
+      ["Spoken & Extreme", 16, 24],
+      ["Tone & Character", 24, 38],
+      ["Genre Vocal Styles", 38, 48]
+    ],
+    "Vocal Delivery": [
+      ["Placement & Phrasing", 0, 16],
+      ["Emotion & Power", 16, 28],
+      ["Special Techniques", 28, 37],
+      ["Runs, Slides & Vibrato", 37, 48],
+      ["Phrase Shapes", 48, 54]
+    ],
+    "Vocal Range & Register": [
+      ["Traditional Voice Types", 0, 12],
+      ["Range & Melody Shape", 12, 18],
+      ["Head, Chest & Falsetto", 18, 24],
+      ["Extreme Registers", 24, 30]
+    ],
+    Production: [
+      ["Fidelity & Format", 0, 8],
+      ["Dynamics & Weight", 8, 15],
+      ["Color & Texture", 15, 24],
+      ["Tone & Space", 24, 31],
+      ["Playback & Scale", 31, 43],
+      ["Recording Character", 43, 49],
+      ["Construction & Finish", 49, 62]
+    ],
+    "Vocal Arrangement": [
+      ["Unison, Doubles & Harmony", 0, 16],
+      ["Duets & Responses", 16, 24],
+      ["Solo, Group & Crowd", 24, 32],
+      ["Layers & Chorus Builds", 32, 44],
+      ["Background Hooks", 44, 55],
+      ["Spoken, Rap & Characters", 55, 62]
+    ],
+    "Harmony & Choir": [
+      ["Choir Types", 0, 16],
+      ["Choir Movement & Color", 16, 24],
+      ["Genre Harmonies", 24, 34],
+      ["Modern Harmony Shapes", 34, 40],
+      ["Harmony Motion & Endings", 40, 45]
+    ],
+    "Rhythm & Groove": [
+      ["Core Feel & Time", 0, 6],
+      ["Genre Grooves", 6, 19],
+      ["Meters & Polyrhythm", 19, 29],
+      ["Pocket & Breaks", 29, 43],
+      ["World Rhythms & Minimal", 43, 50]
+    ],
+    "Mix & Master": [
+      ["Forward Elements", 0, 7],
+      ["Width & Placement", 7, 16],
+      ["Frequency Shape", 16, 27],
+      ["Dynamics & Loudness", 27, 37],
+      ["Format & Environment", 37, 45]
+    ],
+    Effects: [
+      ["Core Effects", 0, 12],
+      ["Vocal Tuning & Doubling", 12, 16],
+      ["Delay & Reverb", 16, 26],
+      ["Filters & Pitch", 26, 36],
+      ["Granular & Movement", 36, 50],
+      ["Transitions & Noise", 50, 62]
+    ],
+    Era: [
+      ["Historic", 0, 6],
+      ["Modern Decades", 6, 12],
+      ["Vintage Movements", 12, 20],
+      ["Broadcast & Technology", 20, 26],
+      ["Future & Timeless", 26, 30]
+    ],
+    Language: [
+      ["Western Europe", 0, 7],
+      ["East & South Asia", 7, 13],
+      ["Global Languages", 13, 19],
+      ["Mixed or No Language", 19, 22]
+    ],
+    Key: [
+      ["Natural Major & Minor", 0, 14],
+      ["Sharp Major & Minor", 14, 24],
+      ["Modes", 24, 30],
+      ["Scales", 30, 35],
+      ["Ambiguous", 35, 36]
+    ],
+    Writing: [
+      ["Voice & Point of View", 0, 10],
+      ["Rhyme & Sound", 10, 22],
+      ["Story & Imagery", 22, 34],
+      ["Form & Repetition", 34, 46],
+      ["Literary Devices", 46, 56],
+      ["Special Formats", 56, 64]
+    ],
+    Arrangement: [
+      ["Builds & Openings", 0, 12],
+      ["Section Energy", 12, 22],
+      ["Breaks & Transitions", 22, 34],
+      ["Drops & Climaxes", 34, 45],
+      ["Instrumental Movement", 45, 54],
+      ["Endings", 54, 62]
+    ],
+    Performance: [
+      ["Setting & Capture", 0, 8],
+      ["Scale & Audience", 8, 16],
+      ["Player Character", 16, 27],
+      ["Human Detail", 27, 36]
+    ],
+    "Recording Space": [
+      ["Dry & Small Rooms", 0, 6],
+      ["Clubs & Halls", 6, 12],
+      ["Industrial Spaces", 12, 18],
+      ["Outdoor & Unusual", 18, 26],
+      ["Vehicles & Studios", 26, 30]
+    ],
+    "Texture & Atmosphere": [
+      ["Density & Temperature", 0, 8],
+      ["Material Character", 8, 16],
+      ["Motion & Depth", 16, 24],
+      ["Weather & Environment", 24, 32],
+      ["Noise & Silence", 32, 40]
+    ]
   };
 
-  const SHORT_PROMPT_TARGET = 280;
-  const SUNO_FIELDS_TARGET = 580;
-
-  const DEFAULT_STATE = Object.freeze({
-    brief: "",
-    selected: [],
-    bpm: 120,
-    energy: "medium",
-    length: "standard",
-    key: "C",
-    mode: "minor",
-    meter: "4/4",
-    vocalPlan: "follow selected vocal tags",
-    structure: STRUCTURES[0][1],
-    production: "",
-    exclude: "",
-    limit: 1000,
-    outputFormat: "short",
-    promptMode: "balanced",
-    output: "",
-    activeStep: "brief"
-  });
+  const VOCALIZED_GENRES = new Set([
+    "A Cappella", "Barbershop", "Doo-Wop", "Sea Shanties", "Vocal Jazz", "Gospel",
+    "Gospel Folk", "Gospel Ballad", "Hymn", "Bluegrass Gospel", "Old-Time Gospel",
+    "Southern Gospel", "Contemporary Christian", "Worship Music", "Praise Music",
+    "Sacred Harp", "Shape Note", "Spiritual", "Gregorian Chant", "Choral", "Opera",
+    "Operetta", "Musical Theatre", "Cabaret", "Qawwali", "Ghazal"
+  ]);
 
   const nodes = {};
-  const categoryIndex = new Map();
-  const allTagRecords = [];
-  let promptHistory = loadCollection(HISTORY_KEY, LEGACY_HISTORY_KEY);
-  let presets = loadCollection(PRESET_KEY, LEGACY_PRESET_KEY);
-  let state = loadProject();
-  let saveTimer = 0;
+  const categorySets = new Map();
+  const familyCache = new Map();
+  let advanceTimer = 0;
   let toastTimer = 0;
-  let installPrompt = null;
-  let outputDirty = !state.output;
-  let lastCompile = {
-    includedTags: 0,
-    totalTags: 0,
-    truncated: false
+  let activeFamilyIndex = 0;
+  let pageIndex = 0;
+  let initialized = false;
+
+  const state = {
+    activeCategory: "Genre",
+    mode: "focused",
+    selected: Object.create(null)
   };
 
-  function clone(value) {
-    return typeof structuredClone === "function"
-      ? structuredClone(value)
-      : JSON.parse(JSON.stringify(value));
+  function categories() {
+    return DATA?.categories || {};
+  }
+
+  function categoryLabel(category) {
+    return SHORT_LABELS[category] || category;
+  }
+
+  function unique(values) {
+    return [...new Set(values)];
   }
 
   function safeJson(key) {
@@ -229,1787 +252,550 @@
     }
   }
 
-  function saveJson(key, value) {
-    try {
-      localStorage.setItem(key, JSON.stringify(value));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  function loadCollection(primaryKey, legacyKey) {
-    const value = safeJson(primaryKey) ?? safeJson(legacyKey) ?? [];
-    return Array.isArray(value) ? value : [];
-  }
-
-  function normalizeState(value) {
-    const next = {
-      ...DEFAULT_STATE,
-      ...(value && typeof value === "object" ? value : {})
-    };
-    next.selected = Array.isArray(next.selected)
-      ? unique(next.selected.map(item => String(item || "").trim())).slice(0, MAX_SELECTED)
-      : [];
-    next.bpm = clampNumber(next.bpm, 50, 220, 120);
-    next.limit = [0, 600, 800, 1000, 1200].includes(Number(next.limit)) ? Number(next.limit) : 1000;
-    next.outputFormat = OUTPUT_FORMATS[next.outputFormat] ? next.outputFormat : "short";
-    next.promptMode = MODE_CONFIG[next.promptMode] ? next.promptMode : "balanced";
-    next.activeStep = STEP_ORDER.includes(next.activeStep) ? next.activeStep : "brief";
-    [
-      "brief", "energy", "length", "key", "mode", "meter", "vocalPlan",
-      "structure", "production", "exclude", "output"
-    ].forEach(key => next[key] = String(next[key] ?? DEFAULT_STATE[key] ?? ""));
-    return next;
-  }
-
-  function loadProject() {
-    return normalizeState(safeJson(STORAGE_KEY) ?? safeJson(LEGACY_STORAGE_KEY) ?? {});
-  }
-
-  function clampNumber(value, minimum, maximum, fallback) {
-    const number = Number(value);
-    return Number.isFinite(number) ? Math.min(maximum, Math.max(minimum, number)) : fallback;
-  }
-
-  function unique(items) {
-    return [...new Set(items.filter(Boolean))];
-  }
-
-  function categories() {
-    return typeof DATA !== "undefined" && DATA?.categories && typeof DATA.categories === "object"
-      ? DATA.categories
-      : {};
-  }
-
-  function groupedCategoryTags(category, tags) {
-    const definitions = typeof DATA !== "undefined" && Array.isArray(DATA?.categoryGroups?.[category])
-      ? DATA.categoryGroups[category]
-      : [];
-    if (!definitions.length) return [];
-
-    const starts = definitions.map(group => tags.indexOf(group.start));
-    if (starts.some((start, index) => start < 0 || (index > 0 && start <= starts[index - 1]))) {
-      return [];
-    }
-
-    return definitions.map((group, index) => ({
-      label: group.label,
-      tags: tags.slice(starts[index], starts[index + 1] ?? tags.length)
-    }));
-  }
-
-  function buildCategoryIndex() {
-    categoryIndex.clear();
-    allTagRecords.length = 0;
+  function buildCategorySets() {
     Object.entries(categories()).forEach(([category, tags]) => {
-      if (!Array.isArray(tags)) return;
-      tags.forEach(tag => {
-        const clean = String(tag || "").trim();
-        if (!clean || categoryIndex.has(clean)) return;
-        categoryIndex.set(clean, category);
-        allTagRecords.push({
-          tag: clean,
-          category,
-          search: `${clean} ${category}`.toLowerCase()
-        });
-      });
+      categorySets.set(category, new Set(tags));
     });
-    state.selected = state.selected.filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
-    const available = categories();
-    const genreCount = Array.isArray(available.Genre) ? available.Genre.length : 0;
-    const instrumentCount = Array.isArray(available.Instruments) ? available.Instruments.length : 0;
-    const totalCount = Object.values(available)
-      .filter(Array.isArray)
-      .reduce((total, tags) => total + tags.length, 0);
-    nodes.libraryStats.textContent = `${totalCount.toLocaleString()} tags available · ${genreCount} genres · ${instrumentCount} instruments · select up to ${MAX_SELECTED}`;
   }
 
-  function sentence(value) {
-    const clean = String(value || "").trim().replace(/\s+/g, " ");
-    if (!clean) return "";
-    return /[.!?…]$/.test(clean) ? clean : `${clean}.`;
+  function emptySelections() {
+    const result = Object.create(null);
+    OUTPUT_ORDER.forEach(category => {
+      result[category] = [];
+    });
+    return result;
   }
 
-  function compact(value, maximum) {
-    const clean = String(value || "").trim().replace(/\s+/g, " ");
-    if (!maximum || clean.length <= maximum) return clean;
-    const room = Math.max(1, maximum - 1);
-    const cut = clean.slice(0, room);
-    const breakAt = Math.max(
-      cut.lastIndexOf(". "),
-      cut.lastIndexOf("; "),
-      cut.lastIndexOf(", "),
-      cut.lastIndexOf(" ")
-    );
-    const result = breakAt > room * .65 ? cut.slice(0, breakAt) : cut;
-    return `${result.trim()}…`;
+  function migrateLegacySelected(raw) {
+    const result = emptySelections();
+    const source = Array.isArray(raw?.selected) ? raw.selected : [];
+    source.forEach(tag => {
+      const category = OUTPUT_ORDER.find(name => categorySets.get(name)?.has(tag));
+      if (category && !result[category].includes(tag)) result[category].push(tag);
+    });
+    return result;
   }
 
-  function titleCase(value) {
-    const clean = String(value || "");
-    return clean ? clean[0].toUpperCase() + clean.slice(1) : "";
+  function loadState() {
+    const saved = safeJson(STORAGE_KEY);
+    const legacy = LEGACY_STORAGE_KEYS.map(safeJson).find(Boolean);
+    const source = saved?.selected && !Array.isArray(saved.selected)
+      ? saved.selected
+      : migrateLegacySelected(legacy || saved || {});
+
+    state.mode = saved?.mode === "extended" ? "extended" : "focused";
+    state.activeCategory = OUTPUT_ORDER.includes(saved?.activeCategory) ? saved.activeCategory : "Genre";
+    state.selected = emptySelections();
+
+    OUTPUT_ORDER.forEach(category => {
+      const allowed = categorySets.get(category) || new Set();
+      const values = Array.isArray(source?.[category]) ? source[category] : [];
+      const valid = unique(values.filter(tag => allowed.has(tag)));
+      state.selected[category] = state.mode === "focused" ? valid.slice(0, FOCUSED_LIMIT) : valid;
+    });
+
+    if (state.mode === "extended") trimExtendedToLimit();
   }
 
-  function slugify(value) {
-    return String(value || "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        activeCategory: state.activeCategory,
+        mode: state.mode,
+        selected: state.selected
+      }));
+    } catch {
+      // The tag studio still works if browser storage is unavailable.
+    }
+  }
+
+  function splitFromStarts(category) {
+    const tags = categories()[category] || [];
+    const starts = DATA?.categoryGroups?.[category] || [];
+    if (!starts.length) return [];
+    return starts.map((group, index) => {
+      const start = tags.indexOf(group.start);
+      const nextStart = index + 1 < starts.length ? tags.indexOf(starts[index + 1].start) : tags.length;
+      return {
+        label: group.label,
+        tags: tags.slice(start, nextStart)
+      };
+    });
+  }
+
+  function genreFamilies() {
+    const source = splitFromStarts("Genre");
+    const vocalized = (categories().Genre || []).filter(tag => VOCALIZED_GENRES.has(tag));
+    const cleaned = source.map(group => ({
+      label: group.label,
+      tags: group.tags.filter(tag => !VOCALIZED_GENRES.has(tag))
+    }));
+    const byLabel = new Map(cleaned.map(group => [group.label, group]));
+    const orderedLabels = [
+      "Country, Folk, Roots & Acoustic",
+      "Classical, Orchestral & Cinematic",
+      "Pop, Vocal & Accessible",
+      "Rock, Punk & Alternative",
+      "Metal & Extreme",
+      "Hip-Hop, Rap & Beat Styles",
+      "R&B, Soul, Funk, Disco & Gospel",
+      "Electronic Dance & Club",
+      "Ambient, Experimental, Industrial & Noise",
+      "Jazz & Blues",
+      "Reggae & Caribbean",
+      "Latin & Iberian",
+      "African & Afro-Diasporic",
+      "Asian, Middle Eastern & Global",
+      "Theatrical, Novelty & Other Hybrids"
+    ];
+    const result = [{ label: "Vocalized & Harmony", tags: vocalized }];
+    orderedLabels.forEach(label => {
+      const group = byLabel.get(label);
+      if (!group?.tags.length) return;
+      const renamed = {
+        "Country, Folk, Roots & Acoustic": "Acoustic, Folk & Roots",
+        "Classical, Orchestral & Cinematic": "Classical & Cinematic",
+        "Pop, Vocal & Accessible": "Pop & Accessible"
+      }[label] || label;
+      result.push({ label: renamed, tags: group.tags });
+    });
+    return result;
+  }
+
+  function explicitFamilies(category, definitions) {
+    const available = categories()[category] || [];
+    const used = new Set();
+    const result = definitions.map(definition => {
+      const tags = definition.tags.filter(tag => available.includes(tag));
+      tags.forEach(tag => used.add(tag));
+      return { label: definition.label, tags };
+    }).filter(group => group.tags.length);
+    const remaining = available.filter(tag => !used.has(tag));
+    if (remaining.length) result.push({ label: `More ${category}`, tags: remaining });
+    return result;
+  }
+
+  function blueprintFamilies(category) {
+    const tags = categories()[category] || [];
+    const blueprint = GROUP_BLUEPRINTS[category];
+    if (blueprint) {
+      return blueprint
+        .map(([label, start, end]) => ({ label, tags: tags.slice(start, end) }))
+        .filter(group => group.tags.length);
+    }
+
+    const groupCount = Math.min(5, Math.max(1, Math.ceil(tags.length / 14)));
+    const size = Math.ceil(tags.length / groupCount);
+    return Array.from({ length: groupCount }, (_, index) => ({
+      label: `${category} ${index + 1}`,
+      tags: tags.slice(index * size, (index + 1) * size)
+    })).filter(group => group.tags.length);
+  }
+
+  function familiesFor(category) {
+    if (familyCache.has(category)) return familyCache.get(category);
+    let families;
+    if (category === "Genre") families = genreFamilies();
+    else if (category === "Instruments") families = splitFromStarts("Instruments");
+    else if (category === "Mood") families = explicitFamilies("Mood", MOOD_FAMILIES);
+    else families = blueprintFamilies(category);
+    familyCache.set(category, families);
+    return families;
+  }
+
+  function allSelectedTags(selected = state.selected) {
+    return OUTPUT_ORDER.flatMap(category => selected[category] || []);
+  }
+
+  function styleText(selected = state.selected) {
+    return allSelectedTags(selected).join(", ");
+  }
+
+  function trimExtendedToLimit() {
+    const next = emptySelections();
+    OUTPUT_ORDER.forEach(category => {
+      for (const tag of state.selected[category] || []) {
+        const candidate = { ...next, [category]: [...next[category], tag] };
+        if (styleText(candidate).length > EXTENDED_CHARACTER_LIMIT) return;
+        next[category].push(tag);
+      }
+    });
+    state.selected = next;
   }
 
   function toast(message) {
+    window.clearTimeout(toastTimer);
     nodes.toast.textContent = message;
     nodes.toast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => nodes.toast.classList.remove("show"), 2100);
+    toastTimer = window.setTimeout(() => nodes.toast.classList.remove("show"), 1800);
   }
 
-  function markDirty() {
-    nodes.saveState.textContent = "Saving…";
-    clearTimeout(saveTimer);
-    saveTimer = window.setTimeout(() => {
-      const saved = saveJson(STORAGE_KEY, snapshot());
-      nodes.saveState.textContent = saved ? "Saved on this device" : "Device storage unavailable";
-    }, 180);
+  function familyColumns(count) {
+    const compact = window.innerWidth <= 800;
+    if (count <= 4) return 2;
+    if (count <= 6) return compact ? 2 : 3;
+    if (count <= 9) return 3;
+    if (count <= 12) return compact ? 3 : 4;
+    return 4;
   }
 
-  function markOutputDirty() {
-    outputDirty = true;
-    // Live-rebuild the moment any control that affects the prompt changes
-    if (state.activeStep === "export" || state.output) {
-      forgePrompt({ addHistory: false, announce: false });
-    }
+  function pageLayout() {
+    const short = window.innerHeight <= 650;
+    if (window.innerWidth <= 480) return { columns: 2, size: short ? 6 : 8 };
+    if (window.innerWidth <= 800) return { columns: 3, size: short ? 9 : 12 };
+    if (window.innerWidth <= 1150) return { columns: 4, size: short ? 12 : 16 };
+    return { columns: 5, size: short ? 15 : 20 };
   }
 
-  function snapshot() {
-    pullControls();
-    return {
-      brief: state.brief,
-      selected: [...state.selected],
-      bpm: state.bpm,
-      energy: state.energy,
-      length: state.length,
-      key: state.key,
-      mode: state.mode,
-      meter: state.meter,
-      vocalPlan: state.vocalPlan,
-      structure: state.structure,
-      production: state.production,
-      exclude: state.exclude,
-      limit: state.limit,
-      outputFormat: state.outputFormat,
-      promptMode: state.promptMode,
-      output: state.output,
-      activeStep: state.activeStep
-    };
+  function renderLibraryStats() {
+    const counts = Object.values(categories()).map(tags => tags.length);
+    const total = counts.reduce((sum, count) => sum + count, 0);
+    nodes.libraryStats.textContent = `${total.toLocaleString()} tags · ${Object.keys(categories()).length} categories · nothing removed`;
   }
 
-  function setStep(step, options = {}) {
-    const next = STEP_ORDER.includes(step) ? step : "brief";
-    const changed = state.activeStep !== next;
-    state.activeStep = next;
-
-    document.querySelectorAll("[data-step]").forEach(button => {
-      const active = button.dataset.step === next;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", String(active));
-      button.tabIndex = active ? 0 : -1;
-    });
-
-    document.querySelectorAll("[data-panel]").forEach(panel => {
-      const active = panel.dataset.panel === next;
-      panel.hidden = !active;
-      panel.classList.toggle("active", active);
-    });
-
-    if (next === "export" && options.forge !== false && (outputDirty || !state.output)) {
-      forgePrompt({ addHistory: false, announce: false });
-    }
-
-    updateStepSummaries();
-    renderQuality();
-    renderExclude();
-    markDirty();
-
-    if (options.history !== false && location.hash !== `#${next}`) {
-      window.history.replaceState(null, "", `#${next}`);
-    }
-
-    if (changed && options.scroll !== false) {
-      const behavior = matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
-      nodes.workspaceMain.scrollIntoView({ behavior, block: "start" });
-      window.setTimeout(() => {
-        document.getElementById(`heading-${next}`)?.focus({ preventScroll: true });
-      }, behavior === "smooth" ? 260 : 0);
-    }
-  }
-
-  function updateStepSummaries() {
-    const briefWords = state.brief.trim() ? state.brief.trim().split(/\s+/).length : 0;
-    nodes.summaryBrief.textContent = briefWords ? `${briefWords} word${briefWords === 1 ? "" : "s"}` : "Not started";
-    nodes.summarySound.textContent = state.selected.length
-      ? `${state.selected.length} selected`
-      : "Nothing selected";
-    nodes.summaryShape.textContent = `${state.bpm} BPM · ${state.key} ${state.mode}`;
-    nodes.summaryExport.textContent = state.output
-      ? `${state.output.length} characters`
-      : "Ready when you are";
-
-    const activeIndex = STEP_ORDER.indexOf(state.activeStep);
-    document.querySelectorAll("[data-step]").forEach(button => {
-      const index = STEP_ORDER.indexOf(button.dataset.step);
-      let complete = index < activeIndex;
-      if (button.dataset.step === "brief") complete = Boolean(state.brief);
-      if (button.dataset.step === "sound") complete = state.selected.length > 0;
-      if (button.dataset.step === "export") complete = Boolean(state.output);
-      button.classList.toggle("complete", complete);
-    });
-  }
-
-  function renderRecipes() {
-    nodes.recipeRow.replaceChildren();
-    nodes.recipeSelect.replaceChildren();
-    const prompt = document.createElement("option");
-    prompt.value = "";
-    prompt.textContent = "Choose a Quick Start";
-    nodes.recipeSelect.appendChild(prompt);
-
-    RECIPES.forEach((recipe, index) => {
+  function renderMainTabs() {
+    nodes.mainCategoryTabs.replaceChildren();
+    MAIN_CATEGORIES.forEach(category => {
       const button = document.createElement("button");
-      const name = document.createElement("strong");
-      const description = document.createElement("small");
-      const option = document.createElement("option");
+      const count = state.selected[category]?.length || 0;
       button.type = "button";
-      button.className = "recipe-card";
-      button.dataset.recipeIndex = String(index);
-      button.setAttribute("aria-pressed", "false");
-      button.setAttribute("aria-label", `Load ${recipe.name} recipe`);
-      name.textContent = recipe.name;
-      description.textContent = recipe.description;
-      option.value = String(index);
-      option.textContent = `${recipe.name} — ${recipe.description}`;
-      button.append(name, description);
-      button.addEventListener("click", () => applyRecipe(recipe));
-      nodes.recipeRow.appendChild(button);
-      nodes.recipeSelect.appendChild(option);
+      button.className = "category-tab";
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", String(state.activeCategory === category));
+      button.innerHTML = `<span>${categoryLabel(category)}</span><small>${count ? `${count} selected` : "Choose 2"}</small>`;
+      button.addEventListener("click", () => chooseCategory(category));
+      nodes.mainCategoryTabs.appendChild(button);
+    });
+
+    const optionalActive = OPTIONAL_CATEGORIES.includes(state.activeCategory);
+    nodes.optionsBtn.classList.toggle("active", optionalActive);
+    nodes.optionsActiveLabel.textContent = optionalActive ? categoryLabel(state.activeCategory) : "More tags";
+  }
+
+  function renderOptionalCategories() {
+    nodes.optionalCategoryGrid.replaceChildren();
+    OPTIONAL_CATEGORIES.forEach(category => {
+      const button = document.createElement("button");
+      const selectedCount = state.selected[category]?.length || 0;
+      button.type = "button";
+      button.className = `optional-category-button${state.activeCategory === category ? " active" : ""}`;
+      button.innerHTML = `<strong>${categoryLabel(category)}</strong><span>${categories()[category].length} choices${selectedCount ? ` · ${selectedCount} selected` : ""}</span>`;
+      button.addEventListener("click", () => chooseCategory(category, { closeOptions: true }));
+      nodes.optionalCategoryGrid.appendChild(button);
     });
   }
 
-  function applyRecipe(recipe) {
-    const recipeIndex = RECIPES.indexOf(recipe);
-    state.brief = recipe.brief;
-    state.selected = unique(recipe.tags).filter(tag => categoryIndex.has(tag)).slice(0, MAX_SELECTED);
-    state.bpm = recipe.bpm;
-    state.energy = recipe.energy;
-    state.key = recipe.key;
-    state.mode = recipe.mode;
-    state.production = recipe.production;
-    state.structure = STRUCTURES[0][1];
-    nodes.recipeSelect.value = recipeIndex >= 0 ? String(recipeIndex) : "";
-    nodes.recipeRow.querySelectorAll("[data-recipe-index]").forEach(button => {
-      const active = Number(button.dataset.recipeIndex) === recipeIndex;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-    markOutputDirty();
-    syncControls();
-    renderSelected();
-    refreshCategoryButtons();
-    refreshCategoryCounts();
-    updateStepSummaries();
-    renderQuality();
-    markDirty();
-    toast(`${recipe.name} loaded`);
+  function renderCategoryHeader() {
+    const selectedCount = state.selected[state.activeCategory]?.length || 0;
+    const optional = OPTIONAL_CATEGORIES.includes(state.activeCategory);
+    nodes.activeCategoryTitle.textContent = state.activeCategory;
+    nodes.activeCategoryHelp.textContent = state.mode === "focused"
+      ? `Choose a family, then choose up to ${FOCUSED_LIMIT} tags${optional ? "." : "; the next main category opens automatically."}`
+      : "Choose as many as you need; this category stays open until you switch tabs.";
+    nodes.categorySelectionStatus.textContent = state.mode === "focused"
+      ? `${selectedCount} / ${FOCUSED_LIMIT} selected`
+      : `${selectedCount} selected`;
   }
 
-  function addTag(tag) {
-    if (!tag || state.selected.includes(tag) || !categoryIndex.has(tag)) return;
-    if (state.selected.length >= MAX_SELECTED) {
-      toast(`Keep the palette focused: up to ${MAX_SELECTED} choices.`);
-      return;
+  function renderFamilies() {
+    const families = familiesFor(state.activeCategory);
+    activeFamilyIndex = Math.min(activeFamilyIndex, Math.max(0, families.length - 1));
+    nodes.familyBoard.replaceChildren();
+    nodes.familyBoard.style.setProperty("--family-columns", String(familyColumns(families.length)));
+    nodes.familyBoard.setAttribute("aria-label", `${state.activeCategory} families`);
+    nodes.familyHeading.textContent = `${state.activeCategory} families`;
+    nodes.familySummary.textContent = `${families.length} groups · ${categories()[state.activeCategory].length} total choices`;
+
+    families.forEach((family, index) => {
+      const button = document.createElement("button");
+      const examples = family.tags.slice(0, 2).join(" · ");
+      button.type = "button";
+      button.className = "family-button";
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", String(index === activeFamilyIndex));
+      button.setAttribute("aria-controls", "tagGrid");
+      button.innerHTML = `<strong>${family.label}</strong><span>${family.tags.length} · ${examples}</span>`;
+      button.addEventListener("click", () => {
+        activeFamilyIndex = index;
+        pageIndex = 0;
+        renderFamilies();
+        renderTagPage();
+      });
+      nodes.familyBoard.appendChild(button);
+    });
+  }
+
+  function renderTagPage() {
+    const families = familiesFor(state.activeCategory);
+    const family = families[activeFamilyIndex] || { label: state.activeCategory, tags: [] };
+    const layout = pageLayout();
+    const totalPages = Math.max(1, Math.ceil(family.tags.length / layout.size));
+    pageIndex = Math.min(pageIndex, totalPages - 1);
+    const start = pageIndex * layout.size;
+    const pageTags = family.tags.slice(start, start + layout.size);
+    const selected = state.selected[state.activeCategory] || [];
+    const focusedFull = state.mode === "focused" && selected.length >= FOCUSED_LIMIT;
+
+    nodes.activeFamilyTitle.textContent = family.label;
+    nodes.pageStatus.textContent = `${pageIndex + 1} / ${totalPages}`;
+    nodes.previousPageBtn.disabled = pageIndex === 0;
+    nodes.nextPageBtn.disabled = pageIndex >= totalPages - 1;
+    nodes.tagGrid.style.setProperty("--tag-columns", String(layout.columns));
+    nodes.tagGrid.replaceChildren();
+
+    pageTags.forEach(tag => {
+      const button = document.createElement("button");
+      const isSelected = selected.includes(tag);
+      button.type = "button";
+      button.className = "tag-button";
+      button.textContent = tag;
+      button.dataset.tag = tag;
+      button.setAttribute("aria-pressed", String(isSelected));
+      button.disabled = focusedFull && !isSelected;
+      button.addEventListener("click", () => toggleTag(tag));
+      nodes.tagGrid.appendChild(button);
+    });
+
+    nodes.tagPageNote.textContent = state.mode === "focused"
+      ? focusedFull
+        ? "Two selected. Remove one to make a different choice."
+        : `Select ${FOCUSED_LIMIT - selected.length} more; the next main tag opens automatically.`
+      : `${family.tags.length} choices in this family · page through them without scrolling.`;
+  }
+
+  function renderStyle() {
+    const text = styleText();
+    nodes.styleOutput.value = text;
+    nodes.characterCount.textContent = state.mode === "extended"
+      ? `${text.length} / ${EXTENDED_CHARACTER_LIMIT}`
+      : `${text.length} characters`;
+    nodes.styleHint.textContent = state.mode === "focused"
+      ? "Focused mode keeps every category to two strong choices. Every library tag remains available."
+      : "1,000-character mode stays on the current category and stops selections at Suno’s limit.";
+
+    const selectedCategories = OUTPUT_ORDER.filter(category => state.selected[category]?.length);
+    nodes.selectedBreakdown.replaceChildren();
+    selectedCategories.slice(0, 6).forEach(category => {
+      const item = document.createElement("div");
+      item.className = "breakdown-item";
+      item.innerHTML = `<span>${categoryLabel(category)}</span><strong>${state.selected[category].length}</strong>`;
+      nodes.selectedBreakdown.appendChild(item);
+    });
+    if (selectedCategories.length > 6) {
+      const item = document.createElement("div");
+      item.className = "breakdown-item";
+      item.innerHTML = `<span>More categories</span><strong>+${selectedCategories.length - 6}</strong>`;
+      nodes.selectedBreakdown.appendChild(item);
     }
-    state.selected.push(tag);
-    afterTagChange();
   }
 
-  function removeTag(tag) {
-    state.selected = state.selected.filter(item => item !== tag);
-    afterTagChange();
+  function renderAll() {
+    renderMainTabs();
+    renderOptionalCategories();
+    renderCategoryHeader();
+    renderFamilies();
+    renderTagPage();
+    renderStyle();
+    saveState();
+  }
+
+  function chooseCategory(category, options = {}) {
+    if (!OUTPUT_ORDER.includes(category)) return;
+    window.clearTimeout(advanceTimer);
+    state.activeCategory = category;
+    activeFamilyIndex = 0;
+    pageIndex = 0;
+    if (options.closeOptions && nodes.optionsDialog.open) nodes.optionsDialog.close();
+    renderAll();
   }
 
   function toggleTag(tag) {
-    state.selected.includes(tag) ? removeTag(tag) : addTag(tag);
-  }
+    const category = state.activeCategory;
+    const selected = [...(state.selected[category] || [])];
+    const index = selected.indexOf(tag);
+    const adding = index < 0;
 
-  function afterTagChange() {
-    renderSelected();
-    renderSearch();
-    refreshCategoryButtons();
-    refreshCategoryCounts();
-    updateStepSummaries();
-    renderQuality();
-    // markOutputDirty already triggers the live rebuild
-    markOutputDirty();
-    markDirty();
-  }
-
-  function announcePriority(message) {
-    const live = nodes.tagPriorityStatus || document.getElementById("selected-priority-live");
-    if (live) {
-      live.textContent = "";
-      window.setTimeout(() => {
-        live.textContent = message;
-      }, 20);
-      return;
-    }
-    // Fallback live region
-    let fallback = document.getElementById("selected-priority-live");
-    if (!fallback) {
-      fallback = document.createElement("div");
-      fallback.id = "selected-priority-live";
-      fallback.className = "sr-only";
-      fallback.setAttribute("aria-live", "polite");
-      fallback.setAttribute("aria-atomic", "true");
-      document.body.appendChild(fallback);
-    }
-    fallback.textContent = "";
-    window.setTimeout(() => {
-      fallback.textContent = message;
-    }, 20);
-  }
-
-  function moveTag(tag, direction, options = {}) {
-    const index = state.selected.indexOf(tag);
-    if (index < 0) return;
-    const target = index + direction;
-    if (target < 0 || target >= state.selected.length) return;
-    const next = [...state.selected];
-    [next[index], next[target]] = [next[target], next[index]];
-    state.selected = next;
-    afterTagChange();
-    announcePriority(`${tag} moved to position ${target + 1} of ${state.selected.length}`);
-    if (options.focus !== false) {
-      window.setTimeout(() => {
-        const row = nodes.tagPriorityList?.querySelector(`[data-tag="${CSS.escape(tag)}"]`);
-        const btn = row?.querySelector(direction < 0 ? ".priority-up" : ".priority-down");
-        (btn || row)?.focus();
-      }, 0);
-    }
-  }
-
-  function renderSelected() {
-    // 1) Simple selected chips (add/remove only — no drag clutter)
-    if (nodes.selectedTags) {
-      nodes.selectedTags.replaceChildren();
-      nodes.selectedTags.setAttribute("role", "list");
-      nodes.selectedTags.setAttribute("aria-label", "Selected sound tags");
-
-      state.selected.forEach(tag => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "selected-chip";
-        chip.textContent = `${tag} ×`;
-        chip.title = `Remove ${tag}`;
-        chip.setAttribute("aria-label", `Remove ${tag}`);
-        chip.addEventListener("click", () => {
-          removeTag(tag);
-          announcePriority(`${tag} removed`);
-        });
-        nodes.selectedTags.appendChild(chip);
-      });
-    }
-
-    // 2) Priority ordered list (the real ranking UI)
-    renderPriorityList();
-
-    const count = state.selected.length;
-    if (nodes.selectedCount) nodes.selectedCount.textContent = `${count} selected`;
-    if (nodes.paletteBar) {
-      nodes.paletteBar.style.width = `${Math.min(100, Math.round((count / 12) * 100))}%`;
-    }
-
-    if (!count) {
-      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Open canvas";
-      if (nodes.selectionGuidance) {
-        nodes.selectionGuidance.textContent = "Aim for 6–14 choices. Put the strongest signals at the top of the priority list.";
+    if (!adding) {
+      selected.splice(index, 1);
+    } else if (state.mode === "focused") {
+      if (selected.length >= FOCUSED_LIMIT) {
+        toast("Focused mode allows two choices in each category.");
+        return;
       }
-    } else if (count < 5) {
-      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Still broad";
-      if (nodes.selectionGuidance) {
-        nodes.selectionGuidance.textContent = "Add mood, instrument, and vocal. Rank what matters most with ↑ ↓.";
-      }
-    } else if (count <= 14) {
-      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Focused";
-      if (nodes.selectionGuidance) {
-        nodes.selectionGuidance.textContent = "Strong range. Keep the most important tags at the top.";
-      }
-    } else if (count <= 22) {
-      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Highly detailed";
-      if (nodes.selectionGuidance) {
-        nodes.selectionGuidance.textContent = "Dense. Raise the signals that matter; drop the rest.";
-      }
+      selected.push(tag);
     } else {
-      if (nodes.paletteLabel) nodes.paletteLabel.textContent = "Overloaded";
-      if (nodes.selectionGuidance) {
-        nodes.selectionGuidance.textContent = "Too many choices fight each other. Trim, then rank.";
+      const candidate = { ...state.selected, [category]: [...selected, tag] };
+      if (styleText(candidate).length > EXTENDED_CHARACTER_LIMIT) {
+        toast("That choice would exceed the 1,000-character limit.");
+        return;
+      }
+      selected.push(tag);
+    }
+
+    state.selected[category] = selected;
+    renderMainTabs();
+    renderOptionalCategories();
+    renderCategoryHeader();
+    renderTagPage();
+    renderStyle();
+    saveState();
+
+    if (adding && state.mode === "focused" && selected.length === FOCUSED_LIMIT) {
+      const currentPosition = MAIN_CATEGORIES.indexOf(category);
+      if (currentPosition >= 0 && currentPosition < MAIN_CATEGORIES.length - 1) {
+        toast(`${category} set. Opening ${MAIN_CATEGORIES[currentPosition + 1]}.`);
+        advanceTimer = window.setTimeout(() => {
+          if (state.activeCategory === category && state.mode === "focused") {
+            chooseCategory(MAIN_CATEGORIES[currentPosition + 1]);
+          }
+        }, 650);
       }
     }
   }
 
-  function renderPriorityList() {
-    const list = nodes.tagPriorityList;
-    const empty = nodes.tagPriorityEmpty;
-    if (!list) return; // Older HTML without priority section — chips alone still work
+  function setMode(mode, changedInput) {
+    if (!['focused', 'extended'].includes(mode) || mode === state.mode) return;
 
-    list.replaceChildren();
-    const hasTags = state.selected.length > 0;
-
-    if (empty) empty.hidden = hasTags;
-    list.hidden = !hasTags;
-
-    state.selected.forEach((tag, index) => {
-      const row = document.createElement("li");
-      row.className = "tag-priority-item";
-      row.dataset.tag = tag;
-      row.tabIndex = 0;
-      row.setAttribute(
-        "aria-label",
-        `${tag}, priority ${index + 1} of ${state.selected.length}`
-      );
-
-      const rank = document.createElement("span");
-      rank.className = "tag-priority-rank";
-      rank.textContent = String(index + 1);
-      rank.setAttribute("aria-hidden", "true");
-
-      const name = document.createElement("span");
-      name.className = "tag-priority-name";
-      name.textContent = tag;
-
-      const controls = document.createElement("div");
-      controls.className = "tag-priority-controls";
-
-      const up = document.createElement("button");
-      up.type = "button";
-      up.className = "priority-up";
-      up.textContent = "↑";
-      up.setAttribute("aria-label", `Move ${tag} up`);
-      up.disabled = index === 0;
-      up.addEventListener("click", (e) => {
-        e.stopPropagation();
-        moveTag(tag, -1);
-      });
-
-      const down = document.createElement("button");
-      down.type = "button";
-      down.className = "priority-down";
-      down.textContent = "↓";
-      down.setAttribute("aria-label", `Move ${tag} down`);
-      down.disabled = index === state.selected.length - 1;
-      down.addEventListener("click", (e) => {
-        e.stopPropagation();
-        moveTag(tag, 1);
-      });
-
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "priority-remove";
-      remove.textContent = "×";
-      remove.setAttribute("aria-label", `Remove ${tag}`);
-      remove.addEventListener("click", (e) => {
-        e.stopPropagation();
-        removeTag(tag);
-        announcePriority(`${tag} removed`);
-      });
-
-      // Keyboard on the row itself
-      row.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowUp") {
-          e.preventDefault();
-          moveTag(tag, -1);
-        } else if (e.key === "ArrowDown") {
-          e.preventDefault();
-          moveTag(tag, 1);
-        } else if (e.key === "Delete" || e.key === "Backspace") {
-          e.preventDefault();
-          removeTag(tag);
-          announcePriority(`${tag} removed`);
-        }
-      });
-
-      controls.append(up, down, remove);
-      row.append(rank, name, controls);
-      list.appendChild(row);
-    });
-  }
-
-  function renderQuickPicks() {
-    nodes.quickPickGrid.replaceChildren();
-    Object.entries(QUICK_PICKS).forEach(([label, requestedTags]) => {
-      const tags = requestedTags.filter(tag => categoryIndex.has(tag));
-      if (!tags.length) return;
-      const row = document.createElement("div");
-      const heading = document.createElement("strong");
-      const buttons = document.createElement("div");
-      row.className = "quick-pick-row";
-      heading.textContent = label;
-      tags.forEach(tag => buttons.appendChild(makeTagButton(tag)));
-      row.append(heading, buttons);
-      nodes.quickPickGrid.appendChild(row);
-    });
-  }
-
-  function renderSearch() {
-    const query = nodes.tagSearch.value.trim().toLowerCase();
-    nodes.searchResults.replaceChildren();
-    if (!query) {
-      nodes.searchResults.hidden = true;
-      return;
-    }
-
-    const matches = allTagRecords
-      .filter(item => item.search.includes(query))
-      .sort((left, right) => {
-        const leftStarts = left.tag.toLowerCase().startsWith(query) ? 0 : 1;
-        const rightStarts = right.tag.toLowerCase().startsWith(query) ? 0 : 1;
-        return leftStarts - rightStarts || left.tag.localeCompare(right.tag);
-      })
-      .slice(0, 100);
-
-    matches.forEach(({ tag, category }) => {
-      const button = document.createElement("button");
-      const label = document.createElement("span");
-      const detail = document.createElement("small");
-      const active = state.selected.includes(tag);
-      button.type = "button";
-      button.setAttribute("role", "option");
-      button.setAttribute("aria-selected", String(active));
-      button.classList.toggle("active", active);
-      label.textContent = active ? `✓ ${tag}` : tag;
-      detail.textContent = category;
-      button.append(label, detail);
-      button.addEventListener("click", () => toggleTag(tag));
-      nodes.searchResults.appendChild(button);
-    });
-
-    if (!matches.length) {
-      const empty = document.createElement("p");
-      empty.className = "helper-text";
-      empty.textContent = "No matching sound options. Try a shorter or broader term.";
-      nodes.searchResults.appendChild(empty);
-    }
-    nodes.searchResults.hidden = false;
-  }
-
-  function makeTagButton(tag) {
-    const button = document.createElement("button");
-    const active = state.selected.includes(tag);
-    button.type = "button";
-    button.dataset.tag = tag;
-    button.textContent = tag;
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-    button.addEventListener("click", () => toggleTag(tag));
-    return button;
-  }
-
-  function fillCategory(details, tags) {
-    let grid = details.querySelector(".category-grid");
-    if (grid) return;
-    grid = document.createElement("div");
-    grid.className = "category-grid";
-    const groups = groupedCategoryTags(details.dataset.category, tags);
-    if (groups.length) {
-      grid.classList.add("category-grid-grouped");
-      groups.forEach(group => {
-        const section = document.createElement("section");
-        const heading = document.createElement("div");
-        const title = document.createElement("h3");
-        const count = document.createElement("span");
-        const buttons = document.createElement("div");
-        section.className = "category-subgroup";
-        heading.className = "category-subgroup-heading";
-        buttons.className = "category-subgroup-tags";
-        title.textContent = group.label;
-        count.textContent = `${group.tags.length} options`;
-        group.tags.forEach(tag => buttons.appendChild(makeTagButton(tag)));
-        heading.append(title, count);
-        section.append(heading, buttons);
-        grid.appendChild(section);
-      });
-    } else {
-      tags.forEach(tag => grid.appendChild(makeTagButton(tag)));
-    }
-    details.appendChild(grid);
-  }
-
-  function renderCategories() {
-    nodes.categoryList.replaceChildren();
-    nodes.categoryJump.replaceChildren();
-    const placeholder = document.createElement("option");
-    placeholder.value = "";
-    placeholder.textContent = "Jump to category";
-    nodes.categoryJump.appendChild(placeholder);
-
-    Object.entries(categories()).forEach(([category, value]) => {
-      const tags = Array.isArray(value) ? value : [];
-      const id = `category-${slugify(category)}`;
-      const details = document.createElement("details");
-      const summary = document.createElement("summary");
-      const title = document.createElement("span");
-      const count = document.createElement("span");
-      const toggle = document.createElement("span");
-      const option = document.createElement("option");
-
-      details.className = "category";
-      details.id = id;
-      details.dataset.category = category;
-      title.textContent = category;
-      count.className = "category-count";
-      count.dataset.categoryCount = category;
-      toggle.className = "category-toggle";
-      toggle.setAttribute("aria-hidden", "true");
-      summary.append(title, count, toggle);
-      details.appendChild(summary);
-      details.addEventListener("toggle", () => {
-        if (details.open) fillCategory(details, tags);
-      });
-      nodes.categoryList.appendChild(details);
-
-      option.value = id;
-      option.textContent = `${category} (${tags.length})`;
-      nodes.categoryJump.appendChild(option);
-    });
-
-    refreshCategoryCounts();
-  }
-
-  function refreshCategoryButtons() {
-    document.querySelectorAll("[data-tag]").forEach(button => {
-      const active = state.selected.includes(button.dataset.tag);
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
-  }
-
-  function refreshCategoryCounts() {
-    Object.entries(categories()).forEach(([category, value]) => {
-      const tags = Array.isArray(value) ? value : [];
-      const selected = tags.filter(tag => state.selected.includes(tag)).length;
-      const node = nodes.categoryList.querySelector(
-        `[data-category-count="${CSS.escape(category)}"]`
-      );
-      if (node) {
-        node.textContent = selected
-          ? `${tags.length} options · ${selected} selected`
-          : `${tags.length} options`;
+    if (mode === "focused") {
+      const needsTrim = OUTPUT_ORDER.some(category => (state.selected[category] || []).length > FOCUSED_LIMIT);
+      if (needsTrim && !window.confirm("Focused mode keeps the first two choices in every category. Continue?")) {
+        changedInput.checked = false;
+        nodes.extendedModeInput.checked = true;
+        return;
       }
-    });
-  }
-
-  function renderStructures() {
-    nodes.structurePresets.replaceChildren();
-    STRUCTURES.forEach(([name, value]) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = name;
-      button.addEventListener("click", () => {
-        state.structure = value;
-        nodes.structureInput.value = value;
-        markOutputDirty();
-        markDirty();
-        renderQuality();
+      OUTPUT_ORDER.forEach(category => {
+        state.selected[category] = (state.selected[category] || []).slice(0, FOCUSED_LIMIT);
       });
-      nodes.structurePresets.appendChild(button);
-    });
-  }
-
-  function groupSelected() {
-    const grouped = new Map();
-    state.selected.forEach(tag => {
-      const category = categoryIndex.get(tag) || "Style";
-      if (!grouped.has(category)) grouped.set(category, []);
-      grouped.get(category).push(tag);
-    });
-    return grouped;
-  }
-
-  function compileForgePrompt() {
-    pullControls();
-    const config = MODE_CONFIG[state.promptMode] || MODE_CONFIG.balanced;
-    const grouped = groupSelected();
-    const usedCategories = new Set();
-    const segments = [];
-
-    const add = (text, tags = [], essential = false) => {
-      const clean = String(text || "").trim();
-      if (clean) segments.push({ text: clean, tags, essential });
-    };
-
-    const addCategory = (category, maximum = config.maxCategoryItems) => {
-      const values = grouped.get(category) || [];
-      if (!values.length) return;
-      usedCategories.add(category);
-      const tags = values.slice(0, maximum);
-      add(`${CATEGORY_LABELS[category] || category}: ${tags.join(", ")}`, tags, category === "Genre");
-    };
-
-    addCategory("Genre");
-    addCategory("Mood");
-
-    if (state.brief) {
-      add(`Creative direction: ${compact(state.brief, config.briefLimit)}`, [], true);
     }
 
-    add(
-      `Track: ${state.bpm} BPM; ${state.key} ${state.mode}; ${state.meter}; ${state.energy} energy; ${state.length} length`,
-      [],
-      true
-    );
-
-    if (state.vocalPlan === "instrumental") {
-      add("Vocals: instrumental; no lead or backing vocals", [], true);
-      usedCategories.add("Vocals");
-      usedCategories.add("Vocal Delivery");
-      usedCategories.add("Vocal Arrangement");
-      usedCategories.add("Harmony & Choir");
-    } else if (state.vocalPlan !== "follow selected vocal tags") {
-      add(`Vocal plan: ${state.vocalPlan}`);
-    }
-
-    CATEGORY_ORDER.forEach(category => {
-      if (!usedCategories.has(category)) addCategory(category);
-    });
-
-    [...grouped.keys()]
-      .filter(category => !usedCategories.has(category) && category !== "Key")
-      .forEach(category => addCategory(category));
-
-    if (state.structure) {
-      add(`Structure: ${compact(state.structure, config.structureLimit)}`);
-    }
-    if (state.production) {
-      add(`Production direction: ${compact(state.production, config.productionLimit)}`);
-    }
-
-    const limit = Number(state.limit) || 0;
-    const included = new Set();
-    const outputSegments = [];
-    let truncated = false;
-
-    for (const segment of segments) {
-      const candidate = sentence(segment.text);
-      const prefix = outputSegments.length ? " " : "";
-      if (!limit || outputSegments.join(" ").length + prefix.length + candidate.length <= limit) {
-        outputSegments.push(candidate);
-        segment.tags.forEach(tag => included.add(tag));
-        continue;
-      }
-
-      const remaining = limit - outputSegments.join(" ").length - prefix.length;
-      if (segment.essential && remaining >= 64) {
-        const shortened = sentence(compact(segment.text, remaining - 1));
-        if (shortened.length <= remaining) outputSegments.push(shortened);
-      }
-      truncated = true;
-    }
-
-    let text = outputSegments.join(" ").trim();
-    if (limit && text.length > limit) {
-      text = compact(text, limit);
-      truncated = true;
-    }
-
-    lastCompile = {
-      includedTags: included.size,
-      totalTags: state.selected.length,
-      truncated
-    };
-    return text;
+    state.mode = mode;
+    pageIndex = 0;
+    renderAll();
+    toast(mode === "focused" ? "Focused mode: two per category." : "1,000-character mode enabled.");
   }
 
-  function categoryValues(grouped, categoryNames) {
-    return unique(categoryNames.flatMap(category => grouped.get(category) || []));
-  }
-
-  function takeWithin(values, maximumItems, maximumCharacters, included) {
-    const chosen = [];
-    for (const value of unique(values).slice(0, maximumItems)) {
-      const candidate = [...chosen, value].join(", ");
-      if (candidate.length > maximumCharacters && chosen.length) break;
-      chosen.push(candidate.length > maximumCharacters ? compact(value, maximumCharacters) : value);
-      if (state.selected.includes(value)) included.add(value);
-    }
-    return chosen;
-  }
-
-  function naturalList(values) {
-    if (values.length < 2) return values[0] || "";
-    if (values.length === 2) return `${values[0]} and ${values[1]}`;
-    return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
-  }
-
-  function compileSunoFieldsPrompt() {
-    // Clean labeled fields that paste cleanly into Suno Custom Mode.
-    // Order and limits tuned for what actually moves the generation.
-    pullControls();
-    const grouped = groupSelected();
-    const included = new Set();
-    const itemLimit = state.promptMode === "compact" ? 2 : state.promptMode === "detailed" ? 5 : 3;
-
-    const genres = takeWithin(grouped.get("Genre") || [], Math.min(itemLimit, 3), 60, included);
-    const eras = takeWithin(grouped.get("Era") || [], 1, 22, included);
-    const moods = takeWithin(grouped.get("Mood") || [], Math.min(itemLimit, 3), 48, included);
-    const instruments = takeWithin(grouped.get("Instruments") || [], Math.min(itemLimit + 1, 5), 90, included);
-
-    const vocalSource = state.vocalPlan === "instrumental"
-      ? ["Instrumental"]
-      : [
-          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
-          ...categoryValues(grouped, [
-            "Vocals",
-            "Vocal Delivery",
-            "Vocal Range & Register",
-            "Vocal Arrangement",
-            "Harmony & Choir"
-          ])
-        ];
-    const vocals = takeWithin(vocalSource, Math.min(itemLimit + 1, 5), 100, included);
-
-    const productionTags = takeWithin(
-      categoryValues(grouped, [
-        "Production",
-        "Mix & Master",
-        "Effects",
-        "Rhythm & Groove",
-        "Recording Space",
-        "Texture & Atmosphere"
-      ]),
-      Math.min(itemLimit + 1, 5),
-      100,
-      included
-    );
-
-    const productionParts = [
-      `${state.bpm} BPM`,
-      `${state.key} ${state.mode}`,
-      state.meter,
-      `${state.energy} energy`
-    ];
-    if (productionTags.length) productionParts.push(productionTags.join(", "));
-    if (state.production) {
-      const noteLimit = state.promptMode === "compact" ? 70 : state.promptMode === "detailed" ? 130 : 100;
-      productionParts.push(compact(state.production, noteLimit));
-    }
-
-    // Only emit a field if it actually has content so the paste stays clean
-    const lines = [
-      ["GENRE", [eras[0], ...genres].filter(Boolean).join(", ")],
-      ["MOOD", moods.join(", ")],
-      ["INSTRUMENTS", instruments.join(", ")],
-      ["VOCALS", vocals.join(", ")],
-      ["PRODUCTION", productionParts.filter(Boolean).join("; ")]
-    ]
-      .filter(([, value]) => value && value.trim())
-      .map(([label, value]) => `${label}: ${value}`.trimEnd());
-
-    const requestedLimit = Number(state.limit) || 0;
-    const effectiveLimit = requestedLimit
-      ? Math.min(requestedLimit, SUNO_FIELDS_TARGET)
-      : SUNO_FIELDS_TARGET;
-    let text = lines.join("\n");
-    let truncated = false;
-    if (text.length > effectiveLimit) {
-      text = compact(text, effectiveLimit);
-      truncated = true;
-    }
-
-    lastCompile = {
-      includedTags: included.size,
-      totalTags: state.selected.length,
-      truncated
-    };
-    return text;
-  }
-
-  function compileShortPrompt() {
-    // Suno-native style string: genre + mood + instruments + vocals + tempo/energy + short production notes.
-    // Comma-separated, no labels, prioritizes the signals Suno actually weights highest.
-    pullControls();
-    const grouped = groupSelected();
-    const included = new Set();
-    const itemLimit = state.promptMode === "compact" ? 2 : state.promptMode === "detailed" ? 4 : 3;
-
-    const genres = takeWithin(grouped.get("Genre") || [], Math.min(itemLimit, 3), 48, included);
-    const eras = takeWithin(grouped.get("Era") || [], 1, 18, included);
-    const moods = takeWithin(grouped.get("Mood") || [], Math.min(itemLimit, 3), 40, included);
-    const instruments = takeWithin(grouped.get("Instruments") || [], Math.min(itemLimit + 1, 4), 70, included);
-
-    const vocalSource = state.vocalPlan === "instrumental"
-      ? ["Instrumental"]
-      : [
-          ...(state.vocalPlan === "follow selected vocal tags" ? [] : [titleCase(state.vocalPlan)]),
-          ...categoryValues(grouped, ["Vocals", "Vocal Delivery", "Vocal Range & Register", "Vocal Arrangement"])
-        ];
-    const vocals = takeWithin(vocalSource, Math.min(itemLimit + 1, 4), 70, included);
-
-    const productionTags = takeWithin(
-      categoryValues(grouped, ["Production", "Mix & Master", "Effects", "Texture & Atmosphere", "Recording Space"]),
-      2,
-      45,
-      included
-    );
-
-    // Build in the order Suno responds to best
-    const parts = [];
-    if (eras[0]) parts.push(eras[0]);
-    if (genres.length) parts.push(genres.join(" "));
-    if (moods.length) parts.push(naturalList(moods));
-    if (instruments.length) parts.push(naturalList(instruments));
-    if (vocals.length) parts.push(naturalList(vocals));
-    if (productionTags.length) parts.push(naturalList(productionTags));
-
-    // Always surface tempo + energy + key when we have space
-    const core = `${state.bpm} BPM, ${state.key} ${state.mode}, ${state.energy} energy`;
-    parts.push(core);
-
-    if (state.production) {
-      const noteLimit = state.promptMode === "compact" ? 55 : state.promptMode === "detailed" ? 90 : 70;
-      parts.push(compact(state.production, noteLimit));
-    }
-
-    // Fall back to the brief if the user has written nothing else
-    let text = parts.filter(Boolean).join(", ");
-    if ((!genres.length && !instruments.length && !vocals.length) && state.brief) {
-      text = compact(state.brief, 180);
-      if (text && !text.includes("BPM")) text += `, ${core}`;
-    }
-    if (!text) text = core;
-
-    const requestedLimit = Number(state.limit) || 0;
-    const effectiveLimit = requestedLimit
-      ? Math.min(requestedLimit, SHORT_PROMPT_TARGET)
-      : SHORT_PROMPT_TARGET;
-    let truncated = false;
-    if (text.length > effectiveLimit) {
-      text = compact(text, effectiveLimit);
-      truncated = true;
-    }
-
-    lastCompile = {
-      includedTags: included.size,
-      totalTags: state.selected.length,
-      truncated
-    };
-    return text;
-  }
-
-  function compilePrompt() {
-    if (state.outputFormat === "suno") return compileSunoFieldsPrompt();
-    if (state.outputFormat === "short") return compileShortPrompt();
-    return compileForgePrompt();
-  }
-
-  function forgePrompt(options = {}) {
-    state.output = compilePrompt();
-    nodes.promptOutput.value = state.output;
-    outputDirty = false;
-    renderCount();
-    renderExclude();
-    renderQuality();
-    updateStepSummaries();
-    markDirty();
-
-    if (state.output) {
-      const tagStatus = lastCompile.totalTags
-        ? `${lastCompile.includedTags} of ${lastCompile.totalTags} selected sound choices represented`
-        : "No sound choices selected";
-      if (state.outputFormat === "short") {
-        nodes.outputStatus.textContent = `Suno-native style string. ${tagStatus}. Live-updates when you change tags.`;
-      } else if (state.outputFormat === "suno") {
-        nodes.outputStatus.textContent = `Organized into six Suno-ready fields. ${tagStatus}.`;
-      } else {
-        nodes.outputStatus.textContent = lastCompile.truncated
-          ? `Built to the character limit. ${tagStatus}; review before copying.`
-          : `Built locally. ${tagStatus}.`;
-      }
-      if (options.addHistory) addHistory();
-      if (options.announce !== false) toast("Prompt regenerated");
-    } else {
-      nodes.outputStatus.textContent = "Add a brief or sound choices, then regenerate.";
-    }
-  }
-
-  function renderCount() {
-    const limit = Number(state.limit) || 0;
-    const length = String(state.output || "").length;
-    nodes.promptCount.textContent = state.outputFormat === "short"
-      ? `${length} / ${SHORT_PROMPT_TARGET} target`
-      : limit ? `${length} / ${limit}` : `${length} characters`;
-    nodes.promptCount.style.borderColor = limit && length > limit ? "var(--danger)" : "";
-
-    const format = OUTPUT_FORMATS[state.outputFormat] || OUTPUT_FORMATS.forge;
-    const detail = MODE_CONFIG[state.promptMode]?.label || "Balanced";
-    nodes.outputModeBadge.textContent = state.outputFormat === "short"
-      ? format.label
-      : `${format.label} · ${detail}`;
-    nodes.formatHint.textContent = format.hint;
-    nodes.promptModeControl.disabled = state.outputFormat === "short";
-  }
-
-  function calculateQuality() {
-    const grouped = groupSelected();
-    const count = state.selected.length;
-    let score = 0;
-
-    if (state.brief.length >= 20) score += 15;
-    if (state.brief.length >= 80) score += 10;
-    if (grouped.has("Genre")) score += 12;
-    if (grouped.has("Mood")) score += 8;
-    if (grouped.has("Instruments")) score += 9;
-    if (grouped.has("Vocals") || state.vocalPlan === "instrumental") score += 8;
-    if (count >= 5 && count <= 14) score += 14;
-    else if (count > 0) score += 6;
-    if (state.production.length >= 25) score += 12;
-    if (state.structure) score += 5;
-    if (state.exclude) score += 4;
-    if (state.bpm && state.key && state.mode && state.meter) score += 8;
-
-    if (count > 22) score -= 8;
-    return Math.max(0, Math.min(100, score));
-  }
-
-  function renderQuality() {
-    const score = calculateQuality();
-    nodes.qualityScore.textContent = String(score);
-
-    let heading = "A focused production brief";
-    let hint = "Add a brief and a few sound choices to strengthen the prompt.";
-
-    if (!state.brief) {
-      heading = "Start with a clear idea";
-      hint = "Describe the sound, emotion, or production goal in the Brief step.";
-    } else if (!state.selected.length) {
-      heading = "Give the idea a sound";
-      hint = "Choose a style, mood, and a few instruments or vocal traits.";
-    } else if (!state.production) {
-      heading = "Add production movement";
-      hint = "A short note about dynamics, recording character, or the final section will make this more specific.";
-    } else if (state.selected.length > 22) {
-      heading = "Trim competing choices";
-      hint = "The palette is overloaded. Remove repeated or conflicting traits for a cleaner result.";
-    } else if (score >= 85) {
-      heading = "Studio-ready direction";
-      hint = "The prompt has clear style, movement, and production detail without obvious gaps.";
-    } else if (score >= 65) {
-      heading = "Strong working prompt";
-      hint = "This is ready to try. Fine-tune only the details that materially change the song.";
-    }
-
-    nodes.qualityHeading.textContent = heading;
-    nodes.qualityHint.textContent = hint;
-  }
-
-  function renderExclude() {
-    const value = state.exclude.trim();
-    nodes.excludePreview.textContent = value
-      ? compact(value, 220)
-      : "Nothing excluded yet.";
-    nodes.copyExcludeBtn.disabled = !value;
-  }
-
-  async function copyText(value, success) {
-    const text = String(value || "").trim();
+  async function copyPrompt() {
+    const text = nodes.styleOutput.value.trim();
     if (!text) {
-      toast("There is nothing to copy yet.");
-      return false;
+      toast("Choose a few tags first.");
+      return;
     }
-
     try {
       await navigator.clipboard.writeText(text);
+      nodes.copyPromptBtn.textContent = "Copied";
+      toast("Style prompt copied.");
     } catch {
-      const box = document.createElement("textarea");
-      box.value = text;
-      box.setAttribute("readonly", "");
-      box.style.position = "fixed";
-      box.style.opacity = "0";
-      document.body.appendChild(box);
-      box.select();
-      document.execCommand("copy");
-      box.remove();
+      nodes.styleOutput.focus();
+      nodes.styleOutput.select();
+      nodes.copyPromptBtn.textContent = "Prompt selected";
+      toast("Prompt selected. Use your device’s Copy command.");
     }
-
-    toast(success);
-    return true;
+    window.setTimeout(() => {
+      nodes.copyPromptBtn.textContent = "Copy prompt";
+    }, 1400);
   }
 
-  function makeId() {
-    return globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  function clearAll() {
+    if (!allSelectedTags().length) return;
+    if (!window.confirm("Clear every selected tag?")) return;
+    state.selected = emptySelections();
+    chooseCategory("Genre");
+    toast("All selections cleared.");
   }
 
-  function addHistory() {
-    if (!state.output) return;
-    const item = {
-      id: makeId(),
-      at: Date.now(),
-      prompt: state.output,
-      state: snapshot()
-    };
-    promptHistory = promptHistory.filter(entry => entry?.prompt !== item.prompt);
-    promptHistory.unshift(item);
-    promptHistory = promptHistory.slice(0, 30);
-    saveJson(HISTORY_KEY, promptHistory);
-    renderSaved();
+  function openOptions() {
+    renderOptionalCategories();
+    if (typeof nodes.optionsDialog.showModal === "function") nodes.optionsDialog.showModal();
+    else nodes.optionsDialog.setAttribute("open", "");
   }
 
-  function savePreset() {
-    pullControls();
-    const name = nodes.presetNameInput.value.trim() || `Preset ${presets.length + 1}`;
-    presets.unshift({
-      id: makeId(),
-      name: compact(name, 70),
-      at: Date.now(),
-      state: snapshot()
-    });
-    presets = presets.slice(0, 50);
-    saveJson(PRESET_KEY, presets);
-    nodes.presetNameInput.value = "";
-    renderSaved();
-    toast("Preset saved");
-  }
-
-  function loadSnapshot(value) {
-    state = normalizeState(value);
-    outputDirty = !state.output;
-    syncControls();
-    renderSelected();
-    refreshCategoryButtons();
-    refreshCategoryCounts();
-    renderCount();
-    renderExclude();
-    renderQuality();
-    updateStepSummaries();
-    setStep(state.activeStep || "brief", {
-      scroll: true,
-      forge: false
-    });
-    markDirty();
-    toast("Saved project loaded");
-  }
-
-  function renderSaved() {
-    const buildItem = (title, subtitle, onLoad, onDelete) => {
-      const item = document.createElement("div");
-      const copy = document.createElement("div");
-      const strong = document.createElement("strong");
-      const small = document.createElement("small");
-      const actions = document.createElement("div");
-      const load = document.createElement("button");
-      const remove = document.createElement("button");
-
-      item.className = "saved-item";
-      copy.className = "saved-item-copy";
-      actions.className = "saved-item-actions";
-      strong.textContent = title;
-      small.textContent = subtitle;
-      load.type = "button";
-      load.textContent = "Load";
-      load.addEventListener("click", onLoad);
-      remove.type = "button";
-      remove.textContent = "Delete";
-      remove.addEventListener("click", onDelete);
-      copy.append(strong, small);
-      actions.append(load, remove);
-      item.append(copy, actions);
-      return item;
-    };
-
-    nodes.presetList.replaceChildren();
-    presets.forEach(preset => {
-      if (!preset?.state) return;
-      nodes.presetList.appendChild(buildItem(
-        String(preset.name || "Saved preset"),
-        String(preset.state.output || preset.state.brief || "Saved prompt preset"),
-        () => loadSnapshot(preset.state),
-        () => {
-          presets = presets.filter(item => item.id !== preset.id);
-          saveJson(PRESET_KEY, presets);
-          renderSaved();
-          toast("Preset deleted");
-        }
-      ));
-    });
-
-    nodes.historyList.replaceChildren();
-    promptHistory.forEach(entry => {
-      if (!entry?.state || !entry?.prompt) return;
-      const date = Number.isFinite(Number(entry.at))
-        ? new Date(Number(entry.at)).toLocaleString()
-        : "Recent prompt";
-      nodes.historyList.appendChild(buildItem(
-        date,
-        String(entry.prompt),
-        () => loadSnapshot(entry.state),
-        () => {
-          promptHistory = promptHistory.filter(item => item.id !== entry.id);
-          saveJson(HISTORY_KEY, promptHistory);
-          renderSaved();
-          toast("History item deleted");
-        }
-      ));
-    });
-
-    nodes.savedCount.textContent = String(presets.length + promptHistory.length);
-  }
-
-  function exportBackup() {
-    const payload = {
-      app: "The Simplest Prompt Builder",
-      version: 3,
-      exportedAt: new Date().toISOString(),
-      current: snapshot(),
-      presets,
-      history: promptHistory
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `simplest-prompt-builder-backup-${new Date().toISOString().slice(0, 10)}.json`;
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(link.href), 1200);
-  }
-
-  async function importBackup(file) {
-    if (!file || file.size > 2_000_000) {
-      toast("Choose a Simplest Prompt Builder backup smaller than 2 MB.");
-      return;
-    }
-
-    try {
-      const payload = JSON.parse(await file.text());
-      if (!payload || typeof payload !== "object") throw new Error("Invalid backup");
-      if (payload.current) loadSnapshot(payload.current);
-      if (Array.isArray(payload.presets)) {
-        presets = payload.presets.filter(item => item?.state).slice(0, 50);
-      }
-      if (Array.isArray(payload.history)) {
-        promptHistory = payload.history.filter(item => item?.state && item?.prompt).slice(0, 30);
-      }
-      saveJson(PRESET_KEY, presets);
-      saveJson(HISTORY_KEY, promptHistory);
-      renderSaved();
-      toast("Backup imported");
-    } catch {
-      toast("That backup could not be read.");
-    }
-  }
-
-  async function refineWithAi() {
-    if (outputDirty || !state.output) forgePrompt({ addHistory: false, announce: false });
-    const prompt = String(state.output || "").trim();
-    if (!prompt) {
-      toast("Build a prompt first.");
-      return;
-    }
-
-    nodes.aiRefineBtn.disabled = true;
-    nodes.aiStatus.textContent = "Refining the production prompt…";
-    try {
-      const response = await fetch("/api/refine-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          direction: nodes.aiDirectionInput.value.trim(),
-          limit: state.outputFormat === "short"
-            ? SHORT_PROMPT_TARGET
-            : Number(state.limit) || 0,
-          format: state.outputFormat
-        })
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data?.error || `Prompt AI failed (${response.status}).`);
-      const refined = String(data?.prompt || "").trim();
-      if (!refined) throw new Error("Prompt AI returned an empty result.");
-      state.output = refined;
-      nodes.promptOutput.value = refined;
-      outputDirty = false;
-      renderCount();
-      addHistory();
-      markDirty();
-      nodes.aiStatus.textContent = "Refined prompt applied. Review it before copying.";
-      toast("Prompt refined");
-    } catch (error) {
-      nodes.aiStatus.textContent = error?.message || "Prompt AI is unavailable. The local generator still works.";
-      toast("Prompt AI unavailable");
-    } finally {
-      nodes.aiRefineBtn.disabled = false;
-    }
-  }
-
-  function pullControls() {
-    if (!nodes.briefInput) return;
-    state.brief = nodes.briefInput.value.trim();
-    state.bpm = clampNumber(nodes.bpmRange.value, 50, 220, 120);
-    state.energy = nodes.energySelect.value;
-    state.length = nodes.lengthSelect.value;
-    state.key = nodes.keySelect.value;
-    state.mode = nodes.modeSelect.value;
-    state.meter = nodes.meterSelect.value;
-    state.vocalPlan = nodes.vocalPlanSelect.value;
-    state.structure = nodes.structureInput.value.trim();
-    state.production = nodes.productionInput.value.trim();
-    state.exclude = nodes.excludeInput.value.trim();
-    state.limit = Number(nodes.limitSelect.value) || 0;
-    state.outputFormat = document.querySelector('input[name="outputFormat"]:checked')?.value || "short";
-    state.promptMode = document.querySelector('input[name="promptMode"]:checked')?.value || "balanced";
-  }
-
-  function syncControls() {
-    nodes.briefInput.value = state.brief;
-    nodes.briefCount.textContent = `${state.brief.length} / 1200`;
-    nodes.bpmRange.value = String(state.bpm);
-    nodes.bpmOutput.textContent = `${state.bpm} BPM`;
-    nodes.energySelect.value = state.energy;
-    nodes.lengthSelect.value = state.length;
-    nodes.keySelect.value = state.key;
-    nodes.modeSelect.value = state.mode;
-    nodes.meterSelect.value = state.meter;
-    nodes.vocalPlanSelect.value = state.vocalPlan;
-    nodes.structureInput.value = state.structure;
-    nodes.productionInput.value = state.production;
-    nodes.excludeInput.value = state.exclude;
-    nodes.limitSelect.value = String(state.limit);
-    const formatInput = document.querySelector(`input[name="outputFormat"][value="${CSS.escape(state.outputFormat)}"]`);
-    if (formatInput) formatInput.checked = true;
-    const modeInput = document.querySelector(`input[name="promptMode"][value="${CSS.escape(state.promptMode)}"]`);
-    if (modeInput) modeInput.checked = true;
-    nodes.promptOutput.value = state.output;
-  }
-
-  function bindStateControl(node, key, transform = value => value) {
-    node.addEventListener("input", () => {
-      state[key] = transform(node.value);
-      if (key === "bpm") nodes.bpmOutput.textContent = `${state.bpm} BPM`;
-      if (key === "brief") nodes.briefCount.textContent = `${node.value.length} / 1200`;
-      markOutputDirty();
-      renderExclude();
-      renderQuality();
-      updateStepSummaries();
-      markDirty();
-    });
-  }
-
-  function resetProject() {
-    state = clone(DEFAULT_STATE);
-    outputDirty = true;
-    nodes.tagSearch.value = "";
-    nodes.searchResults.hidden = true;
-    syncControls();
-    renderSelected();
-    refreshCategoryButtons();
-    refreshCategoryCounts();
-    renderCount();
-    renderExclude();
-    renderQuality();
-    updateStepSummaries();
-    setStep("brief", { scroll: true, forge: false });
-    markDirty();
-    toast("New prompt ready");
+  function openStylePanel(open) {
+    nodes.stylePanel.classList.toggle("open", open);
+    nodes.mobileStyleBtn.setAttribute("aria-expanded", String(open));
   }
 
   function cacheNodes() {
     [
-      "workspace", "saveState", "installBtn", "newProjectBtn", "summaryBrief", "summarySound",
-      "summaryShape", "summaryExport", "briefInput", "briefCount", "clearBriefBtn", "recipeSelect", "recipeRow",
-      "selectedCount", "tagSearch", "libraryStats", "searchResults", "selectedTags", "selectionGuidance",
-      "clearTagsBtn", "paletteLabel", "paletteBar", "quickPickGrid", "categoryJump",
-      "categoryList", "bpmOutput", "bpmRange", "energySelect", "lengthSelect", "keySelect",
-      "modeSelect", "meterSelect", "vocalPlanSelect", "structureInput", "structurePresets",
-      "productionInput", "excludeInput", "limitSelect", "outputFormatControl", "formatHint",
-      "promptModeControl", "outputCard", "promptCount",
-      "outputModeBadge", "promptOutput", "forgeBtn", "copyBtn", "copyExcludeBtn",
-      "excludePreview", "shareBtn", "outputStatus", "qualityScore", "qualityHeading",
-      "qualityHint", "savedWork", "savedCount", "presetNameInput", "savePresetBtn",
-      "savePresetFooterBtn", "exportBackupBtn", "importBackupInput", "presetList",
-      "historyList", "aiAssist", "aiDirectionInput", "aiRefineBtn", "aiStatus",
-      "resetDialog", "confirmResetBtn", "toast",
-      // Priority list nodes (newer HTML)
-      "tagPriorityList", "tagPriorityEmpty", "tagPriorityStatus", "tagPriorityInstructions", "tagPriorityHeading"
-    ].forEach(id => nodes[id] = document.getElementById(id));
-    nodes.workspaceMain = document.querySelector(".workspace-main");
-  }
-
-  function initKeys() {
-    const keys = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
-    nodes.keySelect.replaceChildren();
-    keys.forEach(key => {
-      const option = document.createElement("option");
-      option.value = key;
-      option.textContent = key;
-      nodes.keySelect.appendChild(option);
+      "libraryStats", "mobileStyleBtn", "clearAllBtn", "mainCategoryTabs", "optionsBtn",
+      "optionsActiveLabel", "tagWorkspace", "activeCategoryTitle", "activeCategoryHelp",
+      "categorySelectionStatus", "familyHeading", "familySummary", "familyBoard",
+      "activeFamilyTitle", "previousPageBtn", "pageStatus", "nextPageBtn", "tagGrid",
+      "tagPageNote", "stylePanel", "closeStyleBtn", "styleOutput", "characterCount",
+      "styleHint", "selectedBreakdown", "copyPromptBtn", "optionsDialog",
+      "optionalCategoryGrid", "toast"
+    ].forEach(id => {
+      nodes[id] = document.getElementById(id);
     });
+    nodes.focusedModeInput = document.querySelector('input[name="promptSize"][value="focused"]');
+    nodes.extendedModeInput = document.querySelector('input[name="promptSize"][value="extended"]');
   }
 
   function bindEvents() {
-    document.querySelectorAll("[data-step]").forEach(button => {
-      button.addEventListener("click", () => setStep(button.dataset.step));
-      button.addEventListener("keydown", event => {
-        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
-        event.preventDefault();
-        const current = STEP_ORDER.indexOf(button.dataset.step);
-        const index = event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? STEP_ORDER.length - 1
-            : (current + (event.key === "ArrowRight" ? 1 : -1) + STEP_ORDER.length) % STEP_ORDER.length;
-        document.querySelector(`[data-step="${STEP_ORDER[index]}"]`)?.focus();
-        setStep(STEP_ORDER[index]);
-      });
+    nodes.optionsBtn.addEventListener("click", openOptions);
+    nodes.previousPageBtn.addEventListener("click", () => {
+      if (pageIndex <= 0) return;
+      pageIndex -= 1;
+      renderTagPage();
     });
-
-    document.querySelectorAll("[data-go]").forEach(button => {
-      button.addEventListener("click", () => setStep(button.dataset.go));
+    nodes.nextPageBtn.addEventListener("click", () => {
+      pageIndex += 1;
+      renderTagPage();
     });
-
-    bindStateControl(nodes.briefInput, "brief");
-    bindStateControl(nodes.bpmRange, "bpm", value => clampNumber(value, 50, 220, 120));
-    bindStateControl(nodes.energySelect, "energy");
-    bindStateControl(nodes.lengthSelect, "length");
-    bindStateControl(nodes.keySelect, "key");
-    bindStateControl(nodes.modeSelect, "mode");
-    bindStateControl(nodes.meterSelect, "meter");
-    bindStateControl(nodes.vocalPlanSelect, "vocalPlan");
-    bindStateControl(nodes.structureInput, "structure");
-    bindStateControl(nodes.productionInput, "production");
-    bindStateControl(nodes.excludeInput, "exclude");
-    bindStateControl(nodes.limitSelect, "limit", value => Number(value) || 0);
-
-    document.querySelectorAll('input[name="outputFormat"]').forEach(input => {
-      input.addEventListener("change", () => {
-        state.outputFormat = input.value;
-        markOutputDirty();
-        renderCount();
-        markDirty();
-      });
+    document.querySelectorAll('input[name="promptSize"]').forEach(input => {
+      input.addEventListener("change", () => setMode(input.value, input));
     });
-
-    document.querySelectorAll('input[name="promptMode"]').forEach(input => {
-      input.addEventListener("change", () => {
-        state.promptMode = input.value;
-        markOutputDirty();
-        renderCount();
-        markDirty();
-      });
-    });
-
-    nodes.tagSearch.addEventListener("input", renderSearch);
-    nodes.tagSearch.addEventListener("keydown", event => {
-      if (event.key === "Escape") {
-        nodes.tagSearch.value = "";
-        renderSearch();
-      }
-    });
-
-    nodes.recipeSelect.addEventListener("change", () => {
-      if (nodes.recipeSelect.value === "") return;
-      const recipe = RECIPES[Number(nodes.recipeSelect.value)];
-      if (recipe) applyRecipe(recipe);
-    });
-
-    nodes.clearBriefBtn.addEventListener("click", () => {
-      state.brief = "";
-      nodes.briefInput.value = "";
-      nodes.briefCount.textContent = "0 / 1200";
-      markOutputDirty();
-      renderQuality();
-      updateStepSummaries();
-      markDirty();
-      nodes.briefInput.focus();
-    });
-
-    nodes.clearTagsBtn.addEventListener("click", () => {
-      if (!state.selected.length) return;
-      state.selected = [];
-      afterTagChange();
-      toast("Sound palette cleared");
-    });
-
-    nodes.categoryJump.addEventListener("change", () => {
-      const details = document.getElementById(nodes.categoryJump.value);
-      if (!details) return;
-      details.open = true;
-      const tags = categories()[details.dataset.category] || [];
-      fillCategory(details, Array.isArray(tags) ? tags : []);
-      details.scrollIntoView({
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-        block: "start"
-      });
-      nodes.categoryJump.value = "";
-    });
-
-    nodes.forgeBtn.addEventListener("click", () => forgePrompt({ addHistory: true }));
-    nodes.promptOutput.addEventListener("input", () => {
-      state.output = nodes.promptOutput.value;
-      outputDirty = false;
-      nodes.outputStatus.textContent = "Manual edits saved on this device.";
-      renderCount();
-      updateStepSummaries();
-      markDirty();
-    });
-
-    nodes.copyBtn.addEventListener("click", async () => {
-      if (!state.output) forgePrompt({ addHistory: false, announce: false });
-      const copied = await copyText(nodes.promptOutput.value, "Style prompt copied");
-      if (copied) addHistory();
-    });
-
-    nodes.copyExcludeBtn.addEventListener("click", () => {
-      copyText(nodes.excludeInput.value, "Exclusions copied");
-    });
-
-    nodes.shareBtn.addEventListener("click", async () => {
-      if (!state.output) forgePrompt({ addHistory: false, announce: false });
-      if (!state.output) return;
-      if (navigator.share) {
-        try {
-          await navigator.share({
-            title: "The Simplest Prompt Builder prompt",
-            text: state.output
-          });
-          addHistory();
-        } catch (error) {
-          if (error?.name !== "AbortError") toast("Sharing is unavailable.");
-        }
-      } else {
-        const copied = await copyText(state.output, "Prompt copied for sharing");
-        if (copied) addHistory();
-      }
-    });
-
-    nodes.savePresetBtn.addEventListener("click", savePreset);
-    nodes.savePresetFooterBtn.addEventListener("click", savePreset);
-    nodes.exportBackupBtn.addEventListener("click", exportBackup);
-    nodes.importBackupInput.addEventListener("change", () => {
-      const file = nodes.importBackupInput.files?.[0];
-      if (file) importBackup(file);
-      nodes.importBackupInput.value = "";
-    });
-
-    nodes.newProjectBtn.addEventListener("click", () => {
-      if (typeof nodes.resetDialog.showModal === "function") {
-        nodes.resetDialog.showModal();
-      } else if (window.confirm("Start a new prompt and clear the current project?")) {
-        resetProject();
-      }
-    });
-
-    nodes.confirmResetBtn.addEventListener("click", event => {
-      event.preventDefault();
-      resetProject();
-      nodes.resetDialog.close?.();
-    });
-    nodes.aiRefineBtn.addEventListener("click", refineWithAi);
-
-    nodes.installBtn.addEventListener("click", async () => {
-      if (!installPrompt) return;
-      installPrompt.prompt();
-      await installPrompt.userChoice;
-      installPrompt = null;
-      nodes.installBtn.hidden = true;
-    });
-
-    window.addEventListener("beforeinstallprompt", event => {
-      event.preventDefault();
-      installPrompt = event;
-      nodes.installBtn.hidden = false;
-    });
-
-    window.addEventListener("hashchange", () => {
-      const step = location.hash.slice(1);
-      if (STEP_ORDER.includes(step) && step !== state.activeStep) {
-        setStep(step, { history: false });
-      }
-    });
-
-    document.addEventListener("keydown", event => {
-      const target = event.target;
-      const isTyping = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement;
-
-      if (event.key === "/" && !isTyping && state.activeStep === "sound") {
-        event.preventDefault();
-        nodes.tagSearch.focus();
-      }
-
-      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
-        event.preventDefault();
-        const current = STEP_ORDER.indexOf(state.activeStep);
-        if (state.activeStep === "export") {
-          forgePrompt({ addHistory: true });
-        } else {
-          setStep(STEP_ORDER[Math.min(current + 1, STEP_ORDER.length - 1)]);
-        }
-      }
+    nodes.copyPromptBtn.addEventListener("click", copyPrompt);
+    nodes.clearAllBtn.addEventListener("click", clearAll);
+    nodes.mobileStyleBtn.addEventListener("click", () => openStylePanel(!nodes.stylePanel.classList.contains("open")));
+    nodes.closeStyleBtn.addEventListener("click", () => openStylePanel(false));
+    window.addEventListener("resize", () => {
+      renderFamilies();
+      renderTagPage();
     });
   }
 
-  function injectSelectedChipStyles() {
-    if (document.getElementById("selected-chip-styles")) return;
-    const style = document.createElement("style");
-    style.id = "selected-chip-styles";
-    style.textContent = `
-      .sr-only {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
+  function validateLibrary() {
+    const categoryNames = Object.keys(categories());
+    const missing = OUTPUT_ORDER.filter(category => !categoryNames.includes(category));
+    if (missing.length) throw new Error(`Missing tag categories: ${missing.join(", ")}`);
+
+    const total = Object.values(categories()).reduce((sum, tags) => sum + tags.length, 0);
+    if (total !== 1940) throw new Error(`Expected 1,940 tags, found ${total}.`);
+
+    OUTPUT_ORDER.forEach(category => {
+      const source = categories()[category];
+      const grouped = familiesFor(category).flatMap(family => family.tags);
+      const sourceCounts = new Map();
+      const groupedCounts = new Map();
+      source.forEach(tag => sourceCounts.set(tag, (sourceCounts.get(tag) || 0) + 1));
+      grouped.forEach(tag => groupedCounts.set(tag, (groupedCounts.get(tag) || 0) + 1));
+      const multiplicitiesMatch = [...sourceCounts.entries()]
+        .every(([tag, count]) => groupedCounts.get(tag) === count);
+      if (grouped.length !== source.length || !multiplicitiesMatch) {
+        throw new Error(`${category} family grouping lost or duplicated tags.`);
       }
-      .tag-priority {
-        margin-top: 14px;
-        padding-top: 12px;
-        border-top: 1px solid var(--line, #293244);
-      }
-      .tag-priority-heading {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 10px;
-        margin-bottom: 6px;
-      }
-      .tag-priority-heading h3 {
-        margin: 0;
-        font-size: 0.95rem;
-      }
-      .priority-rule {
-        color: var(--muted, #9ca8b8);
-        font-size: 0.72rem;
-        font-weight: 800;
-        white-space: nowrap;
-      }
-      .tag-priority-help {
-        margin: 0 0 10px;
-        color: var(--muted, #9ca8b8);
-        font-size: 0.82rem;
-        line-height: 1.4;
-      }
-      .tag-priority-list {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: grid;
-        gap: 6px;
-      }
-      .tag-priority-item {
-        display: grid;
-        grid-template-columns: 28px minmax(0, 1fr) auto;
-        align-items: center;
-        gap: 8px;
-        min-height: 44px;
-        padding: 6px 8px 6px 10px;
-        border: 1px solid var(--line, #293244);
-        border-radius: 12px;
-        background: var(--field, #0b0f16);
-      }
-      .tag-priority-item:focus {
-        outline: none;
-      }
-      .tag-priority-item:focus-visible {
-        outline: 2px solid var(--accent, #ff7a18);
-        outline-offset: 2px;
-      }
-      .tag-priority-rank {
-        display: grid;
-        place-items: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 999px;
-        background: rgba(255, 122, 24, 0.15);
-        color: var(--accent-2, #ffb347);
-        font-size: 0.75rem;
-        font-weight: 900;
-      }
-      .tag-priority-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        font-size: 0.88rem;
-        font-weight: 700;
-      }
-      .tag-priority-controls {
-        display: inline-flex;
-        gap: 4px;
-      }
-      .tag-priority-controls button {
-        width: 36px;
-        min-width: 36px;
-        min-height: 36px;
-        padding: 0;
-        border-radius: 10px;
-        font-size: 0.9rem;
-      }
-      .tag-priority-controls button:disabled {
-        opacity: 0.28;
-      }
-      .tag-priority-empty {
-        margin: 0;
-        padding: 12px;
-        border: 1px dashed var(--line, #293244);
-        border-radius: 12px;
-        color: var(--muted, #9ca8b8);
-        font-size: 0.84rem;
-        text-align: center;
-      }
-    `;
-    document.head.appendChild(style);
+    });
   }
 
   function init() {
-    injectSelectedChipStyles();
+    if (initialized) return;
+    initialized = true;
     cacheNodes();
-    buildCategoryIndex();
-    initKeys();
-    renderRecipes();
-    renderQuickPicks();
-    renderStructures();
-    renderCategories();
-    syncControls();
-    renderSelected();
-    refreshCategoryButtons();
-    refreshCategoryCounts();
-    renderSaved();
-    renderCount();
-    renderExclude();
-    renderQuality();
-    updateStepSummaries();
+    buildCategorySets();
+    validateLibrary();
+    loadState();
+    nodes.focusedModeInput.checked = state.mode === "focused";
+    nodes.extendedModeInput.checked = state.mode === "extended";
     bindEvents();
-
-    const hashStep = location.hash.slice(1);
-    const initialStep = STEP_ORDER.includes(hashStep) ? hashStep : state.activeStep;
-    setStep(initialStep, {
-      scroll: false,
-      forge: false,
-      history: false
-    });
-
-    if ("serviceWorker" in navigator) {
-      window.addEventListener(
-        "load",
-        () => navigator.serviceWorker.register("/sw.js").catch(() => {}),
-        { once: true }
-      );
-    }
+    renderLibraryStats();
+    renderAll();
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init, { once: true });
-  } else {
-    init();
+  document.addEventListener("DOMContentLoaded", init);
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/sw.js").catch(() => {});
+    });
   }
 })();
-

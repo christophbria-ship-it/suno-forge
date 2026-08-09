@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#eadfcf">
-  <meta name="description" content="Build production-ready prompts for Suno and other AI music tools with guided sound, arrangement, and mix controls.">
-  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#f3ede4">
+  <meta name="description" content="Explore 1,940 music tags and build a focused Suno style prompt.">
+  <meta name="color-scheme" content="light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/prompt-style.css?v=3.3.2">
-  <title>The Simplest Prompt Builder for AI Music</title>
+  <link rel="stylesheet" href="/prompt-style.css?v=4.0.0">
+  <title>Suno Forge Tag Studio</title>
 </head>
 <body>
-  <a class="skip-link" href="#workspace">Skip to prompt workspace</a>
+  <a class="skip-link" href="#tagWorkspace">Skip to tag choices</a>
 
   <div class="app-shell">
     <header class="topbar">
-      <a class="brand" href="#brief" aria-label="The Simplest Prompt Builder home">
+      <a class="brand" href="#" aria-label="Suno Forge Tag Studio home">
         <span class="brand-mark" aria-hidden="true">
           <svg viewBox="0 0 32 32" role="img">
             <path d="M6 22.5 16 5l10 17.5-10 5.5L6 22.5Z"></path>
@@ -24,454 +24,118 @@
           </svg>
         </span>
         <span class="brand-copy">
-          <strong>THE SIMPLEST<br>PROMPT BUILDER</strong>
-          <small>FOR AI MUSIC</small>
+          <strong>SUNO FORGE</strong>
+          <small>TAG STUDIO</small>
         </span>
       </a>
 
+      <div class="header-status">
+        <span id="libraryStats">Loading the complete sound library…</span>
+      </div>
+
       <div class="header-actions">
-        <span class="save-state" id="saveState" aria-live="polite">Saved on this device</span>
-        <button id="installBtn" class="header-button" type="button" hidden>Install</button>
-        <button id="newProjectBtn" class="header-button" type="button">New prompt</button>
+        <button id="mobileStyleBtn" class="header-button mobile-style-button" type="button" aria-controls="stylePanel" aria-expanded="false">Style</button>
+        <button id="clearAllBtn" class="header-button" type="button">Clear</button>
       </div>
     </header>
 
-    <main id="workspace" class="workspace">
-      <aside class="progress-panel" aria-label="Prompt progress">
-        <div class="progress-intro">
-          <p class="overline">YOUR WORKSPACE</p>
-          <h2>Build with intent.</h2>
-          <p>Four focused steps. No prompt-writing experience required.</p>
-        </div>
+    <main class="workspace" id="workspace">
+      <nav class="category-rail" aria-label="Main tag categories">
+        <p class="rail-label">TAGS</p>
+        <div id="mainCategoryTabs" class="category-tabs" role="tablist" aria-label="Main prompt categories"></div>
+        <button id="optionsBtn" class="category-tab options-button" type="button" aria-haspopup="dialog" aria-controls="optionsDialog">
+          <span>Options</span>
+          <small id="optionsActiveLabel">More tags</small>
+        </button>
+      </nav>
 
-        <nav class="step-nav" role="tablist" aria-label="Prompt maker steps">
-          <button class="step-tab active" id="tab-brief" type="button" role="tab" data-step="brief" aria-controls="panel-brief" aria-selected="true" tabindex="0">
-            <span class="step-number">01</span>
-            <span class="step-label"><strong>Brief</strong><small id="summaryBrief">Not started</small></span>
-            <span class="step-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="step-tab" id="tab-sound" type="button" role="tab" data-step="sound" aria-controls="panel-sound" aria-selected="false" tabindex="-1">
-            <span class="step-number">02</span>
-            <span class="step-label"><strong>Sound</strong><small id="summarySound">Nothing selected</small></span>
-            <span class="step-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="step-tab" id="tab-shape" type="button" role="tab" data-step="shape" aria-controls="panel-shape" aria-selected="false" tabindex="-1">
-            <span class="step-number">03</span>
-            <span class="step-label"><strong>Shape</strong><small id="summaryShape">120 BPM · C minor</small></span>
-            <span class="step-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="step-tab" id="tab-export" type="button" role="tab" data-step="export" aria-controls="panel-export" aria-selected="false" tabindex="-1">
-            <span class="step-number">04</span>
-            <span class="step-label"><strong>Export</strong><small id="summaryExport">Ready when you are</small></span>
-            <span class="step-check" aria-hidden="true">✓</span>
-          </button>
-        </nav>
+      <section class="tag-workspace" id="tagWorkspace" aria-labelledby="activeCategoryTitle">
+        <header class="workspace-heading">
+          <div>
+            <p class="eyebrow">ACTIVE TAG</p>
+            <h1 id="activeCategoryTitle">Genre</h1>
+            <p id="activeCategoryHelp">Choose a family, then choose up to two tags.</p>
+          </div>
+          <span id="categorySelectionStatus" class="selection-badge">0 / 2 selected</span>
+        </header>
 
-        <div class="privacy-note">
-          <span aria-hidden="true">◆</span>
-          <p><strong>Private by default.</strong> Your project, presets, and history stay on this device.</p>
-        </div>
+        <section class="family-section" aria-labelledby="familyHeading">
+          <div class="section-heading">
+            <h2 id="familyHeading">Genre families</h2>
+            <span id="familySummary">Every genre remains available</span>
+          </div>
+          <div id="familyBoard" class="family-board" role="tablist" aria-label="Genre families"></div>
+        </section>
+
+        <section class="tag-tray" aria-labelledby="activeFamilyTitle">
+          <header class="tag-tray-heading">
+            <div>
+              <p class="eyebrow">CHOICES</p>
+              <h2 id="activeFamilyTitle">Vocalized &amp; Harmony</h2>
+            </div>
+            <div class="page-controls">
+              <button id="previousPageBtn" class="page-button" type="button" aria-label="Previous tag page">←</button>
+              <span id="pageStatus">1 / 1</span>
+              <button id="nextPageBtn" class="page-button" type="button" aria-label="Next tag page">→</button>
+            </div>
+          </header>
+          <div id="tagGrid" class="tag-grid" role="group" aria-label="Tag choices"></div>
+          <p id="tagPageNote" class="tag-page-note">Select two; the next main tag opens automatically.</p>
+        </section>
+      </section>
+
+      <aside class="style-panel" id="stylePanel" aria-labelledby="styleHeading">
+        <header class="style-heading">
+          <div>
+            <p class="eyebrow">SUNO</p>
+            <h2 id="styleHeading">Style</h2>
+          </div>
+          <button id="closeStyleBtn" class="close-style-button" type="button" aria-label="Close style panel">×</button>
+        </header>
+
+        <fieldset class="prompt-size-control">
+          <legend>Prompt size</legend>
+          <label>
+            <input type="radio" name="promptSize" value="focused" checked>
+            <span><strong>Focused</strong><small>2 per category</small></span>
+          </label>
+          <label>
+            <input type="radio" name="promptSize" value="extended">
+            <span><strong>1,000</strong><small>character mode</small></span>
+          </label>
+        </fieldset>
+
+        <label class="style-box-label" for="styleOutput">
+          <span>Your style prompt</span>
+          <output id="characterCount" for="styleOutput">0 characters</output>
+        </label>
+        <textarea id="styleOutput" readonly spellcheck="false" placeholder="Your selected tags will appear here, ready for Suno."></textarea>
+        <p id="styleHint" class="style-hint">Focused mode keeps every category to two strong choices.</p>
+
+        <div id="selectedBreakdown" class="selected-breakdown" aria-label="Selected tag counts"></div>
+
+        <button id="copyPromptBtn" class="copy-button" type="button">Copy prompt</button>
       </aside>
-
-      <div class="workspace-main">
-        <section class="step-panel active" id="panel-brief" role="tabpanel" data-panel="brief" aria-labelledby="tab-brief">
-          <header class="panel-heading hero-heading">
-            <div>
-              <p class="overline">STEP 1 · THE IDEA</p>
-              <h1 id="heading-brief" tabindex="-1">Start with the feeling.</h1>
-              <p>Describe the song in plain language. The builder will translate the idea into a precise production brief.</p>
-            </div>
-            <span class="step-badge">01 / 04</span>
-          </header>
-
-          <section class="surface hero-card">
-            <div class="field-heading">
-              <label for="briefInput">What do you want to hear?</label>
-              <output id="briefCount" for="briefInput">0 / 1200</output>
-            </div>
-            <textarea id="briefInput" class="brief-input" rows="7" maxlength="1200" placeholder="Example: Dark Appalachian folk about finally leaving, an intimate weathered vocal, restrained verses, and a defiant final chorus."></textarea>
-            <div class="input-footer">
-              <span>Include the sound, emotion, story, or production goal.</span>
-              <button id="clearBriefBtn" class="text-button" type="button">Clear brief</button>
-            </div>
-          </section>
-
-          <section class="surface recipe-section" aria-labelledby="recipeHeading">
-            <div class="section-heading">
-              <div>
-                <p class="overline">QUICK START</p>
-                <h2 id="recipeHeading">Choose a proven direction</h2>
-                <p>Load a complete starting point, then make it yours.</p>
-              </div>
-              <span class="section-note">6 recipes</span>
-            </div>
-            <label class="recipe-mobile-picker" for="recipeSelect">
-              <span>Quick Start direction</span>
-              <select id="recipeSelect" aria-describedby="recipePickerHint"></select>
-              <small id="recipePickerHint">Choose any recipe; you can change every detail afterward.</small>
-            </label>
-            <div class="recipe-grid" id="recipeRow" aria-label="Starting recipes"></div>
-          </section>
-
-          <footer class="panel-actions">
-            <p><strong>Next:</strong> choose the sounds that define the track.</p>
-            <button class="primary-button" type="button" data-go="sound">Shape the sound <span aria-hidden="true">→</span></button>
-          </footer>
-        </section>
-
-        <section class="step-panel" id="panel-sound" role="tabpanel" data-panel="sound" aria-labelledby="tab-sound" hidden>
-          <header class="panel-heading">
-            <div>
-              <p class="overline">STEP 2 · SOUND PALETTE</p>
-              <h1 id="heading-sound" tabindex="-1">Choose what matters.</h1>
-              <p>Search the full library or use the shortcuts. A focused palette usually produces the strongest prompt.</p>
-            </div>
-            <span id="selectedCount" class="step-badge">0 selected</span>
-          </header>
-
-          <section class="surface search-card">
-            <label class="search-field" for="tagSearch">
-              <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m21 21-4.3-4.3m2.3-5.2A7.5 7.5 0 1 1 4 11.5a7.5 7.5 0 0 1 15 0Z"></path></svg>
-              <input id="tagSearch" type="search" autocomplete="off" placeholder="Search genres, instruments, vocals, moods, effects…">
-              <kbd>/</kbd>
-            </label>
-            <p id="libraryStats" class="library-stats" aria-live="polite">Loading the full sound library…</p>
-            <div id="searchResults" class="search-results" role="listbox" aria-label="Sound search results" hidden></div>
-          </section>
-
-          <section class="surface selected-card" aria-labelledby="selectedHeading">
-            <div class="section-heading compact">
-              <div>
-                <p class="overline">YOUR PALETTE</p>
-                <h2 id="selectedHeading">Selected sound</h2>
-                <p id="selectionGuidance">Aim for 6–14 choices across a few categories.</p>
-              </div>
-              <button id="clearTagsBtn" class="text-button" type="button">Clear all</button>
-            </div>
-            <div id="selectedTags" class="selected-tags" aria-live="polite"></div>
-            <section class="tag-priority" aria-labelledby="tagPriorityHeading">
-              <div class="tag-priority-heading">
-                <div>
-                  <p class="overline">TAG PRIORITY</p>
-                  <h3 id="tagPriorityHeading">Rank Suno’s strongest signals</h3>
-                </div>
-                <span class="priority-rule">Earlier = stronger</span>
-              </div>
-              <p id="tagPriorityInstructions" class="tag-priority-help">Move the most important sound to #1. Focus a row and press Arrow Up or Arrow Down, or use its buttons.</p>
-              <ol id="tagPriorityList" class="tag-priority-list" aria-describedby="tagPriorityInstructions"></ol>
-              <p id="tagPriorityEmpty" class="tag-priority-empty">Selected tags will appear here in their final prompt order.</p>
-              <p id="tagPriorityStatus" class="sr-only" aria-live="polite"></p>
-            </section>
-            <div class="readiness">
-              <div class="readiness-copy">
-                <span>Palette focus</span>
-                <strong id="paletteLabel">Open canvas</strong>
-              </div>
-              <div class="readiness-track" aria-hidden="true"><span id="paletteBar"></span></div>
-            </div>
-          </section>
-
-          <section class="surface quick-picks" aria-labelledby="quickPickHeading">
-            <div class="section-heading compact">
-              <div>
-                <p class="overline">SHORTCUTS</p>
-                <h2 id="quickPickHeading">Useful starting sounds</h2>
-                <p>Tap to add or remove. Everything remains editable.</p>
-              </div>
-            </div>
-            <div id="quickPickGrid" class="quick-pick-grid"></div>
-          </section>
-
-          <section class="surface library-card" aria-labelledby="libraryHeading">
-            <div class="section-heading library-heading">
-              <div>
-                <p class="overline">FULL LIBRARY</p>
-                <h2 id="libraryHeading">Explore every option</h2>
-                <p>Every category and every tag is available here. Open one below or jump directly to it.</p>
-              </div>
-              <label class="jump-field">
-                <span class="sr-only">Jump to category</span>
-                <select id="categoryJump">
-                  <option value="">Jump to category</option>
-                </select>
-              </label>
-            </div>
-            <div id="categoryList" class="category-list"></div>
-          </section>
-
-          <footer class="panel-actions split-actions">
-            <button class="ghost-button" type="button" data-go="brief"><span aria-hidden="true">←</span> Back</button>
-            <p><strong>Next:</strong> set tempo, structure, and production.</p>
-            <button class="primary-button" type="button" data-go="shape">Shape the production <span aria-hidden="true">→</span></button>
-          </footer>
-        </section>
-
-        <section class="step-panel" id="panel-shape" role="tabpanel" data-panel="shape" aria-labelledby="tab-shape" hidden>
-          <header class="panel-heading">
-            <div>
-              <p class="overline">STEP 3 · TRACK DNA</p>
-              <h1 id="heading-shape" tabindex="-1">Direct the build.</h1>
-              <p>Set the musical framework, arrangement, and mix direction without overloading the prompt.</p>
-            </div>
-            <output id="bpmOutput" class="step-badge" for="bpmRange">120 BPM</output>
-          </header>
-
-          <section class="surface controls-card" aria-labelledby="coreControlsHeading">
-            <div class="section-heading compact">
-              <div>
-                <p class="overline">FOUNDATION</p>
-                <h2 id="coreControlsHeading">Core controls</h2>
-              </div>
-            </div>
-
-            <label class="range-field" for="bpmRange">
-              <span>Tempo</span>
-              <input id="bpmRange" type="range" min="50" max="220" value="120">
-              <span class="range-scale" aria-hidden="true"><small>50 · slow</small><small>220 · fast</small></span>
-            </label>
-
-            <div class="control-grid">
-              <label class="field"><span>Energy</span>
-                <select id="energySelect">
-                  <option value="low">Low</option>
-                  <option value="medium" selected>Medium</option>
-                  <option value="high">High</option>
-                  <option value="explosive">Explosive</option>
-                </select>
-              </label>
-              <label class="field"><span>Length</span>
-                <select id="lengthSelect">
-                  <option value="short">Short</option>
-                  <option value="standard" selected>Standard</option>
-                  <option value="extended">Extended</option>
-                  <option value="epic">Epic</option>
-                </select>
-              </label>
-              <label class="field"><span>Key</span><select id="keySelect"></select></label>
-              <label class="field"><span>Mode</span>
-                <select id="modeSelect">
-                  <option value="major">Major</option>
-                  <option value="minor" selected>Minor</option>
-                  <option value="dorian">Dorian</option>
-                  <option value="mixolydian">Mixolydian</option>
-                  <option value="phrygian">Phrygian</option>
-                  <option value="modal / ambiguous">Modal / ambiguous</option>
-                </select>
-              </label>
-              <label class="field"><span>Meter</span>
-                <select id="meterSelect">
-                  <option value="4/4" selected>4/4</option>
-                  <option value="3/4">3/4</option>
-                  <option value="6/8">6/8</option>
-                  <option value="5/4">5/4</option>
-                  <option value="7/8">7/8</option>
-                  <option value="free time">Free time</option>
-                </select>
-              </label>
-              <label class="field"><span>Vocal plan</span>
-                <select id="vocalPlanSelect">
-                  <option value="follow selected vocal tags" selected>Follow selected vocal tags</option>
-                  <option value="instrumental">Instrumental</option>
-                  <option value="solo lead vocal">Solo lead vocal</option>
-                  <option value="lead with backing vocals">Lead + backing vocals</option>
-                  <option value="duet">Duet</option>
-                  <option value="group or choir">Group / choir</option>
-                </select>
-              </label>
-            </div>
-          </section>
-
-          <section class="surface direction-card" aria-labelledby="directionHeading">
-            <div class="section-heading compact">
-              <div>
-                <p class="overline">ARRANGEMENT & MIX</p>
-                <h2 id="directionHeading">Production direction</h2>
-                <p>Describe movement, recording character, transitions, and what should stay out.</p>
-              </div>
-            </div>
-
-            <label class="field">
-              <span>Song structure</span>
-              <input id="structureInput" type="text" maxlength="360" value="Intro > Verse > Chorus > Verse > Chorus > Bridge > Final Chorus > Outro">
-            </label>
-            <div id="structurePresets" class="mini-button-row" aria-label="Structure presets"></div>
-
-            <label class="field">
-              <span>Production notes</span>
-              <textarea id="productionInput" rows="5" maxlength="1000" placeholder="Example: Dry close-mic vocal, sparse verses, natural room sound, heavier live drums only in the final chorus."></textarea>
-            </label>
-
-            <label class="field">
-              <span>Exclude from the result</span>
-              <textarea id="excludeInput" rows="3" maxlength="700" placeholder="Example: glossy pop polish, trap hats, EDM drops, over-singing"></textarea>
-              <small>This stays separate so it can be pasted into Suno’s Exclude Styles box.</small>
-            </label>
-          </section>
-
-          <section class="surface output-settings" aria-labelledby="outputSettingsHeading">
-            <div>
-              <p class="overline">OUTPUT</p>
-              <h2 id="outputSettingsHeading">Prompt format</h2>
-              <p>Keep the full Forge brief, generate Suno-native ranked tags, or make one short GMIV line.</p>
-            </div>
-            <div class="output-setting-controls">
-              <div class="setting-group">
-                <span class="setting-label">Output style</span>
-                <fieldset class="segment-control" id="outputFormatControl" aria-describedby="formatHint">
-                  <legend class="sr-only">Output style</legend>
-                  <label><input type="radio" name="outputFormat" value="forge" checked><span>Forge Brief</span></label>
-                  <label><input type="radio" name="outputFormat" value="suno"><span>Suno Style Tags</span></label>
-                  <label><input type="radio" name="outputFormat" value="short"><span>Short &amp; Sweet</span></label>
-                </fieldset>
-                <small id="formatHint" class="setting-hint">The current full production brief.</small>
-              </div>
-              <div class="setting-group">
-                <span class="setting-label">Detail level</span>
-                <fieldset class="segment-control" id="promptModeControl">
-                  <legend class="sr-only">Prompt detail</legend>
-                  <label><input type="radio" name="promptMode" value="compact"><span>Compact</span></label>
-                  <label><input type="radio" name="promptMode" value="balanced" checked><span>Balanced</span></label>
-                  <label><input type="radio" name="promptMode" value="detailed"><span>Detailed</span></label>
-                </fieldset>
-              </div>
-              <label class="field compact-field"><span>Character limit</span>
-                <select id="limitSelect">
-                  <option value="280">280 characters · Suno recommended</option>
-                  <option value="600">600 characters</option>
-                  <option value="800">800 characters</option>
-                  <option value="1000" selected>1,000 characters</option>
-                  <option value="1200">1,200 characters</option>
-                  <option value="0">No limit</option>
-                </select>
-              </label>
-            </div>
-          </section>
-
-          <footer class="panel-actions split-actions">
-            <button class="ghost-button" type="button" data-go="sound"><span aria-hidden="true">←</span> Back</button>
-            <p><strong>Next:</strong> review the finished Suno-ready prompt.</p>
-            <button class="primary-button" type="button" data-go="export">Build the prompt <span aria-hidden="true">→</span></button>
-          </footer>
-        </section>
-
-        <section class="step-panel" id="panel-export" role="tabpanel" data-panel="export" aria-labelledby="tab-export" hidden>
-          <header class="panel-heading">
-            <div>
-              <p class="overline">STEP 4 · FINAL OUTPUT</p>
-              <h1 id="heading-export" tabindex="-1">Ready for the studio.</h1>
-              <p>Review, edit, copy, or refine your production prompt. Your exclusions remain separate.</p>
-            </div>
-            <span id="promptCount" class="step-badge">0 / 1000</span>
-          </header>
-
-          <section class="surface output-card" id="outputCard" aria-labelledby="finishedPromptHeading">
-            <div class="output-title-row">
-              <div>
-                <p class="overline">STYLE PROMPT</p>
-                <h2 id="finishedPromptHeading">Finished prompt</h2>
-              </div>
-              <span id="outputModeBadge" class="format-badge">Balanced</span>
-            </div>
-
-            <label class="sr-only" for="promptOutput">Finished prompt. You can edit this text.</label>
-            <textarea id="promptOutput" rows="14" spellcheck="true" placeholder="Your finished prompt will appear here."></textarea>
-
-            <div class="output-meta">
-              <p id="outputStatus" class="helper-text" aria-live="polite">Your prompt is built locally on this device.</p>
-              <button id="forgeBtn" class="text-button" type="button">Regenerate</button>
-            </div>
-
-            <div class="primary-actions">
-              <button id="copyBtn" class="primary-button" type="button">
-                <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M8 8h11v11H8z"></path><path d="M5 16H4V5h11v1"></path></svg>
-                Copy style prompt
-              </button>
-              <button id="shareBtn" class="secondary-button" type="button">Share</button>
-            </div>
-          </section>
-
-          <section class="surface exclude-card" aria-labelledby="excludeHeading">
-            <div>
-              <p class="overline">EXCLUDE STYLES</p>
-              <h2 id="excludeHeading">Keep unwanted traits out</h2>
-              <p id="excludePreview">Nothing excluded yet.</p>
-            </div>
-            <button id="copyExcludeBtn" class="secondary-button" type="button">Copy exclusions</button>
-          </section>
-
-          <section class="surface quality-card" aria-labelledby="qualityHeading">
-            <div class="quality-score">
-              <span id="qualityScore">0</span>
-              <small>/ 100</small>
-            </div>
-            <div>
-              <p class="overline">PROMPT READINESS</p>
-              <h2 id="qualityHeading">A focused production brief</h2>
-              <p id="qualityHint">Add a brief and a few sound choices to strengthen the prompt.</p>
-            </div>
-          </section>
-
-          <details id="aiAssist" class="surface disclosure-card">
-            <summary>
-              <span><small>OPTIONAL</small><strong>Polish with Prompt AI</strong></span>
-              <span class="disclosure-icon" aria-hidden="true"></span>
-            </summary>
-            <div class="disclosure-body">
-              <p>AI can tighten or reorganize the production prompt. It will not write lyrics and is never required.</p>
-              <label class="field">
-                <span>Refinement direction</span>
-                <input id="aiDirectionInput" type="text" maxlength="300" placeholder="Example: make it more concise and emphasize the guitar tone">
-              </label>
-              <button id="aiRefineBtn" class="secondary-button full-button" type="button">Refine prompt with AI</button>
-              <p id="aiStatus" class="helper-text" aria-live="polite">Uses the server connection only when requested.</p>
-            </div>
-          </details>
-
-          <details id="savedWork" class="surface disclosure-card">
-            <summary>
-              <span><small>SAVED WORK</small><strong>Presets & history</strong></span>
-              <span class="summary-count" id="savedCount">0</span>
-              <span class="disclosure-icon" aria-hidden="true"></span>
-            </summary>
-            <div class="disclosure-body saved-body">
-              <div class="saved-tools">
-                <input id="presetNameInput" type="text" maxlength="70" placeholder="Preset name">
-                <button id="savePresetBtn" type="button">Save preset</button>
-                <button id="exportBackupBtn" type="button">Export backup</button>
-                <label class="file-button">Import backup<input id="importBackupInput" type="file" accept="application/json,.json"></label>
-              </div>
-              <h3>Presets</h3>
-              <div id="presetList" class="saved-list"></div>
-              <h3>Recent prompts</h3>
-              <div id="historyList" class="saved-list"></div>
-            </div>
-          </details>
-
-          <footer class="panel-actions split-actions">
-            <button class="ghost-button" type="button" data-go="shape"><span aria-hidden="true">←</span> Back</button>
-            <p>Your project autosaves on this device.</p>
-            <button id="savePresetFooterBtn" class="primary-button" type="button">Save as preset</button>
-          </footer>
-        </section>
-      </div>
     </main>
   </div>
 
-  <dialog id="resetDialog" class="confirm-dialog" aria-labelledby="resetTitle">
+  <dialog id="optionsDialog" class="options-dialog" aria-labelledby="optionsTitle">
     <form method="dialog">
-      <div class="dialog-mark" aria-hidden="true">◆</div>
-      <h2 id="resetTitle">Start a new prompt?</h2>
-      <p>This clears the current project. Saved presets and prompt history will stay.</p>
-      <div class="dialog-actions">
-        <button value="cancel" class="ghost-button">Keep working</button>
-        <button id="confirmResetBtn" value="confirm" class="danger-button">Clear project</button>
-      </div>
+      <header>
+        <div>
+          <p class="eyebrow">EVERYTHING ELSE</p>
+          <h2 id="optionsTitle">Optional tag categories</h2>
+        </div>
+        <button class="dialog-close" value="cancel" aria-label="Close options">×</button>
+      </header>
+      <div id="optionalCategoryGrid" class="optional-category-grid"></div>
+      <button class="done-button" value="cancel">Done</button>
     </form>
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script src="/data.js?v=3.3.0" defer></script>
-  <script src="/prompt-app.js?v=3.3.1" defer></script>
+  <script src="/prompt-app.js?v=4.0.0" defer></script>
 </body>
 </html>

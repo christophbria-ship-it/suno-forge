@@ -1,10 +1,10 @@
-const CACHE_NAME = "simplest-prompt-builder-v3-8-beige-canvas-20260809";
+const CACHE_NAME = "suno-forge-tag-studio-v4-20260809";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/prompt-style.css?v=3.3.2",
-  "/prompt-app.js?v=3.3.1",
-  "/data.js?v=3.3.1",
+  "/prompt-style.css?v=4.0.0",
+  "/prompt-app.js?v=4.0.0",
+  "/data.js?v=3.3.0",
   "/manifest.webmanifest",
   "/icon.svg"
 ];
