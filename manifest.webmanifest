@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "Suno Forge Tag Studio",
-  "short_name": "Suno Forge",
+  "name": "The Simplist Prompt Builder",
+  "short_name": "Simplist",
   "description": "Explore 1,941 music tags together on one screen and build a focused Suno style prompt.",
   "start_url": "/",
   "scope": "/",
