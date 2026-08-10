@@ -1,0 +1,99 @@
+:root {
+  --family-tint-1: #f6eee5;
+  --family-tint-2: #f1e7dc;
+  --family-tint-3: #f8f1e8;
+  --family-tint-4: #eee4d8;
+  --family-tint-5: #f5ebe1;
+  --family-tint-6: #efe7dd;
+}
+
+/*
+ * Staggered family wall
+ *
+ * The core app still owns category switching, selection limits, tag data,
+ * prompt generation and its one-screen fitting pass. This layer changes
+ * only the family wall presentation so each family remains a distinct box.
+ */
+.family-board {
+  display: block !important;
+  column-count: 5;
+  column-gap: 8px;
+  grid-template-columns: none !important;
+}
+
+.family-card {
+  display: inline-grid;
+  width: 100%;
+  margin: 0 0 8px;
+  break-inside: avoid;
+  page-break-inside: avoid;
+  vertical-align: top;
+  box-shadow: 0 4px 12px rgba(63, 42, 27, .045);
+}
+
+.family-card:nth-child(6n + 1) {
+  background: var(--family-tint-1);
+}
+
+.family-card:nth-child(6n + 2) {
+  background: var(--family-tint-2);
+}
+
+.family-card:nth-child(6n + 3) {
+  background: var(--family-tint-3);
+}
+
+.family-card:nth-child(6n + 4) {
+  background: var(--family-tint-4);
+}
+
+.family-card:nth-child(6n + 5) {
+  background: var(--family-tint-5);
+}
+
+.family-card:nth-child(6n + 6) {
+  background: var(--family-tint-6);
+}
+
+.family-card-header {
+  min-height: 28px;
+  padding-inline: 4px;
+}
+
+.family-card-header strong {
+  font-size: .72rem;
+}
+
+.family-tag-grid {
+  gap: 4px;
+}
+
+.wall-tag-button {
+  min-height: 22px;
+  padding: 3px 6px;
+}
+
+/* Keep the selected family visually stronger than the alternating tints. */
+.family-card:has(.wall-tag-button[aria-pressed="true"]) {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+  box-shadow: inset 0 0 0 1px rgba(134, 88, 63, .1), 0 5px 14px rgba(63, 42, 27, .07);
+}
+
+/* Four across on medium screens, then three on narrow phone-sized screens. */
+@media (max-width: 1100px) {
+  .family-board {
+    column-count: 4;
+  }
+}
+
+@media (max-width: 680px) {
+  .family-board {
+    column-count: 3;
+    column-gap: 6px;
+  }
+
+  .family-card {
+    margin-bottom: 6px;
+  }
+}
