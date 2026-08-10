@@ -1,8 +1,9 @@
-const CACHE_NAME = "suno-forge-one-screen-tag-wall-v4-1-20260810";
+const CACHE_NAME = "simplist-staggered-family-wall-v4-2-20260810";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/prompt-style.css?v=4.1.0",
+  "/layout-v5.css?v=4.2.0",
   "/prompt-app.js?v=4.1.0",
   "/data.js?v=4.1.0",
   "/manifest.webmanifest",
