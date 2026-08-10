@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplist-staggered-family-wall-v4-2-20260810";
+const CACHE_NAME = "simplist-large-library-wall-v4-2-1-20260810";
 const APP_SHELL = [
   "/",
   "/index.html",
