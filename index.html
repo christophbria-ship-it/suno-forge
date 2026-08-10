@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f3ede4">
-  <meta name="description" content="Explore 1,940 music tags and build a focused Suno style prompt.">
+  <meta name="description" content="Explore 1,941 music tags on one screen and build a focused Suno style prompt.">
   <meta name="color-scheme" content="light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/prompt-style.css?v=4.0.0">
+  <link rel="stylesheet" href="/prompt-style.css?v=4.1.0">
   <title>Suno Forge Tag Studio</title>
 </head>
 <body>
@@ -34,7 +34,6 @@
       </div>
 
       <div class="header-actions">
-        <button id="mobileStyleBtn" class="header-button mobile-style-button" type="button" aria-controls="stylePanel" aria-expanded="false">Style</button>
         <button id="clearAllBtn" class="header-button" type="button">Clear</button>
       </div>
     </header>
@@ -54,7 +53,7 @@
           <div>
             <p class="eyebrow">ACTIVE TAG</p>
             <h1 id="activeCategoryTitle">Genre</h1>
-            <p id="activeCategoryHelp">Choose a family, then choose up to two tags.</p>
+            <p id="activeCategoryHelp">Every family and every choice stays visible together.</p>
           </div>
           <span id="categorySelectionStatus" class="selection-badge">0 / 2 selected</span>
         </header>
@@ -64,23 +63,9 @@
             <h2 id="familyHeading">Genre families</h2>
             <span id="familySummary">Every genre remains available</span>
           </div>
-          <div id="familyBoard" class="family-board" role="tablist" aria-label="Genre families"></div>
-        </section>
-
-        <section class="tag-tray" aria-labelledby="activeFamilyTitle">
-          <header class="tag-tray-heading">
-            <div>
-              <p class="eyebrow">CHOICES</p>
-              <h2 id="activeFamilyTitle">Vocalized &amp; Harmony</h2>
-            </div>
-            <div class="page-controls">
-              <button id="previousPageBtn" class="page-button" type="button" aria-label="Previous tag page">←</button>
-              <span id="pageStatus">1 / 1</span>
-              <button id="nextPageBtn" class="page-button" type="button" aria-label="Next tag page">→</button>
-            </div>
-          </header>
-          <div id="tagGrid" class="tag-grid" role="group" aria-label="Tag choices"></div>
-          <p id="tagPageNote" class="tag-page-note">Select two; the next main tag opens automatically.</p>
+          <div id="familyViewport" class="family-viewport">
+            <div id="familyBoard" class="family-board" role="group" aria-label="Genre families with every choice"></div>
+          </div>
         </section>
       </section>
 
@@ -90,7 +75,6 @@
             <p class="eyebrow">SUNO</p>
             <h2 id="styleHeading">Style</h2>
           </div>
-          <button id="closeStyleBtn" class="close-style-button" type="button" aria-label="Close style panel">×</button>
         </header>
 
         <fieldset class="prompt-size-control">
@@ -105,19 +89,34 @@
           </label>
         </fieldset>
 
-        <label class="style-box-label" for="styleOutput">
-          <span>Your style prompt</span>
-          <output id="characterCount" for="styleOutput">0 characters</output>
-        </label>
-        <textarea id="styleOutput" readonly spellcheck="false" placeholder="Your selected tags will appear here, ready for Suno."></textarea>
-        <p id="styleHint" class="style-hint">Focused mode keeps every category to two strong choices.</p>
+        <div class="style-output-group">
+          <label class="style-box-label" for="styleOutput">
+            <span>Your style prompt</span>
+            <output id="characterCount" for="styleOutput">0 characters</output>
+          </label>
+          <textarea id="styleOutput" readonly spellcheck="false" placeholder="Your selected tags will appear here, ready for Suno."></textarea>
+        </div>
 
-        <div id="selectedBreakdown" class="selected-breakdown" aria-label="Selected tag counts"></div>
+        <p id="styleHint" class="style-hint">Focused mode keeps every category to two strong choices.</p>
 
         <button id="copyPromptBtn" class="copy-button" type="button">Copy prompt</button>
       </aside>
     </main>
   </div>
+
+  <dialog id="familyDialog" class="family-dialog" aria-labelledby="expandedFamilyTitle">
+    <form method="dialog">
+      <header>
+        <div>
+          <p class="eyebrow">ENLARGED FAMILY</p>
+          <h2 id="expandedFamilyTitle">Tag family</h2>
+          <span id="expandedFamilyCount">All choices</span>
+        </div>
+        <button class="dialog-close" value="cancel" aria-label="Close enlarged family">×</button>
+      </header>
+      <div id="expandedTagGrid" class="expanded-tag-grid" role="group" aria-label="Enlarged tag choices"></div>
+    </form>
+  </dialog>
 
   <dialog id="optionsDialog" class="options-dialog" aria-labelledby="optionsTitle">
     <form method="dialog">
@@ -135,7 +134,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="/data.js?v=3.3.0" defer></script>
-  <script src="/prompt-app.js?v=4.0.0" defer></script>
+  <script src="/data.js?v=4.1.0" defer></script>
+  <script src="/prompt-app.js?v=4.1.0" defer></script>
 </body>
 </html>

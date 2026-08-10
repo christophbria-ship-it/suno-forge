@@ -21,14 +21,17 @@ if (duplicateIds.length) fail(`Duplicate HTML ids: ${[...new Set(duplicateIds)].
 
 const requiredIds = [
   "mainCategoryTabs", "optionsBtn", "activeCategoryTitle", "categorySelectionStatus",
-  "familyBoard", "activeFamilyTitle", "previousPageBtn", "pageStatus", "nextPageBtn",
-  "tagGrid", "stylePanel", "styleOutput", "characterCount", "copyPromptBtn",
+  "familyViewport", "familyBoard", "stylePanel", "styleOutput", "characterCount",
+  "copyPromptBtn", "familyDialog", "expandedFamilyTitle", "expandedTagGrid",
   "optionsDialog", "optionalCategoryGrid", "toast"
 ];
 const missingIds = requiredIds.filter(id => !ids.includes(id));
 if (missingIds.length) fail(`Missing required UI ids: ${missingIds.join(", ")}`);
 
-for (const removedId of ["briefInput", "recipeRow", "bpmRange", "promptOutput", "presetList", "historyList"]) {
+for (const removedId of [
+  "briefInput", "recipeRow", "bpmRange", "promptOutput", "presetList", "historyList",
+  "previousPageBtn", "nextPageBtn", "pageStatus", "tagGrid", "tagPageNote"
+]) {
   if (ids.includes(removedId)) fail(`Removed workflow control is still present: ${removedId}`);
 }
 
@@ -72,7 +75,7 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("tag-studio-v4")) fail("Service worker cache was not refreshed for v4.");
+if (!worker.includes("tag-wall-v4-1")) fail("Service worker cache was not refreshed for the one-screen tag wall.");
 
 const context = {};
 vm.createContext(context);
@@ -85,9 +88,10 @@ if (!categories) fail("Sound library did not load.");
 const categoryNames = Object.keys(categories);
 const tagCount = Object.values(categories).reduce((total, tags) => total + tags.length, 0);
 if (categoryNames.length !== 20) fail(`Expected 20 categories, found ${categoryNames.length}.`);
-if (tagCount !== 1940) fail(`Expected 1,940 tags, found ${tagCount}.`);
-if (categories.Genre.length !== 569) fail(`Expected 569 genres, found ${categories.Genre.length}.`);
+if (tagCount !== 1941) fail(`Expected 1,941 tags, found ${tagCount}.`);
+if (categories.Genre.length !== 570) fail(`Expected 570 genres, found ${categories.Genre.length}.`);
 if (categories.Instruments.length !== 523) fail(`Expected 523 instruments, found ${categories.Instruments.length}.`);
+if (!categories.Genre.includes("Acoustic")) fail("The standalone Acoustic genre is missing.");
 
 for (const category of [
   "Genre", "Mood", "Vocals", "Vocal Delivery", "Vocal Range & Register", "Instruments", "Production"
@@ -97,5 +101,7 @@ for (const category of [
 if (!app.includes("EXTENDED_CHARACTER_LIMIT = 1000")) fail("The 1,000-character ceiling is missing.");
 if (!app.includes("FOCUSED_LIMIT = 2")) fail("The two-per-category focused limit is missing.");
 if (!app.includes("family grouping lost or duplicated tags")) fail("Runtime tag-integrity guard is missing.");
+if (!app.includes("renderFamilyWall")) fail("The one-screen family wall is missing.");
+if (/\bpageIndex\b|renderTagPage|previousPageBtn|nextPageBtn/.test(app)) fail("Page-turning logic is still present.");
 
 console.log(`Project checks passed: ${ids.length} unique UI ids, ${categoryNames.length} categories, all ${tagCount} source entries preserved.`);

@@ -1,7 +1,7 @@
 "use strict";
 
 const DATA = Object.freeze({
-  version: "3.3.0",
+  version: "4.1.0",
 
   categoryGroups: {
     Genre: [
@@ -123,7 +123,7 @@ const DATA = Object.freeze({
       // Country, folk, roots & acoustic
       "Country", "Contemporary Country", "Traditional Country", "Outlaw Country", "Alt-Country", "Country Pop",
       "Honky-Tonk", "Western Swing", "Bluegrass", "Progressive Bluegrass", "Americana", "Folk",
-      "Indie Folk", "Contemporary Folk", "Singer-Songwriter", "Acoustic Folk", "Appalachian Folk", "Gothic Folk",
+      "Indie Folk", "Contemporary Folk", "Singer-Songwriter", "Acoustic", "Acoustic Folk", "Appalachian Folk", "Gothic Folk",
       "Dark Folk", "Freak Folk", "Anti-Folk", "Country Blues", "Ambient Folk", "Folk Ballad",
       "Old-Time Music", "Zydeco", "Cajun", "City Folk", "Bakersfield Sound", "Nashville Sound",
       "Neofolk", "Apocalyptic Folk", "Traditional Folk", "Appalachian", "Sea Shanties",

@@ -1,17 +1,18 @@
 # Suno Forge Tag Studio
 
-A focused, local-first Suno style prompt builder that keeps the full 1,940-tag sound library visible and usable.
+A focused, local-first Suno style prompt builder that keeps the full 1,941-tag sound library visible and usable.
 
 ## What makes it different
 
-- Preserves all 20 categories and every existing tag, including 569 genres and 523 instruments.
-- Organizes large libraries into compact musical-family boxes instead of one long scrolling page.
-- Pages through each family without removing or hiding choices from the library.
+- Preserves all 20 categories and every original tag, plus the missing standalone Acoustic genre: 570 genres and 523 instruments.
+- Puts every family box and every choice from the active category on one screen at the same time.
+- Uses no scrolling, page numbers, arrows, or next/previous tag pages.
+- Lets a family enlarge over the same screen for easier tapping while the complete wall remains the primary view.
 - Uses Suno-oriented main categories: Genre, Mood, Vocals, Vocal Delivery, Vocal Range, Instruments, and Production.
 - Keeps all remaining categories behind the Options button.
 - Defaults to two choices per category and automatically advances through the main categories.
 - Includes an optional 1,000-character mode for larger prompts.
-- Produces one clean, comma-separated Suno Style prompt with one-tap copying.
+- Keeps the compact Suno Style box directly below the tag wall with one-tap copying.
 - Saves selections locally and works offline after the first visit.
 
 ## Verification
@@ -20,4 +21,4 @@ A focused, local-first Suno style prompt builder that keeps the full 1,940-tag s
 npm test
 ```
 
-The test suite checks JavaScript syntax, all 1,940 tags, family-group completeness, focused and extended selection rules, pagination, copying, accessibility wiring, and offline assets.
+The test suite checks JavaScript syntax, all 1,941 tags, family-group completeness, the all-at-once wall, focused and extended selection rules, copying, accessibility wiring, and offline assets.

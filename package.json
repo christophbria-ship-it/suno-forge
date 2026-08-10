@@ -1,8 +1,8 @@
 {
   "name": "suno-forge",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "private": true,
-  "description": "A no-scroll, full-library Suno style tag studio.",
+  "description": "A no-scroll, all-at-once Suno style tag wall.",
   "type": "module",
   "scripts": {
     "test": "node --check data.js && node --check prompt-app.js && node --check sw.js && node scripts/check-project.mjs && node scripts/test-ui.mjs"

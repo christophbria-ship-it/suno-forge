@@ -222,8 +222,8 @@
   const familyCache = new Map();
   let advanceTimer = 0;
   let toastTimer = 0;
-  let activeFamilyIndex = 0;
-  let pageIndex = 0;
+  let fitFrame = 0;
+  let expandedFamilyIndex = -1;
   let initialized = false;
 
   const state = {
@@ -430,21 +430,61 @@
     toastTimer = window.setTimeout(() => nodes.toast.classList.remove("show"), 1800);
   }
 
-  function familyColumns(count) {
-    const compact = window.innerWidth <= 800;
-    if (count <= 4) return 2;
-    if (count <= 6) return compact ? 2 : 3;
-    if (count <= 9) return 3;
-    if (count <= 12) return compact ? 3 : 4;
-    return 4;
+  function fitFamilyWall() {
+    const viewportWidth = nodes.familyViewport.clientWidth;
+    const viewportHeight = nodes.familyViewport.clientHeight;
+    if (!viewportWidth || !viewportHeight || !nodes.familyBoard.children.length) return;
+
+    const familyCount = familiesFor(state.activeCategory).length;
+    const widths = unique([
+      Math.round(viewportWidth),
+      Math.max(620, Math.round(viewportWidth * 1.35)),
+      Math.max(820, Math.round(viewportWidth * 1.7)),
+      Math.max(1040, Math.round(viewportWidth * 2.05))
+    ]);
+    let best = null;
+
+    nodes.familyBoard.style.setProperty("--wall-scale", "1");
+    widths.forEach(width => {
+      const maximumColumns = Math.min(familyCount, Math.max(1, Math.floor(width / 185)));
+      for (let columns = 1; columns <= maximumColumns; columns += 1) {
+        nodes.familyBoard.style.setProperty("--wall-width", `${width}px`);
+        nodes.familyBoard.style.setProperty("--family-columns", String(columns));
+        const naturalHeight = Math.max(nodes.familyBoard.scrollHeight, nodes.familyBoard.offsetHeight, 1);
+        const scale = Math.min(viewportWidth / width, viewportHeight / naturalHeight, 1);
+        if (!best || scale > best.scale) best = { width, columns, scale };
+      }
+    });
+
+    if (!best) return;
+    nodes.familyBoard.style.setProperty("--wall-width", `${best.width}px`);
+    nodes.familyBoard.style.setProperty("--family-columns", String(best.columns));
+    nodes.familyBoard.style.setProperty("--wall-scale", String(best.scale));
+    nodes.familyBoard.dataset.fitScale = best.scale.toFixed(3);
   }
 
-  function pageLayout() {
-    const short = window.innerHeight <= 650;
-    if (window.innerWidth <= 480) return { columns: 2, size: short ? 6 : 8 };
-    if (window.innerWidth <= 800) return { columns: 3, size: short ? 9 : 12 };
-    if (window.innerWidth <= 1150) return { columns: 4, size: short ? 12 : 16 };
-    return { columns: 5, size: short ? 15 : 20 };
+  function scheduleFitFamilyWall() {
+    window.cancelAnimationFrame(fitFrame);
+    fitFrame = window.requestAnimationFrame(fitFamilyWall);
+  }
+
+  function expandedColumns(count) {
+    if (window.innerWidth <= 480) {
+      if (count > 80) return 5;
+      if (count > 50) return 4;
+      if (count > 24) return 3;
+      return 2;
+    }
+    if (window.innerWidth <= 800) {
+      if (count > 80) return 7;
+      if (count > 50) return 6;
+      if (count > 30) return 5;
+      return 4;
+    }
+    if (count > 80) return 9;
+    if (count > 50) return 8;
+    if (count > 30) return 7;
+    return Math.min(6, Math.max(3, count));
   }
 
   function renderLibraryStats() {
@@ -490,77 +530,81 @@
     const optional = OPTIONAL_CATEGORIES.includes(state.activeCategory);
     nodes.activeCategoryTitle.textContent = state.activeCategory;
     nodes.activeCategoryHelp.textContent = state.mode === "focused"
-      ? `Choose a family, then choose up to ${FOCUSED_LIMIT} tags${optional ? "." : "; the next main category opens automatically."}`
-      : "Choose as many as you need; this category stays open until you switch tabs.";
+      ? `Every choice is visible together. Pick up to ${FOCUSED_LIMIT}${optional ? "." : "; the next main category opens automatically."}`
+      : "Every choice is visible together; this category stays open until you switch tabs.";
     nodes.categorySelectionStatus.textContent = state.mode === "focused"
       ? `${selectedCount} / ${FOCUSED_LIMIT} selected`
       : `${selectedCount} selected`;
   }
 
-  function renderFamilies() {
-    const families = familiesFor(state.activeCategory);
-    activeFamilyIndex = Math.min(activeFamilyIndex, Math.max(0, families.length - 1));
-    nodes.familyBoard.replaceChildren();
-    nodes.familyBoard.style.setProperty("--family-columns", String(familyColumns(families.length)));
-    nodes.familyBoard.setAttribute("aria-label", `${state.activeCategory} families`);
-    nodes.familyHeading.textContent = `${state.activeCategory} families`;
-    nodes.familySummary.textContent = `${families.length} groups · ${categories()[state.activeCategory].length} total choices`;
-
-    families.forEach((family, index) => {
-      const button = document.createElement("button");
-      const examples = family.tags.slice(0, 2).join(" · ");
-      button.type = "button";
-      button.className = "family-button";
-      button.setAttribute("role", "tab");
-      button.setAttribute("aria-selected", String(index === activeFamilyIndex));
-      button.setAttribute("aria-controls", "tagGrid");
-      button.innerHTML = `<strong>${family.label}</strong><span>${family.tags.length} · ${examples}</span>`;
-      button.addEventListener("click", () => {
-        activeFamilyIndex = index;
-        pageIndex = 0;
-        renderFamilies();
-        renderTagPage();
-      });
-      nodes.familyBoard.appendChild(button);
-    });
-  }
-
-  function renderTagPage() {
-    const families = familiesFor(state.activeCategory);
-    const family = families[activeFamilyIndex] || { label: state.activeCategory, tags: [] };
-    const layout = pageLayout();
-    const totalPages = Math.max(1, Math.ceil(family.tags.length / layout.size));
-    pageIndex = Math.min(pageIndex, totalPages - 1);
-    const start = pageIndex * layout.size;
-    const pageTags = family.tags.slice(start, start + layout.size);
+  function createTagButton(tag, className) {
     const selected = state.selected[state.activeCategory] || [];
     const focusedFull = state.mode === "focused" && selected.length >= FOCUSED_LIMIT;
+    const isSelected = selected.includes(tag);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = className;
+    button.textContent = tag;
+    button.dataset.tag = tag;
+    button.setAttribute("aria-pressed", String(isSelected));
+    button.disabled = focusedFull && !isSelected;
+    button.addEventListener("click", event => {
+      event.stopPropagation();
+      toggleTag(tag);
+    });
+    return button;
+  }
 
-    nodes.activeFamilyTitle.textContent = family.label;
-    nodes.pageStatus.textContent = `${pageIndex + 1} / ${totalPages}`;
-    nodes.previousPageBtn.disabled = pageIndex === 0;
-    nodes.nextPageBtn.disabled = pageIndex >= totalPages - 1;
-    nodes.tagGrid.style.setProperty("--tag-columns", String(layout.columns));
-    nodes.tagGrid.replaceChildren();
+  function renderFamilyWall() {
+    const families = familiesFor(state.activeCategory);
+    nodes.familyBoard.replaceChildren();
+    nodes.familyBoard.style.setProperty("--wall-scale", "1");
+    nodes.familyBoard.setAttribute("aria-label", `${state.activeCategory} families with every choice`);
+    nodes.familyHeading.textContent = `${state.activeCategory} families`;
+    nodes.familySummary.textContent = `${families.length} boxes · all ${categories()[state.activeCategory].length} choices · tap a title to enlarge`;
 
-    pageTags.forEach(tag => {
-      const button = document.createElement("button");
-      const isSelected = selected.includes(tag);
-      button.type = "button";
-      button.className = "tag-button";
-      button.textContent = tag;
-      button.dataset.tag = tag;
-      button.setAttribute("aria-pressed", String(isSelected));
-      button.disabled = focusedFull && !isSelected;
-      button.addEventListener("click", () => toggleTag(tag));
-      nodes.tagGrid.appendChild(button);
+    families.forEach((family, index) => {
+      const card = document.createElement("section");
+      const header = document.createElement("button");
+      const tagGrid = document.createElement("div");
+
+      card.className = "family-card";
+      header.type = "button";
+      header.className = "family-card-header";
+      header.setAttribute("aria-haspopup", "dialog");
+      header.setAttribute("aria-label", `Enlarge ${family.label}, ${family.tags.length} choices`);
+      header.innerHTML = `<strong>${family.label}</strong><span>${family.tags.length} · enlarge ↗</span>`;
+      header.addEventListener("click", () => openFamilyDialog(index));
+
+      tagGrid.className = "family-tag-grid";
+      tagGrid.setAttribute("role", "group");
+      tagGrid.setAttribute("aria-label", `${family.label} choices`);
+      family.tags.forEach(tag => tagGrid.appendChild(createTagButton(tag, "wall-tag-button")));
+
+      card.append(header, tagGrid);
+      nodes.familyBoard.appendChild(card);
     });
 
-    nodes.tagPageNote.textContent = state.mode === "focused"
-      ? focusedFull
-        ? "Two selected. Remove one to make a different choice."
-        : `Select ${FOCUSED_LIMIT - selected.length} more; the next main tag opens automatically.`
-      : `${family.tags.length} choices in this family · page through them without scrolling.`;
+    scheduleFitFamilyWall();
+  }
+
+  function renderExpandedFamily() {
+    const families = familiesFor(state.activeCategory);
+    const family = families[expandedFamilyIndex];
+    if (!family) return;
+
+    nodes.expandedFamilyTitle.textContent = family.label;
+    nodes.expandedFamilyCount.textContent = `${family.tags.length} choices · all shown together`;
+    nodes.expandedTagGrid.style.setProperty("--expanded-columns", String(expandedColumns(family.tags.length)));
+    nodes.expandedTagGrid.replaceChildren();
+    family.tags.forEach(tag => nodes.expandedTagGrid.appendChild(createTagButton(tag, "expanded-tag-button")));
+  }
+
+  function openFamilyDialog(index) {
+    expandedFamilyIndex = index;
+    renderExpandedFamily();
+    if (typeof nodes.familyDialog.showModal === "function") nodes.familyDialog.showModal();
+    else nodes.familyDialog.setAttribute("open", "");
   }
 
   function renderStyle() {
@@ -572,29 +616,13 @@
     nodes.styleHint.textContent = state.mode === "focused"
       ? "Focused mode keeps every category to two strong choices. Every library tag remains available."
       : "1,000-character mode stays on the current category and stops selections at Suno’s limit.";
-
-    const selectedCategories = OUTPUT_ORDER.filter(category => state.selected[category]?.length);
-    nodes.selectedBreakdown.replaceChildren();
-    selectedCategories.slice(0, 6).forEach(category => {
-      const item = document.createElement("div");
-      item.className = "breakdown-item";
-      item.innerHTML = `<span>${categoryLabel(category)}</span><strong>${state.selected[category].length}</strong>`;
-      nodes.selectedBreakdown.appendChild(item);
-    });
-    if (selectedCategories.length > 6) {
-      const item = document.createElement("div");
-      item.className = "breakdown-item";
-      item.innerHTML = `<span>More categories</span><strong>+${selectedCategories.length - 6}</strong>`;
-      nodes.selectedBreakdown.appendChild(item);
-    }
   }
 
   function renderAll() {
     renderMainTabs();
     renderOptionalCategories();
     renderCategoryHeader();
-    renderFamilies();
-    renderTagPage();
+    renderFamilyWall();
     renderStyle();
     saveState();
   }
@@ -602,9 +630,9 @@
   function chooseCategory(category, options = {}) {
     if (!OUTPUT_ORDER.includes(category)) return;
     window.clearTimeout(advanceTimer);
+    if (nodes.familyDialog?.open) nodes.familyDialog.close();
+    expandedFamilyIndex = -1;
     state.activeCategory = category;
-    activeFamilyIndex = 0;
-    pageIndex = 0;
     if (options.closeOptions && nodes.optionsDialog.open) nodes.optionsDialog.close();
     renderAll();
   }
@@ -636,7 +664,8 @@
     renderMainTabs();
     renderOptionalCategories();
     renderCategoryHeader();
-    renderTagPage();
+    renderFamilyWall();
+    if (nodes.familyDialog.open) renderExpandedFamily();
     renderStyle();
     saveState();
 
@@ -669,8 +698,8 @@
     }
 
     state.mode = mode;
-    pageIndex = 0;
     renderAll();
+    if (nodes.familyDialog.open) renderExpandedFamily();
     toast(mode === "focused" ? "Focused mode: two per category." : "1,000-character mode enabled.");
   }
 
@@ -709,20 +738,14 @@
     else nodes.optionsDialog.setAttribute("open", "");
   }
 
-  function openStylePanel(open) {
-    nodes.stylePanel.classList.toggle("open", open);
-    nodes.mobileStyleBtn.setAttribute("aria-expanded", String(open));
-  }
-
   function cacheNodes() {
     [
-      "libraryStats", "mobileStyleBtn", "clearAllBtn", "mainCategoryTabs", "optionsBtn",
+      "libraryStats", "clearAllBtn", "mainCategoryTabs", "optionsBtn",
       "optionsActiveLabel", "tagWorkspace", "activeCategoryTitle", "activeCategoryHelp",
-      "categorySelectionStatus", "familyHeading", "familySummary", "familyBoard",
-      "activeFamilyTitle", "previousPageBtn", "pageStatus", "nextPageBtn", "tagGrid",
-      "tagPageNote", "stylePanel", "closeStyleBtn", "styleOutput", "characterCount",
-      "styleHint", "selectedBreakdown", "copyPromptBtn", "optionsDialog",
-      "optionalCategoryGrid", "toast"
+      "categorySelectionStatus", "familyHeading", "familySummary", "familyViewport",
+      "familyBoard", "stylePanel", "styleOutput", "characterCount", "styleHint",
+      "copyPromptBtn", "familyDialog", "expandedFamilyTitle", "expandedFamilyCount",
+      "expandedTagGrid", "optionsDialog", "optionalCategoryGrid", "toast"
     ].forEach(id => {
       nodes[id] = document.getElementById(id);
     });
@@ -732,25 +755,17 @@
 
   function bindEvents() {
     nodes.optionsBtn.addEventListener("click", openOptions);
-    nodes.previousPageBtn.addEventListener("click", () => {
-      if (pageIndex <= 0) return;
-      pageIndex -= 1;
-      renderTagPage();
-    });
-    nodes.nextPageBtn.addEventListener("click", () => {
-      pageIndex += 1;
-      renderTagPage();
-    });
     document.querySelectorAll('input[name="promptSize"]').forEach(input => {
       input.addEventListener("change", () => setMode(input.value, input));
     });
     nodes.copyPromptBtn.addEventListener("click", copyPrompt);
     nodes.clearAllBtn.addEventListener("click", clearAll);
-    nodes.mobileStyleBtn.addEventListener("click", () => openStylePanel(!nodes.stylePanel.classList.contains("open")));
-    nodes.closeStyleBtn.addEventListener("click", () => openStylePanel(false));
+    nodes.familyDialog.addEventListener("close", () => {
+      expandedFamilyIndex = -1;
+    });
     window.addEventListener("resize", () => {
-      renderFamilies();
-      renderTagPage();
+      scheduleFitFamilyWall();
+      if (nodes.familyDialog.open) renderExpandedFamily();
     });
   }
 
@@ -760,7 +775,7 @@
     if (missing.length) throw new Error(`Missing tag categories: ${missing.join(", ")}`);
 
     const total = Object.values(categories()).reduce((sum, tags) => sum + tags.length, 0);
-    if (total !== 1940) throw new Error(`Expected 1,940 tags, found ${total}.`);
+    if (total !== 1941) throw new Error(`Expected 1,941 tags, found ${total}.`);
 
     OUTPUT_ORDER.forEach(category => {
       const source = categories()[category];

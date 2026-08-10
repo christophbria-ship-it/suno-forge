@@ -1,10 +1,10 @@
-const CACHE_NAME = "suno-forge-tag-studio-v4-20260809";
+const CACHE_NAME = "suno-forge-one-screen-tag-wall-v4-1-20260810";
 const APP_SHELL = [
   "/",
   "/index.html",
-  "/prompt-style.css?v=4.0.0",
-  "/prompt-app.js?v=4.0.0",
-  "/data.js?v=3.3.0",
+  "/prompt-style.css?v=4.1.0",
+  "/prompt-app.js?v=4.1.0",
+  "/data.js?v=4.1.0",
   "/manifest.webmanifest",
   "/icon.svg"
 ];
