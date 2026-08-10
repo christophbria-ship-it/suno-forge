@@ -80,6 +80,32 @@
   box-shadow: inset 0 0 0 1px rgba(134, 88, 63, .1), 0 5px 14px rgba(63, 42, 27, .07);
 }
 
+/*
+ * Genre and Instruments are the two very large libraries. They both render
+ * at least ten family cards. Do not let the legacy one-screen fitter crush
+ * those two walls into unreadably small boxes. Keep their staggered boxes at
+ * full size and scroll the tag area vertically instead.
+ */
+.family-viewport:has(.family-card:nth-child(10)) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+.family-board:has(.family-card:nth-child(10)) {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  transform: none !important;
+}
+
+.family-board:has(.family-card:nth-child(10)) .family-card {
+  min-width: 0;
+}
+
 /* Four across on medium screens, then three on narrow phone-sized screens. */
 @media (max-width: 1100px) {
   .family-board {
@@ -95,5 +121,16 @@
 
   .family-card {
     margin-bottom: 6px;
+  }
+
+  .family-board:has(.family-card:nth-child(10)) .family-card-header strong {
+    font-size: .68rem;
+  }
+
+  .family-board:has(.family-card:nth-child(10)) .wall-tag-button {
+    min-height: 24px;
+    padding: 4px 5px;
+    white-space: normal;
+    text-overflow: clip;
   }
 }
