@@ -1,11 +1,12 @@
-const CACHE_NAME = "simplist-large-library-wall-v4-2-2-20260810";
+const CACHE_NAME = "simplist-expanded-library-v4-3-0-20260811";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/prompt-style.css?v=4.1.0",
   "/layout-v5.css?v=4.2.1",
-  "/prompt-app.js?v=4.1.0",
+  "/prompt-app.js?v=4.3.0",
   "/data.js?v=4.1.0",
+  "/data-additions.js?v=4.3.0",
   "/manifest.webmanifest",
   "/icon.svg"
 ];
