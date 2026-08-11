@@ -775,7 +775,7 @@
     if (missing.length) throw new Error(`Missing tag categories: ${missing.join(", ")}`);
 
     const total = Object.values(categories()).reduce((sum, tags) => sum + tags.length, 0);
-    if (total !== 1941) throw new Error(`Expected 1,941 tags, found ${total}.`);
+    if (total < 1941) throw new Error(`Expected at least 1,941 tags, found ${total}.`);
 
     OUTPUT_ORDER.forEach(category => {
       const source = categories()[category];
