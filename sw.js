@@ -1,12 +1,15 @@
-const CACHE_NAME = "simplist-expanded-library-v4-3-0-20260811";
+const CACHE_NAME = "simplist-structure-builder-v5-0-0-20260812";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/prompt-style.css?v=4.1.0",
   "/layout-v5.css?v=4.2.1",
+  "/structure-page.css?v=5.0.0",
   "/prompt-app.js?v=4.3.0",
   "/data.js?v=4.1.0",
   "/data-additions.js?v=4.3.0",
+  "/structure-data.js?v=5.0.0",
+  "/structure-app.js?v=5.0.0",
   "/manifest.webmanifest",
   "/icon.svg"
 ];
