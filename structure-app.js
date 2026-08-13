@@ -19,11 +19,7 @@
   }
 
   function defaultSections() {
-    return STRUCTURE_LIBRARY.defaultStructure.map(label => ({
-      id: uid(),
-      label,
-      lyrics: ""
-    }));
+    return STRUCTURE_LIBRARY.defaultStructure.map(label => ({ id: uid(), label, lyrics: "" }));
   }
 
   function loadState() {
@@ -54,10 +50,7 @@
 
   function saveState() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({
-        sections: state.sections,
-        activeId: state.activeId
-      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ sections: state.sections, activeId: state.activeId }));
       localStorage.setItem(PAGE_KEY, state.page);
     } catch {
       // The editor remains usable when browser storage is unavailable.
@@ -74,18 +67,13 @@
       .map(section => section.label.match(/^Verse\s+(\d+)$/i))
       .filter(Boolean)
       .map(match => Number(match[1]));
-    const next = verseNumbers.length ? Math.max(...verseNumbers) + 1 : 1;
-    return `Verse ${next}`;
+    return `Verse ${verseNumbers.length ? Math.max(...verseNumbers) + 1 : 1}`;
   }
 
   function insertSection(label, options = {}) {
-    const section = {
-      id: uid(),
-      label: resolveSectionLabel(label),
-      lyrics: ""
-    };
-
+    const section = { id: uid(), label: resolveSectionLabel(label), lyrics: "" };
     let insertAt = state.sections.length;
+
     if (options.beforeId) {
       const index = state.sections.findIndex(item => item.id === options.beforeId);
       if (index >= 0) insertAt = index;
@@ -214,27 +202,28 @@
     button.addEventListener("pointerup", event => {
       if (event.pointerType === "mouse") return;
       if (dragging) {
-        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".song-section");
+        const point = document.elementFromPoint(event.clientX, event.clientY);
+        const target = point?.closest(".song-section");
         if (target) {
           const rect = target.getBoundingClientRect();
           const before = event.clientY < rect.top + rect.height / 2;
           insertSection(label, before
             ? { beforeId: target.dataset.sectionId }
             : { afterId: target.dataset.sectionId });
-        } else if (document.elementFromPoint(event.clientX, event.clientY)?.closest("#structureSections")) {
+        } else if (point?.closest("#structureSections")) {
           insertSection(label, { afterId: state.sections.at(-1)?.id });
         }
         suppressPaletteClickUntil = Date.now() + 500;
       }
       ghost?.remove();
-      ghost = null;
       dragging = false;
+      ghost = null;
     });
 
     button.addEventListener("pointercancel", () => {
       ghost?.remove();
-      ghost = null;
       dragging = false;
+      ghost = null;
     });
   }
 
@@ -245,7 +234,6 @@
       const card = document.createElement("section");
       card.className = `song-section${section.id === state.activeId ? " active" : ""}`;
       card.dataset.sectionId = section.id;
-      card.draggable = true;
 
       const header = document.createElement("header");
       header.className = "song-section-header";
@@ -254,6 +242,7 @@
       handle.type = "button";
       handle.className = "section-drag-handle";
       handle.textContent = "⋮⋮";
+      handle.draggable = true;
       handle.setAttribute("aria-label", `Drag ${section.label}`);
 
       const label = document.createElement("div");
@@ -313,17 +302,13 @@
   }
 
   function bindSectionDrag(card, handle) {
-    card.addEventListener("dragstart", event => {
-      if (!event.target.closest(".section-drag-handle")) {
-        event.preventDefault();
-        return;
-      }
+    handle.addEventListener("dragstart", event => {
       card.classList.add("dragging");
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/x-simplist-existing-section", card.dataset.sectionId);
     });
 
-    card.addEventListener("dragend", () => {
+    handle.addEventListener("dragend", () => {
       card.classList.remove("dragging");
       syncStateOrderFromDom();
     });
@@ -383,8 +368,7 @@
   }
 
   function insertMetaTag(tag) {
-    let id = state.activeId;
-    if (!id && state.sections[0]) id = state.sections[0].id;
+    const id = state.activeId || state.sections[0]?.id;
     const section = state.sections.find(item => item.id === id);
     if (!section) return;
 
@@ -399,9 +383,9 @@
     const leading = before && !before.endsWith("\n") ? "\n" : "";
     const trailing = after && !after.startsWith("\n") ? "\n" : "";
     const insertion = `${leading}${tagText}${trailing}`;
+
     textarea.value = `${before}${insertion}${after}`;
     section.lyrics = textarea.value;
-
     const cursor = before.length + insertion.length;
     textarea.focus();
     textarea.setSelectionRange(cursor, cursor);
@@ -458,8 +442,7 @@
     const entered = window.prompt("Name the section. Square brackets are added automatically.", "Instrumental Interlude");
     if (!entered) return;
     const clean = entered.replace(/^\[|\]$/g, "").trim();
-    if (!clean) return;
-    insertSection(clean);
+    if (clean) insertSection(clean);
   }
 
   function setPage(page) {
@@ -479,8 +462,9 @@
 
   function bindDropZone() {
     nodes.structureSections.addEventListener("dragover", event => {
-      const hasNew = event.dataTransfer.types.includes("text/x-simplist-section");
-      const hasExisting = event.dataTransfer.types.includes("text/x-simplist-existing-section");
+      const types = Array.from(event.dataTransfer.types || []);
+      const hasNew = types.includes("text/x-simplist-section");
+      const hasExisting = types.includes("text/x-simplist-existing-section");
       if (!hasNew && !hasExisting) return;
       event.preventDefault();
       event.dataTransfer.dropEffect = hasNew ? "copy" : "move";
