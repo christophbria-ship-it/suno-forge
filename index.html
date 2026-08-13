@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f3ede4">
-  <meta name="description" content="Explore 1,962 music tags on one screen and build a focused Suno style prompt.">
+  <meta name="description" content="Build Suno style prompts, lyric structures, and square-bracket arrangement tags with The Simplist Prompt Builder.">
   <meta name="color-scheme" content="light">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/prompt-style.css?v=4.1.0">
   <link rel="stylesheet" href="/layout-v5.css?v=4.2.1">
+  <link rel="stylesheet" href="/structure-page.css?v=5.0.0">
   <title>The Simplist Prompt Builder</title>
 </head>
 <body>
-  <a class="skip-link" href="#tagWorkspace">Skip to tag choices</a>
+  <a class="skip-link" href="#tagWorkspace">Skip to workspace</a>
 
   <div class="app-shell">
     <header class="topbar">
@@ -35,6 +36,10 @@
       </div>
 
       <div class="header-actions">
+        <div class="page-switcher" role="tablist" aria-label="Builder pages">
+          <button id="soundPageBtn" class="page-switch-button" type="button" role="tab" aria-selected="true">1 · Sound</button>
+          <button id="structurePageBtn" class="page-switch-button" type="button" role="tab" aria-selected="false">2 · Structure</button>
+        </div>
         <button id="clearAllBtn" class="header-button" type="button">Clear</button>
       </div>
     </header>
@@ -103,6 +108,49 @@
         <button id="copyPromptBtn" class="copy-button" type="button">Copy prompt</button>
       </aside>
     </main>
+
+    <main id="structurePage" class="structure-page" hidden aria-label="Structure builder">
+      <aside class="structure-palette" aria-labelledby="sectionPaletteHeading">
+        <header>
+          <div>
+            <p class="eyebrow">SECTIONS</p>
+            <h2 id="sectionPaletteHeading">Add</h2>
+          </div>
+        </header>
+        <div id="basicSectionList" class="basic-section-list" aria-label="Basic song sections"></div>
+        <button id="customSectionBtn" class="custom-section-button" type="button">+ Custom</button>
+      </aside>
+
+      <section class="lyrics-builder" aria-labelledby="structureBuilderTitle">
+        <header class="lyrics-builder-heading">
+          <div>
+            <p class="eyebrow">PAGE 2</p>
+            <h1 id="structureBuilderTitle">Lyrics + Structure</h1>
+            <p>Write lyrics under each bracket. Drag sections by the handle or tap a section on the left to insert it.</p>
+          </div>
+          <span id="structureStatus" class="structure-status">9 sections</span>
+        </header>
+
+        <div id="structureSections" class="lyrics-sheet" aria-label="Song lyrics and structure sections"></div>
+
+        <footer class="structure-actions">
+          <button id="resetStructureBtn" class="structure-reset-button" type="button">Reset structure</button>
+          <span id="structureCopyStatus" class="structure-copy-status">Square brackets are preserved exactly.</span>
+          <button id="copyForSunoBtn" class="structure-copy-button" type="button">Copy for Suno</button>
+        </footer>
+      </section>
+
+      <aside class="structure-library-panel" aria-labelledby="structureTagsTitle">
+        <header class="structure-library-heading">
+          <div>
+            <p class="eyebrow">BRACKET TAGS</p>
+            <h2 id="structureTagsTitle">Structure Tags</h2>
+            <p>Tap any tag to insert it at the active lyric cursor.</p>
+          </div>
+        </header>
+        <div id="structureTagBoxes" class="structure-tag-boxes" aria-label="Suno structure and arrangement tag boxes"></div>
+      </aside>
+    </main>
   </div>
 
   <dialog id="familyDialog" class="family-dialog" aria-labelledby="expandedFamilyTitle">
@@ -138,5 +186,7 @@
   <script src="/data.js?v=4.1.0" defer></script>
   <script src="/data-additions.js?v=4.3.0" defer></script>
   <script src="/prompt-app.js?v=4.3.0" defer></script>
+  <script src="/structure-data.js?v=5.0.0" defer></script>
+  <script src="/structure-app.js?v=5.0.0" defer></script>
 </body>
 </html>
