@@ -1,0 +1,95 @@
+:root {
+  /* Earthy forest-green interaction palette; beige/off-white surfaces stay unchanged. */
+  --accent: #315d45;
+  --accent-strong: #224632;
+  --accent-soft: #cddfd2;
+  --accent-pale: #e7f0e9;
+  --focus: #3e7155;
+}
+
+/* Give ordinary clickable choices a light green cast so they read as controls. */
+.category-tab,
+.wall-tag-button,
+.expanded-tag-button,
+.optional-category-button,
+.header-button,
+.family-card-header,
+.basic-section-button,
+.custom-section-button,
+.structure-meta-button,
+.structure-reset-button,
+.saved-instrument-tag,
+.saved-instrument-remove,
+.dialog-close,
+.done-button {
+  border-color: #b8cabb;
+  background: #f0f5f0;
+}
+
+.category-tab:hover,
+.wall-tag-button:hover,
+.expanded-tag-button:hover,
+.optional-category-button:hover,
+.header-button:hover,
+.family-card-header:hover,
+.basic-section-button:hover,
+.custom-section-button:hover,
+.structure-meta-button:hover,
+.structure-reset-button:hover,
+.saved-instrument-tag:hover,
+.done-button:hover {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+  color: var(--accent-strong);
+}
+
+/* Selected / primary actions use the deeper forest green. */
+.category-tab[aria-selected="true"],
+.category-tab.active,
+.wall-tag-button[aria-pressed="true"],
+.expanded-tag-button[aria-pressed="true"],
+.page-switch-button[aria-selected="true"],
+.copy-button,
+.structure-copy-button,
+.custom-instrument-save,
+.structure-tool-drawer[open] > summary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fffdf8;
+}
+
+.page-switch-button:not([aria-selected="true"]),
+.structure-tool-drawer > summary {
+  border-color: #b8cabb;
+  background: #f0f5f0;
+  color: #355744;
+}
+
+.tag-drawer > summary {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+  color: var(--accent-strong);
+}
+
+.prompt-size-control label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+  color: var(--accent-strong);
+}
+
+.song-section.active {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent), 0 5px 15px rgba(34, 70, 50, .10);
+}
+
+.family-card:has(.wall-tag-button[aria-pressed="true"]) {
+  border-color: var(--accent);
+  background: var(--accent-pale);
+}
+
+/* Keep destructive / utility icons subdued instead of making them primary green actions. */
+.section-delete-button,
+.section-move-button,
+.section-drag-handle {
+  background: transparent;
+}
