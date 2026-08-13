@@ -1,0 +1,546 @@
+"use strict";
+
+(() => {
+  const STORAGE_KEY = "simplistStructureBuilderV1";
+  const PAGE_KEY = "simplistActivePageV1";
+  const nodes = {};
+  let suppressPaletteClickUntil = 0;
+  let soundStats = "";
+
+  const state = {
+    sections: [],
+    activeId: null,
+    page: "sound"
+  };
+
+  function uid() {
+    if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+    return `section-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  function defaultSections() {
+    return STRUCTURE_LIBRARY.defaultStructure.map(label => ({
+      id: uid(),
+      label,
+      lyrics: ""
+    }));
+  }
+
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+      if (Array.isArray(saved?.sections) && saved.sections.length) {
+        state.sections = saved.sections
+          .filter(section => section && typeof section.label === "string")
+          .map(section => ({
+            id: typeof section.id === "string" ? section.id : uid(),
+            label: section.label,
+            lyrics: typeof section.lyrics === "string" ? section.lyrics : ""
+          }));
+      }
+      state.activeId = state.sections.some(section => section.id === saved?.activeId)
+        ? saved.activeId
+        : state.sections[0]?.id || null;
+      state.page = localStorage.getItem(PAGE_KEY) === "structure" ? "structure" : "sound";
+    } catch {
+      state.sections = [];
+    }
+
+    if (!state.sections.length) {
+      state.sections = defaultSections();
+      state.activeId = state.sections[0]?.id || null;
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        sections: state.sections,
+        activeId: state.activeId
+      }));
+      localStorage.setItem(PAGE_KEY, state.page);
+    } catch {
+      // The editor remains usable when browser storage is unavailable.
+    }
+  }
+
+  function activeSectionIndex() {
+    return state.sections.findIndex(section => section.id === state.activeId);
+  }
+
+  function resolveSectionLabel(requested) {
+    if (requested !== "Verse") return requested;
+    const verseNumbers = state.sections
+      .map(section => section.label.match(/^Verse\s+(\d+)$/i))
+      .filter(Boolean)
+      .map(match => Number(match[1]));
+    const next = verseNumbers.length ? Math.max(...verseNumbers) + 1 : 1;
+    return `Verse ${next}`;
+  }
+
+  function insertSection(label, options = {}) {
+    const section = {
+      id: uid(),
+      label: resolveSectionLabel(label),
+      lyrics: ""
+    };
+
+    let insertAt = state.sections.length;
+    if (options.beforeId) {
+      const index = state.sections.findIndex(item => item.id === options.beforeId);
+      if (index >= 0) insertAt = index;
+    } else if (options.afterId) {
+      const index = state.sections.findIndex(item => item.id === options.afterId);
+      if (index >= 0) insertAt = index + 1;
+    } else {
+      const activeIndex = activeSectionIndex();
+      if (activeIndex >= 0) insertAt = activeIndex + 1;
+    }
+
+    state.sections.splice(insertAt, 0, section);
+    state.activeId = section.id;
+    renderSections();
+    saveState();
+    focusSection(section.id);
+  }
+
+  function deleteSection(id) {
+    const index = state.sections.findIndex(section => section.id === id);
+    if (index < 0) return;
+    state.sections.splice(index, 1);
+    if (!state.sections.length) {
+      const section = { id: uid(), label: "Verse 1", lyrics: "" };
+      state.sections.push(section);
+      state.activeId = section.id;
+    } else if (state.activeId === id) {
+      state.activeId = state.sections[Math.min(index, state.sections.length - 1)].id;
+    }
+    renderSections();
+    saveState();
+  }
+
+  function moveSection(id, direction) {
+    const index = state.sections.findIndex(section => section.id === id);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= state.sections.length) return;
+    const [section] = state.sections.splice(index, 1);
+    state.sections.splice(target, 0, section);
+    renderSections();
+    saveState();
+    focusSection(id, false);
+  }
+
+  function syncStateOrderFromDom() {
+    const order = [...nodes.structureSections.querySelectorAll(".song-section")]
+      .map(element => element.dataset.sectionId);
+    const byId = new Map(state.sections.map(section => [section.id, section]));
+    state.sections = order.map(id => byId.get(id)).filter(Boolean);
+    saveState();
+    renderStatus();
+  }
+
+  function activateSection(id) {
+    state.activeId = id;
+    nodes.structureSections.querySelectorAll(".song-section").forEach(card => {
+      card.classList.toggle("active", card.dataset.sectionId === id);
+    });
+    saveState();
+  }
+
+  function focusSection(id, placeCursor = true) {
+    window.requestAnimationFrame(() => {
+      const textarea = nodes.structureSections.querySelector(`.section-lyrics[data-section-id="${CSS.escape(id)}"]`);
+      if (!textarea) return;
+      activateSection(id);
+      textarea.focus({ preventScroll: true });
+      if (placeCursor) textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      textarea.closest(".song-section")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }
+
+  function renderPalette() {
+    nodes.basicSectionList.replaceChildren();
+    STRUCTURE_LIBRARY.basicSections.forEach(label => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "basic-section-button";
+      button.textContent = label;
+      button.draggable = true;
+      button.dataset.sectionLabel = label;
+      button.addEventListener("click", () => {
+        if (Date.now() < suppressPaletteClickUntil) return;
+        insertSection(label);
+      });
+      button.addEventListener("dragstart", event => {
+        event.dataTransfer.effectAllowed = "copy";
+        event.dataTransfer.setData("text/x-simplist-section", label);
+      });
+      bindTouchPaletteDrag(button, label);
+      nodes.basicSectionList.appendChild(button);
+    });
+  }
+
+  function bindTouchPaletteDrag(button, label) {
+    let startX = 0;
+    let startY = 0;
+    let dragging = false;
+    let ghost = null;
+
+    button.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse") return;
+      startX = event.clientX;
+      startY = event.clientY;
+      dragging = false;
+      ghost = null;
+      button.setPointerCapture(event.pointerId);
+    });
+
+    button.addEventListener("pointermove", event => {
+      if (event.pointerType === "mouse" || !button.hasPointerCapture(event.pointerId)) return;
+      const distance = Math.hypot(event.clientX - startX, event.clientY - startY);
+      if (!dragging && distance < 10) return;
+      if (!dragging) {
+        dragging = true;
+        ghost = document.createElement("div");
+        ghost.className = "structure-drag-ghost";
+        ghost.textContent = `[${label}]`;
+        document.body.appendChild(ghost);
+      }
+      event.preventDefault();
+      ghost.style.left = `${event.clientX}px`;
+      ghost.style.top = `${event.clientY}px`;
+    });
+
+    button.addEventListener("pointerup", event => {
+      if (event.pointerType === "mouse") return;
+      if (dragging) {
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".song-section");
+        if (target) {
+          const rect = target.getBoundingClientRect();
+          const before = event.clientY < rect.top + rect.height / 2;
+          insertSection(label, before
+            ? { beforeId: target.dataset.sectionId }
+            : { afterId: target.dataset.sectionId });
+        } else if (document.elementFromPoint(event.clientX, event.clientY)?.closest("#structureSections")) {
+          insertSection(label, { afterId: state.sections.at(-1)?.id });
+        }
+        suppressPaletteClickUntil = Date.now() + 500;
+      }
+      ghost?.remove();
+      ghost = null;
+      dragging = false;
+    });
+
+    button.addEventListener("pointercancel", () => {
+      ghost?.remove();
+      ghost = null;
+      dragging = false;
+    });
+  }
+
+  function renderSections() {
+    nodes.structureSections.replaceChildren();
+
+    state.sections.forEach((section, index) => {
+      const card = document.createElement("section");
+      card.className = `song-section${section.id === state.activeId ? " active" : ""}`;
+      card.dataset.sectionId = section.id;
+      card.draggable = true;
+
+      const header = document.createElement("header");
+      header.className = "song-section-header";
+
+      const handle = document.createElement("button");
+      handle.type = "button";
+      handle.className = "section-drag-handle";
+      handle.textContent = "⋮⋮";
+      handle.setAttribute("aria-label", `Drag ${section.label}`);
+
+      const label = document.createElement("div");
+      label.className = "section-label";
+      label.textContent = `[${section.label}]`;
+
+      const up = document.createElement("button");
+      up.type = "button";
+      up.className = "section-move-button";
+      up.textContent = "↑";
+      up.disabled = index === 0;
+      up.setAttribute("aria-label", `Move ${section.label} up`);
+      up.addEventListener("click", () => moveSection(section.id, -1));
+
+      const down = document.createElement("button");
+      down.type = "button";
+      down.className = "section-move-button";
+      down.textContent = "↓";
+      down.disabled = index === state.sections.length - 1;
+      down.setAttribute("aria-label", `Move ${section.label} down`);
+      down.addEventListener("click", () => moveSection(section.id, 1));
+
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "section-delete-button";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `Delete ${section.label}`);
+      remove.addEventListener("click", () => deleteSection(section.id));
+
+      const textarea = document.createElement("textarea");
+      textarea.className = "section-lyrics";
+      textarea.dataset.sectionId = section.id;
+      textarea.value = section.lyrics;
+      textarea.placeholder = "Lyrics, directions, or bracket tags…";
+      textarea.spellcheck = true;
+      textarea.addEventListener("focus", () => activateSection(section.id));
+      textarea.addEventListener("pointerdown", () => activateSection(section.id));
+      textarea.addEventListener("input", () => {
+        const current = state.sections.find(item => item.id === section.id);
+        if (!current) return;
+        current.lyrics = textarea.value;
+        renderStatus();
+        saveState();
+      });
+
+      card.addEventListener("pointerdown", event => {
+        if (!event.target.closest("button")) activateSection(section.id);
+      });
+
+      bindSectionDrag(card, handle);
+      header.append(handle, label, up, down, remove);
+      card.append(header, textarea);
+      nodes.structureSections.appendChild(card);
+    });
+
+    renderStatus();
+  }
+
+  function bindSectionDrag(card, handle) {
+    card.addEventListener("dragstart", event => {
+      if (!event.target.closest(".section-drag-handle")) {
+        event.preventDefault();
+        return;
+      }
+      card.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/x-simplist-existing-section", card.dataset.sectionId);
+    });
+
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+      syncStateOrderFromDom();
+    });
+
+    let touchDragging = false;
+    handle.addEventListener("pointerdown", event => {
+      if (event.pointerType === "mouse") return;
+      event.preventDefault();
+      touchDragging = true;
+      handle.setPointerCapture(event.pointerId);
+      card.classList.add("touch-dragging");
+    });
+
+    handle.addEventListener("pointermove", event => {
+      if (!touchDragging || event.pointerType === "mouse") return;
+      event.preventDefault();
+      const target = document.elementFromPoint(event.clientX, event.clientY)?.closest(".song-section");
+      if (!target || target === card || target.parentElement !== nodes.structureSections) return;
+      const rect = target.getBoundingClientRect();
+      const before = event.clientY < rect.top + rect.height / 2;
+      nodes.structureSections.insertBefore(card, before ? target : target.nextSibling);
+    });
+
+    const finish = () => {
+      if (!touchDragging) return;
+      touchDragging = false;
+      card.classList.remove("touch-dragging");
+      syncStateOrderFromDom();
+    };
+    handle.addEventListener("pointerup", finish);
+    handle.addEventListener("pointercancel", finish);
+  }
+
+  function renderTagFamilies() {
+    nodes.structureTagBoxes.replaceChildren();
+    STRUCTURE_LIBRARY.families.forEach(family => {
+      const card = document.createElement("section");
+      card.className = "structure-tag-card";
+      const heading = document.createElement("h3");
+      heading.textContent = family.label;
+      const grid = document.createElement("div");
+      grid.className = "structure-tag-grid";
+
+      family.tags.forEach(tag => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "structure-meta-button";
+        button.textContent = `[${tag}]`;
+        button.title = `Insert [${tag}] at the lyric cursor`;
+        button.addEventListener("click", () => insertMetaTag(tag));
+        grid.appendChild(button);
+      });
+
+      card.append(heading, grid);
+      nodes.structureTagBoxes.appendChild(card);
+    });
+  }
+
+  function insertMetaTag(tag) {
+    let id = state.activeId;
+    if (!id && state.sections[0]) id = state.sections[0].id;
+    const section = state.sections.find(item => item.id === id);
+    if (!section) return;
+
+    const textarea = nodes.structureSections.querySelector(`.section-lyrics[data-section-id="${CSS.escape(id)}"]`);
+    if (!textarea) return;
+
+    const start = Number.isInteger(textarea.selectionStart) ? textarea.selectionStart : textarea.value.length;
+    const end = Number.isInteger(textarea.selectionEnd) ? textarea.selectionEnd : start;
+    const tagText = `[${tag}]`;
+    const before = textarea.value.slice(0, start);
+    const after = textarea.value.slice(end);
+    const leading = before && !before.endsWith("\n") ? "\n" : "";
+    const trailing = after && !after.startsWith("\n") ? "\n" : "";
+    const insertion = `${leading}${tagText}${trailing}`;
+    textarea.value = `${before}${insertion}${after}`;
+    section.lyrics = textarea.value;
+
+    const cursor = before.length + insertion.length;
+    textarea.focus();
+    textarea.setSelectionRange(cursor, cursor);
+    activateSection(id);
+    renderStatus();
+    saveState();
+  }
+
+  function assembledLyrics() {
+    return state.sections.map(section => {
+      const body = section.lyrics.trim();
+      return body ? `[${section.label}]\n${body}` : `[${section.label}]`;
+    }).join("\n\n");
+  }
+
+  function renderStatus() {
+    const text = assembledLyrics();
+    nodes.structureStatus.textContent = `${state.sections.length} sections`;
+    nodes.structureCopyStatus.textContent = `${text.length.toLocaleString()} characters · bracket structure preserved`;
+  }
+
+  async function copyForSuno() {
+    const text = assembledLyrics();
+    try {
+      await navigator.clipboard.writeText(text);
+      nodes.copyForSunoBtn.textContent = "Copied";
+      nodes.structureCopyStatus.textContent = "Copied for Suno";
+    } catch {
+      const helper = document.createElement("textarea");
+      helper.value = text;
+      helper.style.position = "fixed";
+      helper.style.opacity = "0";
+      document.body.appendChild(helper);
+      helper.select();
+      document.execCommand("copy");
+      helper.remove();
+      nodes.copyForSunoBtn.textContent = "Copied";
+    }
+    window.setTimeout(() => {
+      nodes.copyForSunoBtn.textContent = "Copy for Suno";
+      renderStatus();
+    }, 1400);
+  }
+
+  function resetStructure() {
+    if (!window.confirm("Reset Page 2 to the basic song structure?")) return;
+    state.sections = defaultSections();
+    state.activeId = state.sections[0]?.id || null;
+    renderSections();
+    saveState();
+  }
+
+  function addCustomSection() {
+    const entered = window.prompt("Name the section. Square brackets are added automatically.", "Instrumental Interlude");
+    if (!entered) return;
+    const clean = entered.replace(/^\[|\]$/g, "").trim();
+    if (!clean) return;
+    insertSection(clean);
+  }
+
+  function setPage(page) {
+    state.page = page === "structure" ? "structure" : "sound";
+    const structureActive = state.page === "structure";
+    nodes.workspace.hidden = structureActive;
+    nodes.structurePage.hidden = !structureActive;
+    nodes.soundPageBtn.setAttribute("aria-selected", String(!structureActive));
+    nodes.structurePageBtn.setAttribute("aria-selected", String(structureActive));
+    nodes.clearAllBtn.hidden = structureActive;
+    nodes.libraryStats.textContent = structureActive
+      ? "Page 2 · build lyrics and square-bracket structure for Suno"
+      : soundStats;
+    saveState();
+    if (structureActive) window.requestAnimationFrame(() => focusSection(state.activeId, false));
+  }
+
+  function bindDropZone() {
+    nodes.structureSections.addEventListener("dragover", event => {
+      const hasNew = event.dataTransfer.types.includes("text/x-simplist-section");
+      const hasExisting = event.dataTransfer.types.includes("text/x-simplist-existing-section");
+      if (!hasNew && !hasExisting) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = hasNew ? "copy" : "move";
+
+      if (hasExisting) {
+        const dragging = nodes.structureSections.querySelector(".song-section.dragging");
+        const target = event.target.closest(".song-section");
+        if (!dragging || !target || target === dragging) return;
+        const rect = target.getBoundingClientRect();
+        const before = event.clientY < rect.top + rect.height / 2;
+        nodes.structureSections.insertBefore(dragging, before ? target : target.nextSibling);
+      }
+    });
+
+    nodes.structureSections.addEventListener("drop", event => {
+      event.preventDefault();
+      const newLabel = event.dataTransfer.getData("text/x-simplist-section");
+      if (newLabel) {
+        const target = event.target.closest(".song-section");
+        if (!target) {
+          insertSection(newLabel, { afterId: state.sections.at(-1)?.id });
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        const before = event.clientY < rect.top + rect.height / 2;
+        insertSection(newLabel, before
+          ? { beforeId: target.dataset.sectionId }
+          : { afterId: target.dataset.sectionId });
+      } else {
+        syncStateOrderFromDom();
+      }
+    });
+  }
+
+  function cacheNodes() {
+    [
+      "workspace", "structurePage", "soundPageBtn", "structurePageBtn", "clearAllBtn", "libraryStats",
+      "basicSectionList", "customSectionBtn", "structureSections", "structureStatus",
+      "structureCopyStatus", "resetStructureBtn", "copyForSunoBtn", "structureTagBoxes"
+    ].forEach(id => {
+      nodes[id] = document.getElementById(id);
+    });
+  }
+
+  function init() {
+    cacheNodes();
+    if (!nodes.structurePage || !globalThis.STRUCTURE_LIBRARY) return;
+    soundStats = nodes.libraryStats.textContent;
+    loadState();
+    renderPalette();
+    renderTagFamilies();
+    renderSections();
+    bindDropZone();
+    nodes.customSectionBtn.addEventListener("click", addCustomSection);
+    nodes.resetStructureBtn.addEventListener("click", resetStructure);
+    nodes.copyForSunoBtn.addEventListener("click", copyForSuno);
+    nodes.soundPageBtn.addEventListener("click", () => setPage("sound"));
+    nodes.structurePageBtn.addEventListener("click", () => setPage("structure"));
+    setPage(state.page);
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
