@@ -1,16 +1,16 @@
-const CACHE_NAME = "simplist-structure-mobile-v5-1-0-20260813";
+const CACHE_NAME = "simplist-structure-mobile-v5-1-1-20260813";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/prompt-style.css?v=4.1.0",
   "/layout-v5.css?v=4.2.1",
   "/structure-page.css?v=5.0.0",
-  "/structure-mobile.css?v=5.1.0",
+  "/structure-mobile.css?v=5.1.1",
   "/prompt-app.js?v=4.3.0",
   "/data.js?v=4.1.0",
   "/data-additions.js?v=4.3.0",
   "/structure-data.js?v=5.0.0",
-  "/structure-app.js?v=5.0.0",
+  "/structure-app.js?v=5.1.1",
   "/manifest.webmanifest",
   "/icon.svg"
 ];
