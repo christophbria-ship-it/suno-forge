@@ -10,7 +10,8 @@
   const state = {
     sections: [],
     activeId: null,
-    page: "sound"
+    page: "sound",
+    customInstruments: []
   };
 
   function isPhoneLayout() {
@@ -24,6 +25,17 @@
 
   function defaultSections() {
     return STRUCTURE_LIBRARY.defaultStructure.map(label => ({ id: uid(), label, lyrics: "" }));
+  }
+
+  function cleanInstrumentName(value) {
+    return String(value || "")
+      .replace(/^\s*\[|\]\s*$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function instrumentKey(value) {
+    return cleanInstrumentName(value).toLowerCase();
   }
 
   function loadState() {
@@ -41,9 +53,16 @@
       state.activeId = state.sections.some(section => section.id === saved?.activeId)
         ? saved.activeId
         : state.sections[0]?.id || null;
+      state.customInstruments = Array.isArray(saved?.customInstruments)
+        ? [...new Map(saved.customInstruments
+            .map(cleanInstrumentName)
+            .filter(Boolean)
+            .map(name => [instrumentKey(name), name])).values()]
+        : [];
       state.page = localStorage.getItem(PAGE_KEY) === "structure" ? "structure" : "sound";
     } catch {
       state.sections = [];
+      state.customInstruments = [];
     }
 
     if (!state.sections.length) {
@@ -54,7 +73,11 @@
 
   function saveState() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ sections: state.sections, activeId: state.activeId }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        sections: state.sections,
+        activeId: state.activeId,
+        customInstruments: state.customInstruments
+      }));
       localStorage.setItem(PAGE_KEY, state.page);
     } catch {
       // The editor remains usable when browser storage is unavailable.
@@ -102,8 +125,6 @@
     renderSections();
     saveState();
 
-    // On phones, selecting a section should never summon the keyboard or zoom the page.
-    // The user explicitly taps the lyric box when they actually want to type.
     if (isPhoneLayout()) revealSection(section.id);
     else focusSection(section.id);
   }
@@ -359,6 +380,95 @@
     handle.addEventListener("pointercancel", finish);
   }
 
+  function buildInstrumentSaver() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "custom-instrument-saver";
+
+    const title = document.createElement("strong");
+    title.className = "custom-instrument-title";
+    title.textContent = "My saved instruments";
+
+    const form = document.createElement("form");
+    form.className = "custom-instrument-form";
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "custom-instrument-input";
+    input.placeholder = "Type instrument…";
+    input.autocomplete = "off";
+    input.setAttribute("list", "simplistInstrumentSuggestions");
+    input.setAttribute("aria-label", "Instrument name to save");
+
+    const datalist = document.createElement("datalist");
+    datalist.id = "simplistInstrumentSuggestions";
+    const suggestions = globalThis.DATA?.categories?.Instruments || [];
+    suggestions.forEach(name => {
+      const option = document.createElement("option");
+      option.value = name;
+      datalist.appendChild(option);
+    });
+
+    const saveButton = document.createElement("button");
+    saveButton.type = "submit";
+    saveButton.className = "custom-instrument-save";
+    saveButton.textContent = "+ Save";
+
+    form.append(input, saveButton, datalist);
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const name = cleanInstrumentName(input.value);
+      if (!name) return;
+      if (!state.customInstruments.some(saved => instrumentKey(saved) === instrumentKey(name))) {
+        state.customInstruments.push(name);
+        state.customInstruments.sort((a, b) => a.localeCompare(b));
+        saveState();
+      }
+      renderTagFamilies();
+    });
+
+    wrapper.append(title, form);
+
+    if (state.customInstruments.length) {
+      const savedGrid = document.createElement("div");
+      savedGrid.className = "saved-instrument-grid";
+
+      state.customInstruments.forEach(name => {
+        const row = document.createElement("div");
+        row.className = "saved-instrument-row";
+
+        const solo = document.createElement("button");
+        solo.type = "button";
+        solo.className = "structure-meta-button saved-instrument-tag";
+        solo.textContent = `[${name} Solo]`;
+        solo.addEventListener("click", () => insertMetaTag(`${name} Solo`));
+
+        const instrumental = document.createElement("button");
+        instrumental.type = "button";
+        instrumental.className = "structure-meta-button saved-instrument-tag";
+        instrumental.textContent = `[${name} Instrumental]`;
+        instrumental.addEventListener("click", () => insertMetaTag(`${name} Instrumental`));
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "saved-instrument-remove";
+        remove.textContent = "×";
+        remove.setAttribute("aria-label", `Remove ${name} from saved instruments`);
+        remove.addEventListener("click", () => {
+          state.customInstruments = state.customInstruments.filter(saved => instrumentKey(saved) !== instrumentKey(name));
+          saveState();
+          renderTagFamilies();
+        });
+
+        row.append(solo, instrumental, remove);
+        savedGrid.appendChild(row);
+      });
+
+      wrapper.appendChild(savedGrid);
+    }
+
+    return wrapper;
+  }
+
   function renderTagFamilies() {
     nodes.structureTagBoxes.replaceChildren();
     STRUCTURE_LIBRARY.families.forEach(family => {
@@ -380,6 +490,7 @@
       });
 
       card.append(heading, grid);
+      if (family.label === "Instrumentals & Solos") card.appendChild(buildInstrumentSaver());
       nodes.structureTagBoxes.appendChild(card);
     });
   }
@@ -409,8 +520,6 @@
     renderStatus();
     saveState();
 
-    // Keep the phone at the same zoom and do not summon the keyboard just because
-    // a bracket tag was tapped. Desktop keeps the convenient cursor focus.
     if (isPhoneLayout()) revealSection(id);
     else textarea.focus();
   }
