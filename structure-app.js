@@ -13,6 +13,10 @@
     page: "sound"
   };
 
+  function isPhoneLayout() {
+    return window.matchMedia("(max-width: 720px)").matches;
+  }
+
   function uid() {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
     return `section-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -70,6 +74,14 @@
     return `Verse ${verseNumbers.length ? Math.max(...verseNumbers) + 1 : 1}`;
   }
 
+  function revealSection(id) {
+    window.requestAnimationFrame(() => {
+      activateSection(id);
+      const card = nodes.structureSections.querySelector(`.song-section[data-section-id="${CSS.escape(id)}"]`);
+      card?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  }
+
   function insertSection(label, options = {}) {
     const section = { id: uid(), label: resolveSectionLabel(label), lyrics: "" };
     let insertAt = state.sections.length;
@@ -89,7 +101,11 @@
     state.activeId = section.id;
     renderSections();
     saveState();
-    focusSection(section.id);
+
+    // On phones, selecting a section should never summon the keyboard or zoom the page.
+    // The user explicitly taps the lyric box when they actually want to type.
+    if (isPhoneLayout()) revealSection(section.id);
+    else focusSection(section.id);
   }
 
   function deleteSection(id) {
@@ -115,7 +131,8 @@
     state.sections.splice(target, 0, section);
     renderSections();
     saveState();
-    focusSection(id, false);
+    if (isPhoneLayout()) revealSection(id);
+    else focusSection(id, false);
   }
 
   function syncStateOrderFromDom() {
@@ -289,7 +306,7 @@
       });
 
       card.addEventListener("pointerdown", event => {
-        if (!event.target.closest("button")) activateSection(section.id);
+        if (!event.target.closest("button") && !event.target.closest("textarea")) activateSection(section.id);
       });
 
       bindSectionDrag(card, handle);
@@ -387,11 +404,15 @@
     textarea.value = `${before}${insertion}${after}`;
     section.lyrics = textarea.value;
     const cursor = before.length + insertion.length;
-    textarea.focus();
     textarea.setSelectionRange(cursor, cursor);
     activateSection(id);
     renderStatus();
     saveState();
+
+    // Keep the phone at the same zoom and do not summon the keyboard just because
+    // a bracket tag was tapped. Desktop keeps the convenient cursor focus.
+    if (isPhoneLayout()) revealSection(id);
+    else textarea.focus();
   }
 
   function assembledLyrics() {
@@ -457,7 +478,13 @@
       ? "Page 2 · build lyrics and square-bracket structure for Suno"
       : soundStats;
     saveState();
-    if (structureActive) window.requestAnimationFrame(() => focusSection(state.activeId, false));
+
+    if (structureActive) {
+      window.requestAnimationFrame(() => {
+        if (isPhoneLayout()) revealSection(state.activeId);
+        else focusSection(state.activeId, false);
+      });
+    }
   }
 
   function bindDropZone() {
