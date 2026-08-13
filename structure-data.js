@@ -108,3 +108,5 @@ const STRUCTURE_LIBRARY = Object.freeze({
     }
   ]
 });
+
+globalThis.STRUCTURE_LIBRARY = STRUCTURE_LIBRARY;
