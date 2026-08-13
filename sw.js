@@ -1,10 +1,11 @@
-const CACHE_NAME = "simplist-structure-builder-v5-0-0-20260812";
+const CACHE_NAME = "simplist-structure-mobile-v5-1-0-20260813";
 const APP_SHELL = [
   "/",
   "/index.html",
   "/prompt-style.css?v=4.1.0",
   "/layout-v5.css?v=4.2.1",
   "/structure-page.css?v=5.0.0",
+  "/structure-mobile.css?v=5.1.0",
   "/prompt-app.js?v=4.3.0",
   "/data.js?v=4.1.0",
   "/data-additions.js?v=4.3.0",
@@ -25,16 +26,13 @@ self.addEventListener("install", event => {
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      ))
+      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
 
@@ -64,7 +62,6 @@ self.addEventListener("fetch", event => {
           return response;
         })
         .catch(() => cached);
-
       return cached || network;
     })
   );
