@@ -1,0 +1,11 @@
+.custom-instrument-saver{display:grid;gap:7px;margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
+.custom-instrument-title{font-size:.68rem;color:var(--accent-strong)}
+.custom-instrument-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.custom-instrument-input{min-width:0;min-height:38px;padding:7px 9px;border:1px solid var(--line-strong);border-radius:8px;outline:none;background:#fffdf9;color:var(--ink);font-size:16px;font-weight:700}
+.custom-instrument-input:focus{border-color:var(--accent)}
+.custom-instrument-save{min-height:38px;padding:6px 9px;border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:#fffdf8;font-size:.66rem;font-weight:950}
+.saved-instrument-grid{display:grid;gap:5px}
+.saved-instrument-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 30px;gap:4px;align-items:center}
+.saved-instrument-tag{width:100%;font-size:.58rem}
+.saved-instrument-remove{display:grid;width:30px;height:32px;place-items:center;padding:0;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--muted);font-weight:950}
+@media(max-width:720px){.custom-instrument-title{font-size:.72rem}.custom-instrument-form{grid-template-columns:minmax(0,1fr) 72px}.custom-instrument-input,.custom-instrument-save{min-height:42px}.custom-instrument-save{font-size:.7rem}.saved-instrument-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 32px}.saved-instrument-tag{min-height:38px!important;font-size:.64rem!important}.saved-instrument-remove{width:32px;height:38px}}
