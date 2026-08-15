@@ -1,0 +1,27 @@
+name: Package Forge v4.7
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build complete deployment bundle
+        run: |
+          mkdir -p dist
+          cp -R index.html manifest.webmanifest sw.js package.json vercel.json README.md STEM_ENGINE_SETUP.md STUDIO_REMOTE_SETUP.md dist/
+          cp -R style*.css data*.js app*.js dist/
+          cp -R api lib dist/
+
+      - name: Upload Forge bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: forge-v47-final
+          path: dist
+          if-no-files-found: error
+          retention-days: 1
