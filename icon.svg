@@ -1,15 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-  <title id="title">The Simplest Prompt Builder</title>
-  <defs>
-    <linearGradient id="rootBeerMetallic" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#4f2f22"/>
-      <stop offset="48%" stop-color="#8c6a50"/>
-      <stop offset="100%" stop-color="#6b4633"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="#0d0d10"/>
-  <path d="M92 356 256 70l164 286-164 90L92 356Z" fill="url(#rootBeerMetallic)"/>
-  <path d="m168 334 88-158 88 158-88 48-88-48Z" fill="#0d0d10"/>
-  <path d="m218 318 38-68 38 68-38 21-38-21Z" fill="#b59673"/>
+<title id="title">The Simplist 1950s record player</title>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a2817"/><stop offset="1" stop-color="#24120a"/></linearGradient></defs>
+<rect width="512" height="512" rx="106" fill="url(#bg)"/>
+<rect x="26" y="26" width="460" height="460" rx="84" fill="none" stroke="#b98952" stroke-width="8"/>
+<g fill="none" stroke="#e3c18b" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M142 180h228l28 142H112l30-142Z"/>
+<ellipse cx="243" cy="247" rx="94" ry="53"/>
+<ellipse cx="243" cy="247" rx="64" ry="36"/>
+<circle cx="243" cy="247" r="7" fill="#e3c18b"/>
+<path d="M352 208v35l-74 43m74-78 22-20m-16 111h31M129 320l-14 44m274-44 14 44"/>
+<path d="M141 177l24-74h185l45 74"/>
+<path d="M177 125h159"/>
+</g>
+<g stroke="#b98952" stroke-width="6"><path d="M182 359h130"/><path d="M193 377h108"/></g>
 </svg>
-
