@@ -2,17 +2,17 @@
   "id": "/",
   "name": "The Simplist Prompt Builder",
   "short_name": "Simplist",
-  "description": "Explore 1,962 music tags together on one screen and build a focused Suno style prompt.",
+  "description": "Build simple Suno style prompts with categorized music tags, one-line descriptions, and saved custom tags.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#f3ede4",
-  "theme_color": "#f3ede4",
+  "background_color": "#2b160c",
+  "theme_color": "#3b2012",
   "categories": ["music", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/icon.svg?v=12.0.0",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
