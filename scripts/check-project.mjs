@@ -76,7 +76,9 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v13-20260824")) fail("Service worker cache was not refreshed for the v11 layout.");
+if (!worker.includes("simplist-v14-20260825-descriptions")) fail("Service worker cache was not refreshed for the sound-description release.");
+if (!html.includes('/tag-descriptions.js?v=11.1.0')) fail("The sound-description engine is not loaded.");
+if (!worker.includes('/tag-descriptions.js?v=11.1.0')) fail("The sound-description engine is missing from the offline app shell.");
 if (!html.includes('/v11-layout.css?v=11.0.0')) fail("The v11 layout stylesheet is not loaded last.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");

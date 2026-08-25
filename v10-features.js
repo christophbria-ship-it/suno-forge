@@ -1,3 +1,310 @@
 "use strict";
-(()=>{const KEY="simplist-v10-custom-family-tags";const prompt=()=>document.getElementById("styleOutput");const get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||"{}")}catch{return{}}};const put=v=>{try{localStorage.setItem(KEY,JSON.stringify(v))}catch{}};const category=()=>document.getElementById("activeCategoryTitle")?.textContent?.trim()||"Genre";const clean=s=>String(s||"").replace(/\s+/g," ").trim();const describe=(tag,cat)=>{const t=clean(tag),l=t.toLowerCase();if(cat==="Genre")return`The recognizable sound and feel of ${t}.`;if(cat==="Instruments")return`Adds the tone and playing character of ${t}.`;if(cat==="Mood")return`Makes the music feel ${l}.`;if(cat.includes("Vocal Delivery"))return`Changes how vocal phrases are delivered: ${l}.`;if(cat.includes("Vocal Range"))return`Places the voice mainly in ${l}.`;if(cat==="Vocals")return`Uses ${l} as the main vocal type or tone.`;if(cat==="Production")return`Shapes the recording and finish toward ${l}.`;if(cat.includes("Mix"))return`Changes the final balance and polish toward ${l}.`;if(cat==="Effects")return`Applies ${l} as audible processing.`;if(cat==="Era")return`Uses the musical and recording character of ${t}.`;if(cat.includes("Groove"))return`Changes the pulse and rhythmic feel toward ${l}.`;if(cat==="Arrangement")return`Shapes how the song builds, moves, and ends with ${l}.`;if(cat==="Performance")return`Changes how the music is performed toward ${l}.`;return`Uses ${l} as a clear musical direction.`};function decorateButton(b,cat){if(!b||b.classList.contains("v10-tag"))return;const name=clean(b.dataset.tag||b.textContent);if(!name)return;b.classList.add("v10-tag");b.dataset.name=name;b.textContent="";const n=document.createElement("strong");n.textContent=name;const d=document.createElement("span");d.className="tag-description";d.textContent=describe(name,cat);b.append(n,d)}function addCustomToPrompt(name,b){const p=prompt();if(!p)return;const parts=p.value.split(",").map(clean).filter(Boolean);if(!parts.some(x=>x.toLowerCase()===name.toLowerCase()))parts.push(name);p.value=parts.join(", ").slice(0,1000);p.dispatchEvent(new Event("input",{bubbles:true}));b?.setAttribute("aria-pressed","true")}function customButton(item){const b=document.createElement("button");b.type="button";b.className="expanded-tag-button v10-tag";b.dataset.name=item.name;b.dataset.v10Custom="1";const n=document.createElement("strong");n.textContent=item.name;const d=document.createElement("span");d.className="tag-description";d.textContent=item.description;b.append(n,d);b.addEventListener("click",()=>addCustomToPrompt(item.name,b));return b}function addForm(host,cat,family){host.querySelector(".dialog-family-add")?.remove();const box=document.createElement("details");box.className="dialog-family-add";const sum=document.createElement("summary");sum.textContent=`+ Add to ${family}`;const form=document.createElement("div");form.className="v10-add-form";const name=document.createElement("input");name.type="text";name.placeholder=cat==="Instruments"?"Example: Slap Bass":"Type a missing tag";name.maxLength=60;const desc=document.createElement("input");desc.type="text";desc.placeholder="Description (optional)";desc.maxLength=140;const save=document.createElement("button");save.type="button";save.textContent="Save";save.onclick=()=>{const nm=clean(name.value);if(!nm)return;const ds=clean(desc.value)||describe(nm,cat);const data=get();data[cat]??={};data[cat][family]??=[];if(!data[cat][family].some(x=>x.name.toLowerCase()===nm.toLowerCase()))data[cat][family].push({name:nm,description:ds});put(data);document.getElementById("expandedTagGrid")?.append(customButton({name:nm,description:ds}));name.value="";desc.value="";box.open=false};[name,desc].forEach(i=>i.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();save.click()}}));form.append(name,desc,save);box.append(sum,form);host.append(box)}function enhanceMain(){document.querySelectorAll(".family-card").forEach(card=>{const h=card.querySelector(".family-card-header");if(!h)return;if(!h.dataset.cleanCard){h.dataset.cleanCard="1";const count=h.querySelector("span");if(count)count.textContent=(count.textContent.match(/\d+/)?.[0]||"")+" choices · tap to open";card.addEventListener("click",e=>{if(e.target.closest("button,details,input"))return;h.click()})}});const p=prompt();if(p){p.readOnly=false;p.spellcheck=true;p.maxLength=1000;p.placeholder="Tap tags or type anything you want here."}}function enhanceDialog(){const dialog=document.getElementById("familyDialog");if(!dialog?.open)return;const cat=category(),family=clean(document.getElementById("expandedFamilyTitle")?.textContent||"Other"),grid=document.getElementById("expandedTagGrid");if(!grid)return;grid.querySelectorAll(".expanded-tag-button").forEach(b=>decorateButton(b,cat));const saved=get()?.[cat]?.[family]||[];saved.forEach(item=>{if(![...grid.querySelectorAll("[data-name]")].some(x=>clean(x.dataset.name).toLowerCase()===item.name.toLowerCase()))grid.append(customButton(item))});addForm(dialog.querySelector("form"),cat,family)}function enhance(){enhanceMain();enhanceDialog()}let timer=0;const schedule=()=>{clearTimeout(timer);timer=setTimeout(enhance,35)};new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true,attributes:true,attributeFilter:["open"]});document.addEventListener("DOMContentLoaded",()=>{enhance();document.addEventListener("click",e=>{if(e.target.closest(".family-card-header,.category-tab,.optional-category-button"))setTimeout(enhance,55)})})})();
-(()=>{const clean=s=>String(s||"").replace(/\s+/g," ").trim();let manualText="",manualDirty=false,lastAuto="",suppress=false;const p=()=>document.getElementById("styleOutput");const focused=()=>document.querySelector('input[name="promptSize"][value="focused"]')?.checked;function count(){const el=p(),o=document.getElementById("characterCount");if(el&&o)o.textContent=focused()?`${el.value.length} characters`:`${el.value.length} / 1000`}function extraRail(){const rail=document.querySelector(".category-rail"),main=document.getElementById("mainCategoryTabs"),grid=document.getElementById("optionalCategoryGrid");if(!rail||!main||!grid)return;let block=rail.querySelector(".extra-category-block");if(!block){block=document.createElement("section");block.className="extra-category-block";const label=document.createElement("div");label.className="extra-category-label";label.textContent="EXTRA / OPTIONAL";const list=document.createElement("div");list.className="extra-category-list";block.append(label,list);main.after(block)}const list=block.querySelector(".extra-category-list");[...grid.querySelectorAll(".optional-category-button")].forEach(b=>list.appendChild(b));const opt=document.getElementById("optionsBtn");if(opt)opt.hidden=true}function mergeNewAuto(newAuto){if(!manualDirty){lastAuto=newAuto;return}const before=new Set(lastAuto.split(",").map(clean).filter(Boolean).map(x=>x.toLowerCase()));const added=newAuto.split(",").map(clean).filter(Boolean).filter(x=>!before.has(x.toLowerCase()));let out=manualText;for(const item of added){if(!out.toLowerCase().includes(item.toLowerCase()))out=clean(out?`${out}, ${item}`:item)}manualText=out.slice(0,1000);const el=p();if(el){suppress=true;el.value=manualText;suppress=false;count()}lastAuto=newAuto}function restoreExact(){const el=p();if(!el)return;const auto=el.value;if(!manualDirty){lastAuto=auto;count();return}suppress=true;el.value=manualText.slice(0,1000);suppress=false;lastAuto=auto;count()}function afterClick(target){setTimeout(()=>{extraRail();const el=p();if(!el)return;const isTag=!!target.closest(".wall-tag-button,.expanded-tag-button");if(isTag)mergeNewAuto(el.value);else restoreExact();const title=document.getElementById("activeCategoryTitle")?.textContent?.trim();const status=document.getElementById("categorySelectionStatus")?.textContent||"";if(focused()&&title==="Production"&&/^2\s*\/\s*2/.test(status)){setTimeout(()=>p()?.focus(),680)}},45)}document.addEventListener("DOMContentLoaded",()=>{const el=p();if(el){lastAuto=el.value;el.addEventListener("input",e=>{if(suppress||!e.isTrusted)return;manualText=el.value.slice(0,1000);manualDirty=true;count()})}extraRail();new MutationObserver(()=>extraRail()).observe(document.body,{subtree:true,childList:true});document.addEventListener("click",e=>{if(e.target.closest(".wall-tag-button,.expanded-tag-button,.category-tab,.optional-category-button")||e.target.closest('input[name="promptSize"]'))afterClick(e.target)})})})();
+
+(() => {
+  const KEY = "simplist-v10-custom-family-tags";
+  const prompt = () => document.getElementById("styleOutput");
+  const clean = value => String(value || "").replace(/\s+/g, " ").trim();
+  const describe = (tag, category) => {
+    const description = globalThis.describeSimplistTag?.(clean(tag), clean(category));
+    return clean(description) || "This choice changes a specific audible part of the track.";
+  };
+
+  const get = () => {
+    try {
+      return JSON.parse(localStorage.getItem(KEY) || "{}");
+    } catch {
+      return {};
+    }
+  };
+
+  const put = value => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(value));
+    } catch {
+      // Custom tags remain optional when storage is unavailable.
+    }
+  };
+
+  const category = () => document.getElementById("activeCategoryTitle")?.textContent?.trim() || "Genre";
+
+  function decorateButton(button, activeCategory) {
+    if (!button || button.classList.contains("v10-tag")) return;
+    const name = clean(button.dataset.tag || button.textContent);
+    if (!name) return;
+    button.classList.add("v10-tag");
+    button.dataset.name = name;
+    button.textContent = "";
+    const label = document.createElement("strong");
+    label.textContent = name;
+    const detail = document.createElement("span");
+    detail.className = "tag-description";
+    detail.textContent = describe(name, activeCategory);
+    button.append(label, detail);
+  }
+
+  function addCustomToPrompt(name, button) {
+    const output = prompt();
+    if (!output) return;
+    const parts = output.value.split(",").map(clean).filter(Boolean);
+    if (!parts.some(value => value.toLowerCase() === name.toLowerCase())) parts.push(name);
+    output.value = parts.join(", ").slice(0, 1000);
+    output.dispatchEvent(new Event("input", { bubbles: true }));
+    button?.setAttribute("aria-pressed", "true");
+  }
+
+  function customButton(item) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "expanded-tag-button v10-tag";
+    button.dataset.name = item.name;
+    button.dataset.v10Custom = "1";
+    const label = document.createElement("strong");
+    label.textContent = item.name;
+    const detail = document.createElement("span");
+    detail.className = "tag-description";
+    detail.textContent = item.description;
+    button.append(label, detail);
+    button.addEventListener("click", () => addCustomToPrompt(item.name, button));
+    return button;
+  }
+
+  function addForm(host, activeCategory, family) {
+    host.querySelector(".dialog-family-add")?.remove();
+    const box = document.createElement("details");
+    box.className = "dialog-family-add";
+    const summary = document.createElement("summary");
+    summary.textContent = `+ Add to ${family}`;
+    const form = document.createElement("div");
+    form.className = "v10-add-form";
+    const name = document.createElement("input");
+    name.type = "text";
+    name.placeholder = activeCategory === "Instruments" ? "Example: Slap Bass" : "Type a missing tag";
+    name.maxLength = 60;
+    const detail = document.createElement("input");
+    detail.type = "text";
+    detail.placeholder = "Description (optional)";
+    detail.maxLength = 220;
+    const save = document.createElement("button");
+    save.type = "button";
+    save.textContent = "Save";
+
+    save.addEventListener("click", () => {
+      const tagName = clean(name.value);
+      if (!tagName) return;
+      const tagDescription = clean(detail.value) || describe(tagName, activeCategory);
+      const data = get();
+      data[activeCategory] ??= {};
+      data[activeCategory][family] ??= [];
+      if (!data[activeCategory][family].some(item => item.name.toLowerCase() === tagName.toLowerCase())) {
+        data[activeCategory][family].push({ name: tagName, description: tagDescription });
+      }
+      put(data);
+      document.getElementById("expandedTagGrid")?.append(customButton({ name: tagName, description: tagDescription }));
+      name.value = "";
+      detail.value = "";
+      box.open = false;
+    });
+
+    [name, detail].forEach(input => input.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        save.click();
+      }
+    }));
+
+    form.append(name, detail, save);
+    box.append(summary, form);
+    host.append(box);
+  }
+
+  function enhanceMain() {
+    document.querySelectorAll(".family-card").forEach(card => {
+      const header = card.querySelector(".family-card-header");
+      if (!header || header.dataset.cleanCard) return;
+      header.dataset.cleanCard = "1";
+      const count = header.querySelector("span");
+      if (count) count.textContent = `${count.textContent.match(/\d+/)?.[0] || ""} choices · tap to open`;
+      card.addEventListener("click", event => {
+        if (event.target.closest("button,details,input")) return;
+        header.click();
+      });
+    });
+
+    const output = prompt();
+    if (!output) return;
+    output.readOnly = false;
+    output.spellcheck = true;
+    output.maxLength = 1000;
+    output.placeholder = "Tap tags or type anything you want here.";
+  }
+
+  function enhanceDialog() {
+    const dialog = document.getElementById("familyDialog");
+    if (!dialog?.open) return;
+    const activeCategory = category();
+    const family = clean(document.getElementById("expandedFamilyTitle")?.textContent || "Other");
+    const grid = document.getElementById("expandedTagGrid");
+    if (!grid) return;
+    grid.querySelectorAll(".expanded-tag-button").forEach(button => decorateButton(button, activeCategory));
+    const saved = get()?.[activeCategory]?.[family] || [];
+    saved.forEach(item => {
+      const alreadyPresent = [...grid.querySelectorAll("[data-name]")]
+        .some(node => clean(node.dataset.name).toLowerCase() === item.name.toLowerCase());
+      if (!alreadyPresent) grid.append(customButton(item));
+    });
+    addForm(dialog.querySelector("form"), activeCategory, family);
+  }
+
+  function enhance() {
+    enhanceMain();
+    enhanceDialog();
+  }
+
+  let timer = 0;
+  const schedule = () => {
+    clearTimeout(timer);
+    timer = setTimeout(enhance, 35);
+  };
+
+  new MutationObserver(schedule).observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["open"]
+  });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    enhance();
+    document.addEventListener("click", event => {
+      if (event.target.closest(".family-card-header,.category-tab,.optional-category-button")) {
+        setTimeout(enhance, 55);
+      }
+    });
+  });
+})();
+
+(() => {
+  const clean = value => String(value || "").replace(/\s+/g, " ").trim();
+  let manualText = "";
+  let manualDirty = false;
+  let lastAuto = "";
+  let suppress = false;
+
+  const prompt = () => document.getElementById("styleOutput");
+  const focused = () => document.querySelector('input[name="promptSize"][value="focused"]')?.checked;
+
+  function count() {
+    const output = prompt();
+    const counter = document.getElementById("characterCount");
+    if (output && counter) {
+      counter.textContent = focused() ? `${output.value.length} characters` : `${output.value.length} / 1000`;
+    }
+  }
+
+  function extraRail() {
+    const rail = document.querySelector(".category-rail");
+    const main = document.getElementById("mainCategoryTabs");
+    const grid = document.getElementById("optionalCategoryGrid");
+    if (!rail || !main || !grid) return;
+
+    let block = rail.querySelector(".extra-category-block");
+    if (!block) {
+      block = document.createElement("section");
+      block.className = "extra-category-block";
+      const label = document.createElement("div");
+      label.className = "extra-category-label";
+      label.textContent = "EXTRA / OPTIONAL";
+      const list = document.createElement("div");
+      list.className = "extra-category-list";
+      block.append(label, list);
+      main.after(block);
+    }
+
+    const list = block.querySelector(".extra-category-list");
+    [...grid.querySelectorAll(".optional-category-button")].forEach(button => list.appendChild(button));
+    const options = document.getElementById("optionsBtn");
+    if (options) options.hidden = true;
+  }
+
+  function mergeNewAuto(newAuto) {
+    if (!manualDirty) {
+      lastAuto = newAuto;
+      return;
+    }
+
+    const before = new Set(lastAuto.split(",").map(clean).filter(Boolean).map(value => value.toLowerCase()));
+    const added = newAuto.split(",").map(clean).filter(Boolean)
+      .filter(value => !before.has(value.toLowerCase()));
+    let outputText = manualText;
+    for (const item of added) {
+      if (!outputText.toLowerCase().includes(item.toLowerCase())) {
+        outputText = clean(outputText ? `${outputText}, ${item}` : item);
+      }
+    }
+    manualText = outputText.slice(0, 1000);
+    const output = prompt();
+    if (output) {
+      suppress = true;
+      output.value = manualText;
+      suppress = false;
+      count();
+    }
+    lastAuto = newAuto;
+  }
+
+  function restoreExact() {
+    const output = prompt();
+    if (!output) return;
+    const auto = output.value;
+    if (!manualDirty) {
+      lastAuto = auto;
+      count();
+      return;
+    }
+    suppress = true;
+    output.value = manualText.slice(0, 1000);
+    suppress = false;
+    lastAuto = auto;
+    count();
+  }
+
+  function afterClick(target) {
+    setTimeout(() => {
+      extraRail();
+      const output = prompt();
+      if (!output) return;
+      const isTag = Boolean(target.closest(".wall-tag-button,.expanded-tag-button"));
+      if (isTag) mergeNewAuto(output.value);
+      else restoreExact();
+
+      const title = document.getElementById("activeCategoryTitle")?.textContent?.trim();
+      const status = document.getElementById("categorySelectionStatus")?.textContent || "";
+      if (focused() && title === "Production" && /^2\s*\/\s*2/.test(status)) {
+        setTimeout(() => prompt()?.focus(), 680);
+      }
+    }, 45);
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const output = prompt();
+    if (output) {
+      lastAuto = output.value;
+      output.addEventListener("input", event => {
+        if (suppress || !event.isTrusted) return;
+        manualText = output.value.slice(0, 1000);
+        manualDirty = true;
+        count();
+      });
+    }
+    extraRail();
+    new MutationObserver(extraRail).observe(document.body, { subtree: true, childList: true });
+    document.addEventListener("click", event => {
+      if (
+        event.target.closest(".wall-tag-button,.expanded-tag-button,.category-tab,.optional-category-button")
+        || event.target.closest('input[name="promptSize"]')
+      ) {
+        afterClick(event.target);
+      }
+    });
+  });
+})();
