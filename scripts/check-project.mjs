@@ -11,6 +11,7 @@ const fail = message => {
 const html = read("index.html");
 const app = read("prompt-app.js");
 const css = read("prompt-style.css");
+const latestLayout = read("v11-layout.css");
 const worker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const dataSource = read("data.js");
@@ -59,15 +60,15 @@ for (const asset of localAssets) {
 }
 
 if (manifest.start_url !== "/") fail("Manifest start URL must open the tag studio.");
-if (manifest.theme_color !== "#f3ede4" || manifest.background_color !== "#f3ede4") {
-  fail("Manifest colors do not match the light off-white canvas.");
+if (manifest.theme_color !== "#21130d" || manifest.background_color !== "#21130d") {
+  fail("Manifest colors do not match the dark prompt-box canvas.");
 }
 for (const icon of manifest.icons || []) {
-  const local = String(icon.src || "").replace(/^\//, "");
+  const local = String(icon.src || "").replace(/^\//, "").split("?")[0];
   if (!local || !fs.existsSync(path.join(root, local))) fail(`Manifest icon is missing: ${icon.src}`);
 }
 
-const shellMatch = worker.match(/const APP_SHELL = \[([\s\S]*?)\];/);
+const shellMatch = worker.match(/const APP_SHELL\s*=\s*\[([\s\S]*?)\];/);
 if (!shellMatch) fail("Service worker app shell is missing.");
 const shellAssets = [...shellMatch[1].matchAll(/"([^"]+)"/g)].map(match => match[1]);
 for (const asset of shellAssets) {
@@ -75,7 +76,10 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("tag-wall-v4-1")) fail("Service worker cache was not refreshed for the one-screen tag wall.");
+if (!worker.includes("simplist-v13-20260824")) fail("Service worker cache was not refreshed for the v11 layout.");
+if (!html.includes('/v11-layout.css?v=11.0.0')) fail("The v11 layout stylesheet is not loaded last.");
+if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
+if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");
 
 const context = {};
 vm.createContext(context);
