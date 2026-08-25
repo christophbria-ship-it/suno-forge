@@ -351,3 +351,28 @@ input::placeholder {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
 }
+
+/* Match every interface label to the typography and cream ink in the logo. */
+:root {
+  --logo-text: #f1dfbd;
+  --ink: var(--logo-text);
+  --muted: var(--logo-text);
+}
+
+body,
+body * {
+  color: var(--logo-text) !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+}
+
+body *::before,
+body *::after {
+  color: var(--logo-text) !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+}
+
+body input::placeholder,
+body textarea::placeholder {
+  color: var(--logo-text) !important;
+  opacity: .72;
+}
