@@ -106,6 +106,45 @@ for (const category of Object.keys(window.DATA.categories)) {
   renderedTagCount += categoryTagCount;
 }
 
+const instrumentsButton = [...document.querySelectorAll(".category-tab")]
+  .find(button => button.querySelector("span")?.textContent.trim() === "Instruments");
+assert.ok(instrumentsButton, "Instruments must remain available for the custom-tag test.");
+instrumentsButton.click();
+await wait(80);
+document.querySelector(".family-card-header").click();
+await wait(80);
+
+const addDetails = document.querySelector(".dialog-family-add");
+assert.ok(addDetails, "Every enlarged family must include an Add control.");
+addDetails.open = true;
+await wait(100);
+assert.equal(document.querySelector(".dialog-family-add"), addDetails, "Opening Add must not rebuild the custom-tag form.");
+assert.equal(addDetails.open, true, "The custom-tag form must stay open while the user types.");
+
+const customName = "Glass Harmonica Swell";
+const customDescription = "A rubbed glass tone blooms with a pure singing sustain, watery shimmer, and an eerie floating attack.";
+const customInputs = addDetails.querySelectorAll("input");
+customInputs[0].value = customName;
+customInputs[1].value = customDescription;
+[...addDetails.querySelectorAll("button")].find(button => button.textContent.trim() === "Save").click();
+await wait(80);
+
+const customCard = document.querySelector(`#expandedTagGrid [data-name="${customName}"]`);
+assert.ok(customCard, "Saving must add the custom tag to the open family.");
+assert.equal(customCard.querySelector(".tag-description")?.textContent.trim(), customDescription);
+assert.equal(addDetails.open, false, "The form should close only after a successful save.");
+assert.match(window.localStorage.getItem("simplist-v10-custom-family-tags") || "", /Glass Harmonica Swell/);
+customCard.click();
+assert.match(document.getElementById("styleOutput").value, /Glass Harmonica Swell/);
+assert.match(window.localStorage.getItem("sunoForgeTagStudioV4") || "", /Glass Harmonica Swell/, "The active custom tag must survive reopening the app.");
+await wait(80);
+const builtInInstrument = [...document.querySelectorAll("#expandedTagGrid .expanded-tag-button")]
+  .find(card => card.dataset.v10Custom !== "1");
+builtInInstrument.click();
+await wait(120);
+assert.match(document.getElementById("styleOutput").value, /Glass Harmonica Swell/, "Later built-in choices must not erase the custom tag.");
+document.getElementById("familyDialog").close();
+
 assert.equal(renderedTagCount, 1962, "The interface must render descriptions for all 1,962 tags.");
 assert.equal(document.querySelectorAll(".extra-category-list .optional-category-button").length, 13, "The existing optional-category rail behavior must remain intact.");
 assert.equal(reportedErrors.length, 0, `Runtime errors: ${reportedErrors.map(error => error.message).join(" | ")}`);

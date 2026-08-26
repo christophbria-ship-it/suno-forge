@@ -50,10 +50,17 @@
   function addCustomToPrompt(name, button) {
     const output = prompt();
     if (!output) return;
-    const parts = output.value.split(",").map(clean).filter(Boolean);
-    if (!parts.some(value => value.toLowerCase() === name.toLowerCase())) parts.push(name);
-    output.value = parts.join(", ").slice(0, 1000);
-    output.dispatchEvent(new Event("input", { bubbles: true }));
+    const handled = !output.dispatchEvent(new CustomEvent("simplist:add-custom-tag", {
+      bubbles: true,
+      cancelable: true,
+      detail: { name }
+    }));
+    if (!handled) {
+      const parts = output.value.split(",").map(clean).filter(Boolean);
+      if (!parts.some(value => value.toLowerCase() === name.toLowerCase())) parts.push(name);
+      output.value = parts.join(", ").slice(0, 1000);
+      output.dispatchEvent(new Event("input", { bubbles: true }));
+    }
     button?.setAttribute("aria-pressed", "true");
   }
 
@@ -74,9 +81,13 @@
   }
 
   function addForm(host, activeCategory, family) {
-    host.querySelector(".dialog-family-add")?.remove();
+    const existing = host.querySelector(".dialog-family-add");
+    if (existing?.dataset.category === activeCategory && existing.dataset.family === family) return;
+    existing?.remove();
     const box = document.createElement("details");
     box.className = "dialog-family-add";
+    box.dataset.category = activeCategory;
+    box.dataset.family = family;
     const summary = document.createElement("summary");
     summary.textContent = `+ Add to ${family}`;
     const form = document.createElement("div");
@@ -279,6 +290,10 @@
       extraRail();
       const output = prompt();
       if (!output) return;
+      if (target.closest('[data-v10-custom="1"]')) {
+        count();
+        return;
+      }
       const isTag = Boolean(target.closest(".wall-tag-button,.expanded-tag-button"));
       if (isTag) mergeNewAuto(output.value);
       else restoreExact();

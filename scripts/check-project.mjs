@@ -76,11 +76,11 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v17-20260826-all-descriptions")) fail("Service worker cache was not refreshed for the complete-description release.");
+if (!worker.includes("simplist-v18-20260826-custom-tags")) fail("Service worker cache was not refreshed for the custom-tag release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
-if (!html.includes('/prompt-app.js?v=11.2.0')) fail("The description-aware prompt interface is not loaded.");
-if (!html.includes('/v10-features.js?v=11.2.0')) fail("The description interface helpers are not loaded.");
+if (!html.includes('/prompt-app.js?v=11.3.0')) fail("The custom-tag-aware prompt interface is not loaded.");
+if (!html.includes('/v10-features.js?v=11.3.0')) fail("The custom-tag interface helpers are not loaded.");
 if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout stylesheet is not loaded last.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");

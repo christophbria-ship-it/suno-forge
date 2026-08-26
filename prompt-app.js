@@ -229,7 +229,8 @@
   const state = {
     activeCategory: "Genre",
     mode: "focused",
-    selected: Object.create(null)
+    selected: Object.create(null),
+    custom: []
   };
 
   function categories() {
@@ -293,6 +294,9 @@
     state.mode = saved?.mode === "extended" ? "extended" : "focused";
     state.activeCategory = OUTPUT_ORDER.includes(saved?.activeCategory) ? saved.activeCategory : "Genre";
     state.selected = emptySelections();
+    state.custom = unique((Array.isArray(saved?.custom) ? saved.custom : [])
+      .map(value => String(value || "").replace(/\s+/g, " ").trim())
+      .filter(Boolean));
 
     OUTPUT_ORDER.forEach(category => {
       const allowed = categorySets.get(category) || new Set();
@@ -309,7 +313,8 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         activeCategory: state.activeCategory,
         mode: state.mode,
-        selected: state.selected
+        selected: state.selected,
+        custom: state.custom
       }));
     } catch {
       // The tag studio still works if browser storage is unavailable.
@@ -411,23 +416,30 @@
   }
 
   function allSelectedTags(selected = state.selected) {
-    return OUTPUT_ORDER.flatMap(category => selected[category] || []);
+    return [...OUTPUT_ORDER.flatMap(category => selected[category] || []), ...state.custom];
   }
 
-  function styleText(selected = state.selected) {
-    return allSelectedTags(selected).join(", ");
+  function styleText(selected = state.selected, custom = state.custom) {
+    return [...OUTPUT_ORDER.flatMap(category => selected[category] || []), ...custom].join(", ");
   }
 
   function trimExtendedToLimit() {
     const next = emptySelections();
+    const originalCustom = [...state.custom];
+    state.custom = [];
     OUTPUT_ORDER.forEach(category => {
       for (const tag of state.selected[category] || []) {
         const candidate = { ...next, [category]: [...next[category], tag] };
-        if (styleText(candidate).length > EXTENDED_CHARACTER_LIMIT) return;
+        if (styleText(candidate, []).length > EXTENDED_CHARACTER_LIMIT) return;
         next[category].push(tag);
       }
     });
     state.selected = next;
+    const nextCustom = [];
+    originalCustom.forEach(tag => {
+      if (styleText(next, [...nextCustom, tag]).length <= EXTENDED_CHARACTER_LIMIT) nextCustom.push(tag);
+    });
+    state.custom = nextCustom;
   }
 
   function toast(message) {
@@ -566,8 +578,7 @@
     detail.className = "tag-description";
     detail.textContent = description;
     button.append(label, detail);
-    button.addEventListener("click", event => {
-      event.stopPropagation();
+    button.addEventListener("click", () => {
       toggleTag(tag);
     });
     return button;
@@ -700,6 +711,24 @@
     }
   }
 
+  function addCustomTag(value) {
+    const name = String(value || "").replace(/\s+/g, " ").trim();
+    if (!name) return;
+    if (allSelectedTags().some(tag => tag.toLowerCase() === name.toLowerCase())) {
+      toast(`${name} is already in your prompt.`);
+      return;
+    }
+    const candidate = [...state.custom, name];
+    if (styleText(state.selected, candidate).length > EXTENDED_CHARACTER_LIMIT) {
+      toast("That custom tag would exceed the 1,000-character limit.");
+      return;
+    }
+    state.custom = candidate;
+    renderStyle();
+    saveState();
+    toast(`${name} added to your prompt.`);
+  }
+
   function setMode(mode, changedInput) {
     if (!['focused', 'extended'].includes(mode) || mode === state.mode) return;
 
@@ -746,6 +775,7 @@
     if (!allSelectedTags().length) return;
     if (!window.confirm("Clear every selected tag?")) return;
     state.selected = emptySelections();
+    state.custom = [];
     chooseCategory("Genre");
     toast("All selections cleared.");
   }
@@ -773,6 +803,10 @@
 
   function bindEvents() {
     nodes.optionsBtn.addEventListener("click", openOptions);
+    nodes.styleOutput.addEventListener("simplist:add-custom-tag", event => {
+      event.preventDefault();
+      addCustomTag(event.detail?.name);
+    });
     document.querySelectorAll('input[name="promptSize"]').forEach(input => {
       input.addEventListener("change", () => setMode(input.value, input));
     });
