@@ -352,27 +352,27 @@ input::placeholder {
   }
 }
 
-/* Match every interface label to the typography and cream ink in the logo. */
+/* Keep the logo typography while testing plain white interface text. */
 :root {
-  --logo-text: #f1dfbd;
-  --ink: var(--logo-text);
-  --muted: var(--logo-text);
+  --interface-text: #ffffff;
+  --ink: var(--interface-text);
+  --muted: var(--interface-text);
 }
 
 body,
 body * {
-  color: var(--logo-text) !important;
+  color: var(--interface-text) !important;
   font-family: Georgia, "Times New Roman", serif !important;
 }
 
 body *::before,
 body *::after {
-  color: var(--logo-text) !important;
+  color: var(--interface-text) !important;
   font-family: Georgia, "Times New Roman", serif !important;
 }
 
 body input::placeholder,
 body textarea::placeholder {
-  color: var(--logo-text) !important;
+  color: var(--interface-text) !important;
   opacity: .72;
 }
