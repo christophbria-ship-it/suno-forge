@@ -376,3 +376,28 @@ body textarea::placeholder {
   color: var(--interface-text) !important;
   opacity: .72;
 }
+
+/* Keep every audible explanation visible instead of clipping it to one line. */
+.expanded-tag-button.v10-tag {
+  min-height: 78px !important;
+  align-content: start !important;
+}
+
+.expanded-tag-button .tag-description {
+  display: block !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  font-size: .56rem !important;
+  line-height: 1.24 !important;
+}
+
+@media (max-width: 760px) {
+  .expanded-tag-button.v10-tag {
+    min-height: 88px !important;
+  }
+
+  .expanded-tag-button .tag-description {
+    font-size: .54rem !important;
+  }
+}

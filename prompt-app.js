@@ -240,6 +240,13 @@
     return SHORT_LABELS[category] || category;
   }
 
+  function tagDescription(tag, category) {
+    const description = globalThis.describeSimplistTag?.(tag, category);
+    return typeof description === "string" && description.trim()
+      ? description.trim()
+      : "This choice changes a specific audible part of the track's tone, movement, structure, or performance.";
+  }
+
   function unique(values) {
     return [...new Set(values)];
   }
@@ -538,16 +545,27 @@
   }
 
   function createTagButton(tag, className) {
+    const activeCategory = state.activeCategory;
     const selected = state.selected[state.activeCategory] || [];
     const focusedFull = state.mode === "focused" && selected.length >= FOCUSED_LIMIT;
     const isSelected = selected.includes(tag);
+    const description = tagDescription(tag, activeCategory);
     const button = document.createElement("button");
+    const label = document.createElement("strong");
+    const detail = document.createElement("span");
     button.type = "button";
-    button.className = className;
-    button.textContent = tag;
+    button.className = `${className} v10-tag`;
     button.dataset.tag = tag;
+    button.dataset.name = tag;
+    button.dataset.category = activeCategory;
     button.setAttribute("aria-pressed", String(isSelected));
+    button.setAttribute("aria-label", `${tag}. ${description}`);
+    button.title = `${tag}: ${description}`;
     button.disabled = focusedFull && !isSelected;
+    label.textContent = tag;
+    detail.className = "tag-description";
+    detail.textContent = description;
+    button.append(label, detail);
     button.addEventListener("click", event => {
       event.stopPropagation();
       toggleTag(tag);

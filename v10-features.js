@@ -28,18 +28,23 @@
   const category = () => document.getElementById("activeCategoryTitle")?.textContent?.trim() || "Genre";
 
   function decorateButton(button, activeCategory) {
-    if (!button || button.classList.contains("v10-tag")) return;
-    const name = clean(button.dataset.tag || button.textContent);
+    if (!button || button.dataset.v10Custom === "1") return;
+    const name = clean(button.dataset.tag || button.dataset.name || button.querySelector("strong")?.textContent || button.textContent);
     if (!name) return;
+    const buttonCategory = clean(button.dataset.category || activeCategory);
+    const description = describe(name, buttonCategory);
     button.classList.add("v10-tag");
     button.dataset.name = name;
+    button.dataset.category = buttonCategory;
     button.textContent = "";
     const label = document.createElement("strong");
     label.textContent = name;
     const detail = document.createElement("span");
     detail.className = "tag-description";
-    detail.textContent = describe(name, activeCategory);
+    detail.textContent = description;
     button.append(label, detail);
+    button.title = `${name}: ${description}`;
+    button.setAttribute("aria-label", `${name}. ${description}`);
   }
 
   function addCustomToPrompt(name, button) {
@@ -221,7 +226,8 @@
     }
 
     const list = block.querySelector(".extra-category-list");
-    [...grid.querySelectorAll(".optional-category-button")].forEach(button => list.appendChild(button));
+    const incoming = [...grid.querySelectorAll(".optional-category-button")];
+    if (incoming.length) list.replaceChildren(...incoming);
     const options = document.getElementById("optionsBtn");
     if (options) options.hidden = true;
   }

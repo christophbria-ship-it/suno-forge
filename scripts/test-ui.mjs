@@ -4,6 +4,7 @@ import { JSDOM, VirtualConsole } from "jsdom";
 
 const html = fs.readFileSync("index.html", "utf8");
 const dataSource = fs.readFileSync("data.js", "utf8");
+const descriptionSource = fs.readFileSync("tag-descriptions.js", "utf8");
 const appSource = fs.readFileSync("prompt-app.js", "utf8");
 const reportedErrors = [];
 const copied = [];
@@ -51,9 +52,13 @@ const click = node => {
   node.click();
 };
 const byText = (selector, text, exact = false) => [...document.querySelectorAll(selector)]
-  .find(node => exact ? node.textContent.trim() === text : node.textContent.includes(text));
+  .find(node => {
+    const value = node.dataset?.tag || node.querySelector("strong")?.textContent.trim() || node.textContent.trim();
+    return exact ? value === text : value.includes(text);
+  });
 
 window.eval(dataSource + "\nwindow.DATA = DATA;");
+window.eval(descriptionSource);
 window.eval(appSource);
 document.dispatchEvent(new window.Event("DOMContentLoaded", { bubbles: true }));
 await wait(30);
@@ -98,9 +103,9 @@ assert.equal(document.querySelectorAll("#familyBoard .family-card").length, 5, "
 assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 70, "Every Mood choice should be rendered at once.");
 assert.match(document.querySelector("#familyBoard .family-card").textContent, /Mellow & Gentle/);
 
-const firstMoodName = document.querySelector("#familyBoard .wall-tag-button").textContent;
+const firstMoodName = document.querySelector("#familyBoard .wall-tag-button").dataset.tag;
 click(byText("#familyBoard .wall-tag-button", firstMoodName, true));
-click([...document.querySelectorAll("#familyBoard .wall-tag-button")].find(button => button.textContent !== firstMoodName));
+click([...document.querySelectorAll("#familyBoard .wall-tag-button")].find(button => button.dataset.tag !== firstMoodName));
 await wait(720);
 assert.equal(document.getElementById("activeCategoryTitle").textContent, "Vocals");
 
@@ -119,7 +124,7 @@ extended.dispatchEvent(new window.Event("change", { bubbles: true }));
 assert.match(document.getElementById("characterCount").textContent, /\/ 1000/);
 
 const activeBeforeExtendedChoices = document.getElementById("activeCategoryTitle").textContent;
-const effectNames = [...document.querySelectorAll("#familyBoard .wall-tag-button")].slice(0, 3).map(button => button.textContent);
+const effectNames = [...document.querySelectorAll("#familyBoard .wall-tag-button")].slice(0, 3).map(button => button.dataset.tag);
 effectNames.forEach(name => click(byText("#familyBoard .wall-tag-button", name, true)));
 await wait(720);
 assert.equal(document.getElementById("activeCategoryTitle").textContent, activeBeforeExtendedChoices, "1,000-character mode must stay on the active category.");

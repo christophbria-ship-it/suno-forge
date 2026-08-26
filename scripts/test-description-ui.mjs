@@ -57,8 +57,58 @@ const aCappella = document.querySelector('#expandedTagGrid [data-name="A Cappell
 const barbershop = document.querySelector('#expandedTagGrid [data-name="Barbershop"] .tag-description');
 assert.match(aCappella?.textContent || "", /voices.+no instruments/i);
 assert.match(barbershop?.textContent || "", /four close vocal parts.+ringing chords/i);
+
+document.getElementById("familyDialog").close();
+const categoryLabels = {
+  "Vocal Delivery": "Delivery",
+  "Vocal Range & Register": "Vocal Range",
+  "Vocal Arrangement": "Vocal Arrange",
+  "Harmony & Choir": "Harmony",
+  "Rhythm & Groove": "Groove",
+  "Mix & Master": "Mix",
+  "Recording Space": "Space",
+  "Texture & Atmosphere": "Texture"
+};
+
+let renderedTagCount = 0;
+for (const category of Object.keys(window.DATA.categories)) {
+  const label = categoryLabels[category] || category;
+  const categoryButton = [...document.querySelectorAll(".category-tab,.optional-category-button")]
+    .find(button => button.querySelector("span,strong")?.textContent.trim() === label);
+  assert.ok(categoryButton, `${category} must have a category control.`);
+  categoryButton.click();
+  await wait(80);
+  assert.equal(document.getElementById("activeCategoryTitle").textContent.trim(), category);
+
+  const familyHeaders = [...document.querySelectorAll(".family-card-header")];
+  assert.ok(familyHeaders.length > 0, `${category} must render at least one family.`);
+  let categoryTagCount = 0;
+  for (const familyHeader of familyHeaders) {
+    familyHeader.click();
+    await wait(55);
+
+    const categoryCards = [...document.querySelectorAll("#expandedTagGrid .expanded-tag-button")];
+    assert.ok(categoryCards.length > 0, `${category} must render enlarged tag cards.`);
+    categoryTagCount += categoryCards.length;
+    for (const card of categoryCards) {
+      const name = card.querySelector("strong")?.textContent.trim() || card.dataset.name || "unknown tag";
+      const description = card.querySelector(".tag-description")?.textContent.trim() || "";
+      const expected = window.describeSimplistTag(name, category);
+      assert.ok(description, `${category} / ${name} must show its description in the interface.`);
+      assert.ok(description.length >= 45, `${category} / ${name} must show a meaningful audible description.`);
+      assert.notEqual(description.toLowerCase(), name.toLowerCase(), `${category} / ${name} must not repeat its tag name as the description.`);
+      assert.equal(description, expected, `${category} / ${name} must receive the description for its actual category.`);
+    }
+    document.getElementById("familyDialog").close();
+    await wait(20);
+  }
+  assert.equal(categoryTagCount, window.DATA.categories[category].length, `${category} must show every tag with a description.`);
+  renderedTagCount += categoryTagCount;
+}
+
+assert.equal(renderedTagCount, 1962, "The interface must render descriptions for all 1,962 tags.");
 assert.equal(document.querySelectorAll(".extra-category-list .optional-category-button").length, 13, "The existing optional-category rail behavior must remain intact.");
 assert.equal(reportedErrors.length, 0, `Runtime errors: ${reportedErrors.map(error => error.message).join(" | ")}`);
 
-console.log("Description UI check passed: the live card layer shows 26 distinct Vocalized & Harmony explanations and preserves existing controls.");
+console.log("Description UI check passed: every category shows audible tag explanations and preserves existing controls.");
 window.close();
