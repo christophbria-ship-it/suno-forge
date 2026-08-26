@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import crypto from "node:crypto";
 
 const root = process.cwd();
 const read = file => fs.readFileSync(path.join(root, file), "utf8");
@@ -12,6 +13,7 @@ const html = read("index.html");
 const app = read("prompt-app.js");
 const css = read("prompt-style.css");
 const latestLayout = read("v11-layout.css");
+const mobileLayout = read("mobile-v12.css");
 const worker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const dataSource = read("data.js");
@@ -42,10 +44,9 @@ if (/\son(?:click|change|input)=/i.test(html)) fail("Inline event handlers are n
 if (!html.includes('name="promptSize" value="focused"')) fail("Focused mode is missing.");
 if (!html.includes('name="promptSize" value="extended"')) fail("1,000-character mode is missing.");
 
-if (!css.includes("overflow: hidden")) fail("No-scroll layout guard is missing.");
-if (/overflow-(?:x|y):\s*(?:auto|scroll)|overflow:\s*(?:auto|scroll)/.test(css)) {
-  fail("The interface reintroduced a scrolling region.");
-}
+if (!css.includes("overflow: hidden")) fail("Desktop no-scroll layout guard is missing.");
+if (!mobileLayout.includes("overflow-y: auto !important")) fail("The true mobile page does not restore vertical scrolling.");
+if (!mobileLayout.includes("overflow-x: hidden !important")) fail("The true mobile page does not prevent horizontal overflow.");
 if (!css.includes("@media (prefers-reduced-motion: reduce)")) fail("Reduced-motion support is missing.");
 if (!css.includes(":focus-visible")) fail("Visible keyboard focus styles are missing.");
 if (!css.includes("-webkit-text-size-adjust: 100%")) fail("Mobile text sizing guard is missing.");
@@ -76,16 +77,33 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v18-20260826-custom-tags")) fail("Service worker cache was not refreshed for the custom-tag release.");
+if (!worker.includes("simplist-v19-20260826-mobile-brand")) fail("Service worker cache was not refreshed for the mobile-brand release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
-if (!html.includes('/prompt-app.js?v=11.3.0')) fail("The custom-tag-aware prompt interface is not loaded.");
-if (!html.includes('/v10-features.js?v=11.3.0')) fail("The custom-tag interface helpers are not loaded.");
-if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout stylesheet is not loaded last.");
+if (!html.includes('/prompt-app.js?v=11.4.0')) fail("The mobile-ready prompt interface is not loaded.");
+if (!html.includes('/v10-features.js?v=11.4.0')) fail("The mobile-ready custom-tag helpers are not loaded.");
+if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout stylesheet is missing.");
+if (!html.includes('/mobile-v12.css?v=12.0.0')) fail("The true mobile layout stylesheet is not loaded last.");
+if (!worker.includes('/mobile-v12.css?v=12.0.0')) fail("The true mobile layout is missing from the offline app shell.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");
 if (!latestLayout.includes("--interface-text: #ffffff")) fail("The interface text is not plain white.");
 if (!latestLayout.includes('font-family: Georgia, "Times New Roman", serif !important')) fail("The interface typography does not match the logo serif.");
+if (!mobileLayout.includes("#nl-badge-frame")) fail("The production badge can still cover app controls.");
+if (!mobileLayout.includes("grid-template-columns: repeat(2, minmax(0, 1fr))")) fail("Mobile controls do not have a readable two-column layout.");
+if (!mobileLayout.includes("@media (max-width: 350px)")) fail("The narrowest supported phone layout is missing.");
+if (!mobileLayout.includes("grid-template-columns: minmax(0, 1fr) !important")) fail("The 320px single-column fallback is missing.");
+if (!mobileLayout.includes(".options-button") || !mobileLayout.includes("display: grid !important")) fail("Extra / Optional is not restored as one control.");
+if (!mobileLayout.includes("#optionsDialog[open]")) fail("The Extra / Optional dialog cannot become visible.");
+if (!html.includes("simplist-logo-approved-reference.jpg?v=12.0.0")) fail("The approved logo reference is not displayed.");
+if (html.includes("simplist-logo-small.svg")) fail("The substitute logo is still referenced by the interface.");
+if (worker.includes("simplist-logo-small.svg")) fail("The substitute logo is still cached for the interface.");
+const logoHash = crypto.createHash("sha256")
+  .update(fs.readFileSync(path.join(root, "simplist-logo-approved-reference.jpg")))
+  .digest("hex");
+if (logoHash !== "8d0efc881013c22f714e0fda823027a1ba8ce0df36d784da2f286d94f864b3fa") {
+  fail("The approved logo reference pixels changed.");
+}
 
 const context = {};
 vm.createContext(context);

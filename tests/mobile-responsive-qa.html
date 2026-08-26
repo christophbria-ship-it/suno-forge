@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>The Simplist mobile QA</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: #120a06; color: white; font-family: system-ui, sans-serif; }
+    body { padding: 12px; }
+    h1 { margin: 0 0 12px; font-size: 18px; }
+    main { display: flex; align-items: flex-start; gap: 14px; }
+    section { display: grid; gap: 6px; }
+    strong { font-size: 13px; }
+    iframe { display: block; height: 900px; border: 2px solid #c47d43; background: #21130d; }
+    #phone320 { width: 320px; }
+    #phone360 { width: 360px; }
+    #phone430 { width: 430px; }
+    #nl-badge-frame { display: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Production-width regression frames</h1>
+  <main>
+    <section><strong>320 px</strong><iframe id="phone320" src="/?qa=320" title="320 pixel app"></iframe></section>
+    <section><strong>360 px</strong><iframe id="phone360" src="/?qa=360" title="360 pixel app"></iframe></section>
+    <section><strong>430 px</strong><iframe id="phone430" src="/?qa=430" title="430 pixel app"></iframe></section>
+  </main>
+</body>
+</html>

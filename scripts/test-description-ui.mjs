@@ -146,7 +146,9 @@ assert.match(document.getElementById("styleOutput").value, /Glass Harmonica Swel
 document.getElementById("familyDialog").close();
 
 assert.equal(renderedTagCount, 1962, "The interface must render descriptions for all 1,962 tags.");
-assert.equal(document.querySelectorAll(".extra-category-list .optional-category-button").length, 13, "The existing optional-category rail behavior must remain intact.");
+assert.equal(document.querySelectorAll(".extra-category-block").length, 0, "Optional categories must not be duplicated in the main rail.");
+assert.equal(document.querySelectorAll("#optionalCategoryGrid .optional-category-button").length, 13, "All optional categories must remain inside the single Extra / Optional dialog.");
+assert.equal(document.getElementById("optionsBtn").hidden, false, "The single Extra / Optional control must stay available.");
 assert.equal(reportedErrors.length, 0, `Runtime errors: ${reportedErrors.map(error => error.message).join(" | ")}`);
 
 console.log("Description UI check passed: every category shows audible tag explanations and preserves existing controls.");

@@ -219,28 +219,13 @@
 
   function extraRail() {
     const rail = document.querySelector(".category-rail");
-    const main = document.getElementById("mainCategoryTabs");
-    const grid = document.getElementById("optionalCategoryGrid");
-    if (!rail || !main || !grid) return;
-
-    let block = rail.querySelector(".extra-category-block");
-    if (!block) {
-      block = document.createElement("section");
-      block.className = "extra-category-block";
-      const label = document.createElement("div");
-      label.className = "extra-category-label";
-      label.textContent = "EXTRA / OPTIONAL";
-      const list = document.createElement("div");
-      list.className = "extra-category-list";
-      block.append(label, list);
-      main.after(block);
-    }
-
-    const list = block.querySelector(".extra-category-list");
-    const incoming = [...grid.querySelectorAll(".optional-category-button")];
-    if (incoming.length) list.replaceChildren(...incoming);
+    if (!rail) return;
+    rail.querySelector(".extra-category-block")?.remove();
     const options = document.getElementById("optionsBtn");
-    if (options) options.hidden = true;
+    if (options) {
+      options.hidden = false;
+      options.removeAttribute("hidden");
+    }
   }
 
   function mergeNewAuto(newAuto) {
