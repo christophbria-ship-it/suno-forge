@@ -68,7 +68,20 @@ assert.match(document.getElementById("libraryStats").textContent, /1,941 tags/);
 assert.match(document.getElementById("libraryStats").textContent, /20 categories/);
 assert.match(document.getElementById("libraryStats").textContent, /nothing removed/);
 assert.equal(document.querySelectorAll("#mainCategoryTabs .category-tab").length, 7, "Seven Suno-focused categories should stay on the main rail.");
-assert.equal(document.querySelectorAll("#optionalCategoryGrid .optional-category-button").length, 13, "All remaining categories should stay in Options.");
+assert.deepEqual(
+  [...document.querySelectorAll("#mainCategoryTabs .category-tab span")].map(node => node.textContent.trim()),
+  [
+    "Genre",
+    "Era",
+    "Mood/Emotion",
+    "Tempo/Groove",
+    "Instruments",
+    "Vocal Style/Delivery",
+    "Production/Sound Quality"
+  ],
+  "The main rail must use the agreed seven tags in the agreed order."
+);
+assert.equal(document.querySelectorAll("#optionalCategoryGrid .optional-category-button").length, 11, "Only the eleven remaining categories should stay in Options.");
 assert.equal(document.getElementById("activeCategoryTitle").textContent, "Genre");
 assert.equal(document.getElementById("previousPageBtn"), null, "Page-turning controls must be gone.");
 assert.equal(document.getElementById("nextPageBtn"), null, "Page-turning controls must be gone.");
@@ -97,8 +110,15 @@ assert.ok([...document.querySelectorAll("#familyBoard .wall-tag-button")]
   .every(button => button.disabled));
 
 await wait(720);
-assert.equal(document.getElementById("activeCategoryTitle").textContent, "Mood", "Focused mode should advance after two choices.");
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Era", "Focused mode should advance to Era after Genre.");
 assert.equal(document.getElementById("familyDialog").open, false, "The enlarged family should close when the next main category opens.");
+assert.equal(document.querySelectorAll("#familyBoard .family-card").length, 5, "Era should show all five chronological family boxes.");
+assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 30, "Every Era choice should be rendered at once.");
+
+const eraNames = [...document.querySelectorAll("#familyBoard .wall-tag-button")].slice(0, 2).map(button => button.dataset.tag);
+eraNames.forEach(name => click(byText("#familyBoard .wall-tag-button", name, true)));
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Mood/Emotion");
 assert.equal(document.querySelectorAll("#familyBoard .family-card").length, 5, "Mood should show all five mellow-to-extreme boxes.");
 assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 70, "Every Mood choice should be rendered at once.");
 assert.match(document.querySelector("#familyBoard .family-card").textContent, /Mellow & Gentle/);
@@ -107,7 +127,34 @@ const firstMoodName = document.querySelector("#familyBoard .wall-tag-button").da
 click(byText("#familyBoard .wall-tag-button", firstMoodName, true));
 click([...document.querySelectorAll("#familyBoard .wall-tag-button")].find(button => button.dataset.tag !== firstMoodName));
 await wait(720);
-assert.equal(document.getElementById("activeCategoryTitle").textContent, "Vocals");
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Tempo/Groove");
+assert.equal(document.querySelectorAll("#familyBoard .family-card").length, 5);
+assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 50);
+
+const grooveNames = [...document.querySelectorAll("#familyBoard .wall-tag-button")].slice(0, 2).map(button => button.dataset.tag);
+grooveNames.forEach(name => click(byText("#familyBoard .wall-tag-button", name, true)));
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Instruments");
+assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 523);
+
+click(byText("#familyBoard .wall-tag-button", "Acoustic Guitar", true));
+click(byText("#familyBoard .wall-tag-button", "Electric Guitar", true));
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Vocal Style/Delivery");
+assert.equal(document.querySelectorAll("#familyBoard .family-card").length, 13, "All vocal style, delivery, and range families should share one main section.");
+assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 132, "No vocal choices should be lost when the three old steps are combined.");
+assert.match(document.getElementById("familySummary").textContent, /all 132 choices/);
+
+click(byText("#familyBoard .wall-tag-button", "Male Vocal", true));
+click(byText("#familyBoard .wall-tag-button", "Close-Mic Vocal", true));
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Production/Sound Quality");
+assert.equal(document.querySelectorAll("#familyBoard .wall-tag-button").length, 62);
+
+const productionNames = [...document.querySelectorAll("#familyBoard .wall-tag-button")].slice(0, 2).map(button => button.dataset.tag);
+productionNames.forEach(name => click(byText("#familyBoard .wall-tag-button", name, true)));
+await wait(720);
+assert.equal(document.getElementById("activeCategoryTitle").textContent, "Production/Sound Quality", "The final main step should stay open after two choices.");
 
 click(document.getElementById("optionsBtn"));
 assert.equal(document.getElementById("optionsDialog").open, true, "Options should open as a compact dialog.");

@@ -285,7 +285,7 @@
 
       const title = document.getElementById("activeCategoryTitle")?.textContent?.trim();
       const status = document.getElementById("categorySelectionStatus")?.textContent || "";
-      if (focused() && title === "Production" && /^2\s*\/\s*2/.test(status)) {
+      if (focused() && title === "Production/Sound Quality" && /^2\s*\/\s*2/.test(status)) {
         setTimeout(() => prompt()?.focus(), 680);
       }
     }, 45);

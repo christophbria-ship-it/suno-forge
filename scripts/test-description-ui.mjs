@@ -59,51 +59,76 @@ assert.match(aCappella?.textContent || "", /voices.+no instruments/i);
 assert.match(barbershop?.textContent || "", /four close vocal parts.+ringing chords/i);
 
 document.getElementById("familyDialog").close();
-const categoryLabels = {
-  "Vocal Delivery": "Delivery",
-  "Vocal Range & Register": "Vocal Range",
+const controlLabels = {
   "Vocal Arrangement": "Vocal Arrange",
   "Harmony & Choir": "Harmony",
-  "Rhythm & Groove": "Groove",
   "Mix & Master": "Mix",
   "Recording Space": "Space",
   "Texture & Atmosphere": "Texture"
 };
 
+const displayCategories = [
+  "Genre",
+  "Era",
+  "Mood/Emotion",
+  "Tempo/Groove",
+  "Instruments",
+  "Vocal Style/Delivery",
+  "Production/Sound Quality",
+  "Vocal Arrangement",
+  "Harmony & Choir",
+  "Effects",
+  "Mix & Master",
+  "Recording Space",
+  "Texture & Atmosphere",
+  "Language",
+  "Key",
+  "Writing",
+  "Arrangement",
+  "Performance"
+];
+
 let renderedTagCount = 0;
-for (const category of Object.keys(window.DATA.categories)) {
-  const label = categoryLabels[category] || category;
+const renderedBySource = new Map();
+for (const displayCategory of displayCategories) {
+  const label = controlLabels[displayCategory] || displayCategory;
   const categoryButton = [...document.querySelectorAll(".category-tab,.optional-category-button")]
     .find(button => button.querySelector("span,strong")?.textContent.trim() === label);
-  assert.ok(categoryButton, `${category} must have a category control.`);
+  assert.ok(categoryButton, `${displayCategory} must have a category control.`);
   categoryButton.click();
   await wait(80);
-  assert.equal(document.getElementById("activeCategoryTitle").textContent.trim(), category);
+  assert.equal(document.getElementById("activeCategoryTitle").textContent.trim(), displayCategory);
 
   const familyHeaders = [...document.querySelectorAll(".family-card-header")];
-  assert.ok(familyHeaders.length > 0, `${category} must render at least one family.`);
-  let categoryTagCount = 0;
+  assert.ok(familyHeaders.length > 0, `${displayCategory} must render at least one family.`);
   for (const familyHeader of familyHeaders) {
+    const familySource = familyHeader.dataset.sourceCategory;
+    assert.ok(window.DATA.categories[familySource], `${displayCategory} family must identify its source category.`);
     familyHeader.click();
     await wait(55);
 
     const categoryCards = [...document.querySelectorAll("#expandedTagGrid .expanded-tag-button")];
-    assert.ok(categoryCards.length > 0, `${category} must render enlarged tag cards.`);
-    categoryTagCount += categoryCards.length;
+    assert.ok(categoryCards.length > 0, `${displayCategory} must render enlarged tag cards.`);
     for (const card of categoryCards) {
       const name = card.querySelector("strong")?.textContent.trim() || card.dataset.name || "unknown tag";
       const description = card.querySelector(".tag-description")?.textContent.trim() || "";
-      const expected = window.describeSimplistTag(name, category);
-      assert.ok(description, `${category} / ${name} must show its description in the interface.`);
-      assert.ok(description.length >= 45, `${category} / ${name} must show a meaningful audible description.`);
-      assert.notEqual(description.toLowerCase(), name.toLowerCase(), `${category} / ${name} must not repeat its tag name as the description.`);
-      assert.equal(description, expected, `${category} / ${name} must receive the description for its actual category.`);
+      const sourceCategory = card.dataset.category;
+      const expected = window.describeSimplistTag(name, sourceCategory);
+      assert.equal(sourceCategory, familySource, `${displayCategory} / ${name} must retain its exact source category.`);
+      assert.ok(description, `${sourceCategory} / ${name} must show its description in the interface.`);
+      assert.ok(description.length >= 45, `${sourceCategory} / ${name} must show a meaningful audible description.`);
+      assert.notEqual(description.toLowerCase(), name.toLowerCase(), `${sourceCategory} / ${name} must not repeat its tag name as the description.`);
+      assert.equal(description, expected, `${sourceCategory} / ${name} must receive the description for its actual category.`);
+      renderedBySource.set(sourceCategory, (renderedBySource.get(sourceCategory) || 0) + 1);
+      renderedTagCount += 1;
     }
     document.getElementById("familyDialog").close();
     await wait(20);
   }
-  assert.equal(categoryTagCount, window.DATA.categories[category].length, `${category} must show every tag with a description.`);
-  renderedTagCount += categoryTagCount;
+}
+
+for (const [sourceCategory, tags] of Object.entries(window.DATA.categories)) {
+  assert.equal(renderedBySource.get(sourceCategory), tags.length, `${sourceCategory} must show every tag with a description exactly once.`);
 }
 
 const instrumentsButton = [...document.querySelectorAll(".category-tab")]
@@ -147,7 +172,7 @@ document.getElementById("familyDialog").close();
 
 assert.equal(renderedTagCount, 1962, "The interface must render descriptions for all 1,962 tags.");
 assert.equal(document.querySelectorAll(".extra-category-block").length, 0, "Optional categories must not be duplicated in the main rail.");
-assert.equal(document.querySelectorAll("#optionalCategoryGrid .optional-category-button").length, 13, "All optional categories must remain inside the single Extra / Optional dialog.");
+assert.equal(document.querySelectorAll("#optionalCategoryGrid .optional-category-button").length, 11, "Only the remaining optional categories must stay inside the single Extra / Optional dialog.");
 assert.equal(document.getElementById("optionsBtn").hidden, false, "The single Extra / Optional control must stay available.");
 assert.equal(reportedErrors.length, 0, `Runtime errors: ${reportedErrors.map(error => error.message).join(" | ")}`);
 

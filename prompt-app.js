@@ -6,21 +6,27 @@
   const FOCUSED_LIMIT = 2;
   const EXTENDED_CHARACTER_LIMIT = 1000;
 
-  const MAIN_CATEGORIES = [
-    "Genre",
-    "Mood",
-    "Vocals",
-    "Vocal Delivery",
-    "Vocal Range & Register",
-    "Instruments",
-    "Production"
+  const MAIN_CATEGORY_CONFIG = [
+    { label: "Genre", sources: ["Genre"] },
+    { label: "Era", sources: ["Era"] },
+    { label: "Mood/Emotion", sources: ["Mood"] },
+    { label: "Tempo/Groove", sources: ["Rhythm & Groove"] },
+    { label: "Instruments", sources: ["Instruments"] },
+    {
+      label: "Vocal Style/Delivery",
+      sources: ["Vocals", "Vocal Delivery", "Vocal Range & Register"]
+    },
+    { label: "Production/Sound Quality", sources: ["Production"] }
   ];
+
+  const MAIN_CATEGORIES = MAIN_CATEGORY_CONFIG.map(category => category.label);
+  const MAIN_CATEGORY_SOURCES = Object.fromEntries(
+    MAIN_CATEGORY_CONFIG.map(category => [category.label, category.sources])
+  );
 
   const OPTIONAL_CATEGORIES = [
     "Vocal Arrangement",
     "Harmony & Choir",
-    "Era",
-    "Rhythm & Groove",
     "Effects",
     "Mix & Master",
     "Recording Space",
@@ -32,14 +38,14 @@
     "Performance"
   ];
 
-  const OUTPUT_ORDER = [...MAIN_CATEGORIES, ...OPTIONAL_CATEGORIES];
+  const OUTPUT_ORDER = [
+    ...MAIN_CATEGORY_CONFIG.flatMap(category => category.sources),
+    ...OPTIONAL_CATEGORIES
+  ];
 
   const SHORT_LABELS = {
-    "Vocal Delivery": "Delivery",
-    "Vocal Range & Register": "Vocal Range",
     "Vocal Arrangement": "Vocal Arrange",
     "Harmony & Choir": "Harmony",
-    "Rhythm & Groove": "Groove",
     "Mix & Master": "Mix",
     "Recording Space": "Space",
     "Texture & Atmosphere": "Texture"
@@ -241,6 +247,29 @@
     return SHORT_LABELS[category] || category;
   }
 
+  function sourceCategoriesFor(category) {
+    return MAIN_CATEGORY_SOURCES[category] || [category];
+  }
+
+  function normalizedActiveCategory(category) {
+    if (MAIN_CATEGORIES.includes(category) || OPTIONAL_CATEGORIES.includes(category)) return category;
+    const mainCategory = MAIN_CATEGORY_CONFIG.find(config => config.sources.includes(category));
+    return mainCategory?.label || "Genre";
+  }
+
+  function selectedTagsFor(category, selected = state.selected) {
+    return sourceCategoriesFor(category).flatMap(source => selected[source] || []);
+  }
+
+  function selectedCountFor(category, selected = state.selected) {
+    return selectedTagsFor(category, selected).length;
+  }
+
+  function choiceCountFor(category) {
+    return sourceCategoriesFor(category)
+      .reduce((total, source) => total + (categories()[source]?.length || 0), 0);
+  }
+
   function tagDescription(tag, category) {
     const description = globalThis.describeSimplistTag?.(tag, category);
     return typeof description === "string" && description.trim()
@@ -292,7 +321,7 @@
       : migrateLegacySelected(legacy || saved || {});
 
     state.mode = saved?.mode === "extended" ? "extended" : "focused";
-    state.activeCategory = OUTPUT_ORDER.includes(saved?.activeCategory) ? saved.activeCategory : "Genre";
+    state.activeCategory = normalizedActiveCategory(saved?.activeCategory);
     state.selected = emptySelections();
     state.custom = unique((Array.isArray(saved?.custom) ? saved.custom : [])
       .map(value => String(value || "").replace(/\s+/g, " ").trim())
@@ -302,10 +331,11 @@
       const allowed = categorySets.get(category) || new Set();
       const values = Array.isArray(source?.[category]) ? source[category] : [];
       const valid = unique(values.filter(tag => allowed.has(tag)));
-      state.selected[category] = state.mode === "focused" ? valid.slice(0, FOCUSED_LIMIT) : valid;
+      state.selected[category] = valid;
     });
 
-    if (state.mode === "extended") trimExtendedToLimit();
+    if (state.mode === "focused") trimFocusedSelections();
+    else trimExtendedToLimit();
   }
 
   function saveState() {
@@ -404,14 +434,25 @@
     })).filter(group => group.tags.length);
   }
 
-  function familiesFor(category) {
-    if (familyCache.has(category)) return familyCache.get(category);
+  function sourceFamiliesFor(category) {
+    const cacheKey = `source:${category}`;
+    if (familyCache.has(cacheKey)) return familyCache.get(cacheKey);
     let families;
     if (category === "Genre") families = genreFamilies();
     else if (category === "Instruments") families = splitFromStarts("Instruments");
     else if (category === "Mood") families = explicitFamilies("Mood", MOOD_FAMILIES);
     else families = blueprintFamilies(category);
-    familyCache.set(category, families);
+    familyCache.set(cacheKey, families);
+    return families;
+  }
+
+  function familiesFor(category) {
+    const cacheKey = `view:${category}`;
+    if (familyCache.has(cacheKey)) return familyCache.get(cacheKey);
+    const families = sourceCategoriesFor(category).flatMap(sourceCategory =>
+      sourceFamiliesFor(sourceCategory).map(family => ({ ...family, sourceCategory }))
+    );
+    familyCache.set(cacheKey, families);
     return families;
   }
 
@@ -440,6 +481,24 @@
       if (styleText(next, [...nextCustom, tag]).length <= EXTENDED_CHARACTER_LIMIT) nextCustom.push(tag);
     });
     state.custom = nextCustom;
+  }
+
+  function trimFocusedSelections() {
+    MAIN_CATEGORY_CONFIG.forEach(({ sources }) => {
+      let remaining = FOCUSED_LIMIT;
+      sources.forEach(source => {
+        state.selected[source] = (state.selected[source] || []).slice(0, remaining);
+        remaining -= state.selected[source].length;
+      });
+    });
+    OPTIONAL_CATEGORIES.forEach(category => {
+      state.selected[category] = (state.selected[category] || []).slice(0, FOCUSED_LIMIT);
+    });
+  }
+
+  function focusedSelectionsOverflow() {
+    return [...MAIN_CATEGORIES, ...OPTIONAL_CATEGORIES]
+      .some(category => selectedCountFor(category) > FOCUSED_LIMIT);
   }
 
   function toast(message) {
@@ -516,7 +575,7 @@
     nodes.mainCategoryTabs.replaceChildren();
     MAIN_CATEGORIES.forEach(category => {
       const button = document.createElement("button");
-      const count = state.selected[category]?.length || 0;
+      const count = selectedCountFor(category);
       button.type = "button";
       button.className = "category-tab";
       button.setAttribute("role", "tab");
@@ -545,7 +604,7 @@
   }
 
   function renderCategoryHeader() {
-    const selectedCount = state.selected[state.activeCategory]?.length || 0;
+    const selectedCount = selectedCountFor(state.activeCategory);
     const optional = OPTIONAL_CATEGORIES.includes(state.activeCategory);
     nodes.activeCategoryTitle.textContent = state.activeCategory;
     nodes.activeCategoryHelp.textContent = state.mode === "focused"
@@ -556,12 +615,12 @@
       : `${selectedCount} selected`;
   }
 
-  function createTagButton(tag, className) {
+  function createTagButton(tag, className, sourceCategory) {
     const activeCategory = state.activeCategory;
-    const selected = state.selected[state.activeCategory] || [];
-    const focusedFull = state.mode === "focused" && selected.length >= FOCUSED_LIMIT;
+    const selected = state.selected[sourceCategory] || [];
+    const focusedFull = state.mode === "focused" && selectedCountFor(activeCategory) >= FOCUSED_LIMIT;
     const isSelected = selected.includes(tag);
-    const description = tagDescription(tag, activeCategory);
+    const description = tagDescription(tag, sourceCategory);
     const button = document.createElement("button");
     const label = document.createElement("strong");
     const detail = document.createElement("span");
@@ -569,7 +628,7 @@
     button.className = `${className} v10-tag`;
     button.dataset.tag = tag;
     button.dataset.name = tag;
-    button.dataset.category = activeCategory;
+    button.dataset.category = sourceCategory;
     button.setAttribute("aria-pressed", String(isSelected));
     button.setAttribute("aria-label", `${tag}. ${description}`);
     button.title = `${tag}: ${description}`;
@@ -579,7 +638,7 @@
     detail.textContent = description;
     button.append(label, detail);
     button.addEventListener("click", () => {
-      toggleTag(tag);
+      toggleTag(tag, sourceCategory);
     });
     return button;
   }
@@ -590,7 +649,7 @@
     nodes.familyBoard.style.setProperty("--wall-scale", "1");
     nodes.familyBoard.setAttribute("aria-label", `${state.activeCategory} families with every choice`);
     nodes.familyHeading.textContent = `${state.activeCategory} families`;
-    nodes.familySummary.textContent = `${families.length} boxes · all ${categories()[state.activeCategory].length} choices · tap a title to enlarge`;
+    nodes.familySummary.textContent = `${families.length} boxes · all ${choiceCountFor(state.activeCategory)} choices · tap a title to enlarge`;
 
     families.forEach((family, index) => {
       const card = document.createElement("section");
@@ -598,8 +657,10 @@
       const tagGrid = document.createElement("div");
 
       card.className = "family-card";
+      card.dataset.sourceCategory = family.sourceCategory;
       header.type = "button";
       header.className = "family-card-header";
+      header.dataset.sourceCategory = family.sourceCategory;
       header.setAttribute("aria-haspopup", "dialog");
       header.setAttribute("aria-label", `Enlarge ${family.label}, ${family.tags.length} choices`);
       header.innerHTML = `<strong>${family.label}</strong><span>${family.tags.length} · enlarge ↗</span>`;
@@ -608,7 +669,7 @@
       tagGrid.className = "family-tag-grid";
       tagGrid.setAttribute("role", "group");
       tagGrid.setAttribute("aria-label", `${family.label} choices`);
-      family.tags.forEach(tag => tagGrid.appendChild(createTagButton(tag, "wall-tag-button")));
+      family.tags.forEach(tag => tagGrid.appendChild(createTagButton(tag, "wall-tag-button", family.sourceCategory)));
 
       card.append(header, tagGrid);
       nodes.familyBoard.appendChild(card);
@@ -626,7 +687,7 @@
     nodes.expandedFamilyCount.textContent = `${family.tags.length} choices · all shown together`;
     nodes.expandedTagGrid.style.setProperty("--expanded-columns", String(expandedColumns(family.tags.length)));
     nodes.expandedTagGrid.replaceChildren();
-    family.tags.forEach(tag => nodes.expandedTagGrid.appendChild(createTagButton(tag, "expanded-tag-button")));
+    family.tags.forEach(tag => nodes.expandedTagGrid.appendChild(createTagButton(tag, "expanded-tag-button", family.sourceCategory)));
   }
 
   function openFamilyDialog(index) {
@@ -657,7 +718,7 @@
   }
 
   function chooseCategory(category, options = {}) {
-    if (!OUTPUT_ORDER.includes(category)) return;
+    if (![...MAIN_CATEGORIES, ...OPTIONAL_CATEGORIES].includes(category)) return;
     window.clearTimeout(advanceTimer);
     if (nodes.familyDialog?.open) nodes.familyDialog.close();
     expandedFamilyIndex = -1;
@@ -666,22 +727,23 @@
     renderAll();
   }
 
-  function toggleTag(tag) {
+  function toggleTag(tag, sourceCategory) {
     const category = state.activeCategory;
-    const selected = [...(state.selected[category] || [])];
+    if (!sourceCategoriesFor(category).includes(sourceCategory)) return;
+    const selected = [...(state.selected[sourceCategory] || [])];
     const index = selected.indexOf(tag);
     const adding = index < 0;
 
     if (!adding) {
       selected.splice(index, 1);
     } else if (state.mode === "focused") {
-      if (selected.length >= FOCUSED_LIMIT) {
-        toast("Focused mode allows two choices in each category.");
+      if (selectedCountFor(category) >= FOCUSED_LIMIT) {
+        toast("Simple mode allows two choices in each main tag.");
         return;
       }
       selected.push(tag);
     } else {
-      const candidate = { ...state.selected, [category]: [...selected, tag] };
+      const candidate = { ...state.selected, [sourceCategory]: [...selected, tag] };
       if (styleText(candidate).length > EXTENDED_CHARACTER_LIMIT) {
         toast("That choice would exceed the 1,000-character limit.");
         return;
@@ -689,7 +751,7 @@
       selected.push(tag);
     }
 
-    state.selected[category] = selected;
+    state.selected[sourceCategory] = selected;
     renderMainTabs();
     renderOptionalCategories();
     renderCategoryHeader();
@@ -698,7 +760,7 @@
     renderStyle();
     saveState();
 
-    if (adding && state.mode === "focused" && selected.length === FOCUSED_LIMIT) {
+    if (adding && state.mode === "focused" && selectedCountFor(category) === FOCUSED_LIMIT) {
       const currentPosition = MAIN_CATEGORIES.indexOf(category);
       if (currentPosition >= 0 && currentPosition < MAIN_CATEGORIES.length - 1) {
         toast(`${category} set. Opening ${MAIN_CATEGORIES[currentPosition + 1]}.`);
@@ -733,15 +795,13 @@
     if (!['focused', 'extended'].includes(mode) || mode === state.mode) return;
 
     if (mode === "focused") {
-      const needsTrim = OUTPUT_ORDER.some(category => (state.selected[category] || []).length > FOCUSED_LIMIT);
+      const needsTrim = focusedSelectionsOverflow();
       if (needsTrim && !window.confirm("Focused mode keeps the first two choices in every category. Continue?")) {
         changedInput.checked = false;
         nodes.extendedModeInput.checked = true;
         return;
       }
-      OUTPUT_ORDER.forEach(category => {
-        state.selected[category] = (state.selected[category] || []).slice(0, FOCUSED_LIMIT);
-      });
+      trimFocusedSelections();
     }
 
     state.mode = mode;
@@ -831,7 +891,7 @@
 
     OUTPUT_ORDER.forEach(category => {
       const source = categories()[category];
-      const grouped = familiesFor(category).flatMap(family => family.tags);
+      const grouped = sourceFamiliesFor(category).flatMap(family => family.tags);
       const sourceCounts = new Map();
       const groupedCounts = new Map();
       source.forEach(tag => sourceCounts.set(tag, (sourceCounts.get(tag) || 0) + 1));
@@ -840,6 +900,14 @@
         .every(([tag, count]) => groupedCounts.get(tag) === count);
       if (grouped.length !== source.length || !multiplicitiesMatch) {
         throw new Error(`${category} family grouping lost or duplicated tags.`);
+      }
+    });
+
+    MAIN_CATEGORIES.forEach(category => {
+      const expected = choiceCountFor(category);
+      const grouped = familiesFor(category).reduce((total, family) => total + family.tags.length, 0);
+      if (grouped !== expected) {
+        throw new Error(`${category} combined family grouping lost or duplicated tags.`);
       }
     });
   }
