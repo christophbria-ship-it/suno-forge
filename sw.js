@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplist-v20-20260827-better-seven";
+const CACHE_NAME = "simplist-v21-20260827-better-seven-polish";
 
 const APP_SHELL = [
   "/",
@@ -11,7 +11,7 @@ const APP_SHELL = [
   "/forest-theme.css?v=10.0.0",
   "/v10-features.css?v=10.0.0",
   "/v11-layout.css?v=11.4.0",
-  "/mobile-v12.css?v=12.1.0",
+  "/mobile-v12.css?v=12.2.0",
   "/tag-descriptions.js?v=11.2.0",
   "/prompt-app.js?v=11.5.0",
   "/v10-features.js?v=11.5.0",

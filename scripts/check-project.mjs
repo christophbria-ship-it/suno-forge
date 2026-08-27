@@ -77,14 +77,14 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v20-20260827-better-seven")) fail("Service worker cache was not refreshed for the seven-main-tag release.");
+if (!worker.includes("simplist-v21-20260827-better-seven-polish")) fail("Service worker cache was not refreshed for the polished seven-main-tag release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
 if (!html.includes('/prompt-app.js?v=11.5.0')) fail("The seven-main-tag prompt interface is not loaded.");
 if (!html.includes('/v10-features.js?v=11.5.0')) fail("The matching custom-tag helpers are not loaded.");
 if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout stylesheet is missing.");
-if (!html.includes('/mobile-v12.css?v=12.1.0')) fail("The true mobile layout stylesheet is not loaded last.");
-if (!worker.includes('/mobile-v12.css?v=12.1.0')) fail("The true mobile layout is missing from the offline app shell.");
+if (!html.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout stylesheet is not loaded last.");
+if (!worker.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout is missing from the offline app shell.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");
 if (!latestLayout.includes("--interface-text: #ffffff")) fail("The interface text is not plain white.");
@@ -93,7 +93,8 @@ if (!mobileLayout.includes("#nl-badge-frame")) fail("The production badge can st
 if (!mobileLayout.includes("grid-template-columns: repeat(2, minmax(0, 1fr))")) fail("Mobile controls do not have a readable two-column layout.");
 if (!mobileLayout.includes("@media (max-width: 350px)")) fail("The narrowest supported phone layout is missing.");
 if (!mobileLayout.includes("grid-template-columns: minmax(0, 1fr) !important")) fail("The 320px single-column fallback is missing.");
-if (!mobileLayout.includes("overflow-wrap: anywhere")) fail("Long main-category labels can overflow narrow screens.");
+if (!mobileLayout.includes("overflow-wrap: break-word")) fail("Long main-category labels can overflow narrow screens.");
+if (!mobileLayout.includes(".category-tabs .category-tab:last-child")) fail("The longest seventh main tag does not receive a full mobile row.");
 if (!mobileLayout.includes(".options-button") || !mobileLayout.includes("display: grid !important")) fail("Extra / Optional is not restored as one control.");
 if (!mobileLayout.includes("#optionsDialog[open]")) fail("The Extra / Optional dialog cannot become visible.");
 if (!html.includes("simplist-logo-approved-reference.jpg?v=12.0.0")) fail("The approved logo reference is not displayed.");
