@@ -867,6 +867,25 @@
       event.preventDefault();
       addCustomTag(event.detail?.name);
     });
+    nodes.styleOutput.addEventListener("simplist:apply-sound-blend", event => {
+      const detail = event.detail || {};
+      const text = String(detail.text || "").replace(/\s+/g, " ").trim().slice(0, EXTENDED_CHARACTER_LIMIT);
+      if (!text) return;
+      if (detail.mode === "replace") {
+        state.selected = emptySelections();
+        state.custom = [text];
+      } else {
+        const candidate = unique([...state.custom, text]);
+        if (styleText(state.selected, candidate).length > EXTENDED_CHARACTER_LIMIT) {
+          toast("That sound blend would exceed the 1,000-character limit.");
+          return;
+        }
+        state.custom = candidate;
+      }
+      detail.applied = true;
+      renderAll();
+      toast(detail.mode === "replace" ? "Prompt replaced with your sound blend." : "Sound blend added to your prompt.");
+    });
     document.querySelectorAll('input[name="promptSize"]').forEach(input => {
       input.addEventListener("change", () => setMode(input.value, input));
     });

@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplist-v21-20260827-better-seven-polish";
+const CACHE_NAME = "simplist-v22-20260827-sound-blender";
 
 const APP_SHELL = [
   "/",
@@ -12,14 +12,17 @@ const APP_SHELL = [
   "/v10-features.css?v=10.0.0",
   "/v11-layout.css?v=11.4.0",
   "/mobile-v12.css?v=12.2.0",
+  "/sound-blender.css?v=1.0.0",
   "/tag-descriptions.js?v=11.2.0",
-  "/prompt-app.js?v=11.5.0",
+  "/prompt-app.js?v=11.6.0",
   "/v10-features.js?v=11.5.0",
   "/data.js?v=4.1.0",
   "/data-additions.js?v=4.3.0",
   "/structure-data.js?v=5.0.0",
-  "/structure-app.js?v=5.2.0",
   "/data-global.js?v=5.2.0",
+  "/sound-profiles.js?v=1.0.0",
+  "/structure-app.js?v=5.3.0",
+  "/sound-blender.js?v=1.0.0",
   "/manifest.webmanifest",
   "/icon.svg?v=12.0.0",
   "/simplist-logo-approved-reference.jpg?v=12.0.0"

@@ -59,7 +59,8 @@
             .filter(Boolean)
             .map(name => [instrumentKey(name), name])).values()]
         : [];
-      state.page = localStorage.getItem(PAGE_KEY) === "structure" ? "structure" : "sound";
+      const savedPage = localStorage.getItem(PAGE_KEY);
+      state.page = ["sound", "blend", "structure"].includes(savedPage) ? savedPage : "sound";
     } catch {
       state.sections = [];
       state.customInstruments = [];
@@ -561,7 +562,7 @@
   }
 
   function resetStructure() {
-    if (!window.confirm("Reset Page 2 to the basic song structure?")) return;
+    if (!window.confirm("Reset Page 3 to the basic song structure?")) return;
     state.sections = defaultSections();
     state.activeId = state.sections[0]?.id || null;
     renderSections();
@@ -576,16 +577,22 @@
   }
 
   function setPage(page) {
-    state.page = page === "structure" ? "structure" : "sound";
+    state.page = ["sound", "blend", "structure"].includes(page) ? page : "sound";
+    const soundActive = state.page === "sound";
+    const blendActive = state.page === "blend";
     const structureActive = state.page === "structure";
-    nodes.workspace.hidden = structureActive;
+    nodes.workspace.hidden = !soundActive;
+    nodes.blendPage.hidden = !blendActive;
     nodes.structurePage.hidden = !structureActive;
-    nodes.soundPageBtn.setAttribute("aria-selected", String(!structureActive));
+    nodes.soundPageBtn.setAttribute("aria-selected", String(soundActive));
+    nodes.blendPageBtn.setAttribute("aria-selected", String(blendActive));
     nodes.structurePageBtn.setAttribute("aria-selected", String(structureActive));
-    nodes.clearAllBtn.hidden = structureActive;
+    nodes.clearAllBtn.hidden = !soundActive;
     nodes.libraryStats.textContent = structureActive
-      ? "Page 2 · build lyrics and square-bracket structure for Suno"
-      : soundStats;
+      ? "Page 3 · build lyrics and square-bracket structure for Suno"
+      : blendActive
+        ? "Page 2 · translate named music references into name-free sound descriptions"
+        : soundStats;
     saveState();
 
     if (structureActive) {
@@ -637,7 +644,7 @@
 
   function cacheNodes() {
     [
-      "workspace", "structurePage", "soundPageBtn", "structurePageBtn", "clearAllBtn", "libraryStats",
+      "workspace", "blendPage", "structurePage", "soundPageBtn", "blendPageBtn", "structurePageBtn", "clearAllBtn", "libraryStats",
       "basicSectionList", "customSectionBtn", "structureSections", "structureStatus",
       "structureCopyStatus", "resetStructureBtn", "copyForSunoBtn", "structureTagBoxes"
     ].forEach(id => {
@@ -658,6 +665,7 @@
     nodes.resetStructureBtn.addEventListener("click", resetStructure);
     nodes.copyForSunoBtn.addEventListener("click", copyForSuno);
     nodes.soundPageBtn.addEventListener("click", () => setPage("sound"));
+    nodes.blendPageBtn.addEventListener("click", () => setPage("blend"));
     nodes.structurePageBtn.addEventListener("click", () => setPage("structure"));
     setPage(state.page);
   }

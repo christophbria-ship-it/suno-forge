@@ -1,0 +1,438 @@
+.sound-blender-page {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: #fff;
+}
+
+.sound-blender-page[hidden] {
+  display: none !important;
+}
+
+.sound-blender-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, .65fr);
+  grid-template-areas:
+    "heading heading"
+    "form result"
+    "custom result";
+  align-content: start;
+  gap: 10px;
+  width: 100%;
+  min-height: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: #21130d;
+  box-shadow: var(--shadow);
+}
+
+.sound-blender-heading {
+  grid-area: heading;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 4px 3px 6px;
+}
+
+.sound-blender-heading h1,
+.sound-blend-result h2 {
+  margin: 2px 0 0;
+  color: #fff;
+  letter-spacing: -.035em;
+}
+
+.sound-blender-heading h1 {
+  font-size: clamp(1.45rem, 3vw, 2.35rem);
+}
+
+.sound-blender-heading p:last-child {
+  max-width: 850px;
+  margin: 7px 0 0;
+  color: #fff;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+
+.sound-blend-form {
+  grid-area: form;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sound-reference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sound-reference-card,
+.sound-blend-result,
+.custom-sound-details {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #21130d;
+  color: #fff;
+}
+
+.sound-reference-card {
+  display: grid;
+  align-content: start;
+  grid-template-columns: minmax(0, 1fr) minmax(104px, .42fr);
+  gap: 6px 8px;
+  margin: 0;
+  padding: 11px;
+}
+
+.sound-reference-card legend {
+  padding: 0 6px;
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 800;
+}
+
+.sound-reference-card legend small {
+  color: #fff;
+  font-size: .58rem;
+  font-weight: 500;
+}
+
+.sound-reference-card label,
+.custom-sound-form label {
+  align-self: end;
+  color: #fff;
+  font-size: .61rem;
+  font-weight: 750;
+}
+
+.sound-reference-card label[for^="soundReference"] {
+  grid-column: 1;
+}
+
+.sound-reference-card label[for^="soundFocus"] {
+  grid-column: 2;
+}
+
+.sound-reference-card input {
+  grid-column: 1;
+}
+
+.sound-reference-card select {
+  grid-column: 2;
+}
+
+.sound-reference-card input,
+.sound-reference-card select,
+.sound-blend-result textarea,
+.custom-sound-form input,
+.custom-sound-form select,
+.custom-sound-form textarea {
+  width: 100%;
+  border: 1px solid var(--line) !important;
+  border-radius: 9px;
+  background: #160c08 !important;
+  color: #fff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+}
+
+.sound-reference-card input,
+.sound-reference-card select,
+.custom-sound-form input,
+.custom-sound-form select {
+  min-height: 42px;
+  padding: 8px 9px;
+  font-size: .72rem;
+}
+
+.sound-reference-card input::placeholder,
+.sound-blend-result textarea::placeholder,
+.custom-sound-form input::placeholder,
+.custom-sound-form textarea::placeholder {
+  color: #fff;
+  opacity: .6;
+}
+
+.sound-matches {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-height: 0;
+}
+
+.sound-match-button {
+  min-height: 31px;
+  padding: 5px 8px;
+  border: 1px solid var(--line) !important;
+  border-radius: 999px;
+  background: #21130d !important;
+  color: #fff !important;
+  font-size: .59rem;
+  line-height: 1.1;
+}
+
+.sound-match-button:hover,
+.sound-match-button:focus-visible,
+.sound-match-button[data-selected="true"] {
+  border-color: var(--line-strong) !important;
+  background: #3c2115 !important;
+}
+
+.sound-reference-status {
+  grid-column: 1 / -1;
+  min-height: 1.4em;
+  margin: 0;
+  color: #fff;
+  font-size: .58rem;
+  line-height: 1.25;
+}
+
+.build-sound-button,
+.sound-blend-actions button,
+.custom-sound-form button {
+  min-height: 44px;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: 10px;
+  background: #21130d !important;
+  color: #fff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.build-sound-button:hover,
+.sound-blend-actions button:hover:not(:disabled),
+.custom-sound-form button:hover {
+  background: #3c2115 !important;
+}
+
+.sound-blend-result {
+  grid-area: result;
+  display: grid;
+  grid-template-rows: auto minmax(180px, 1fr) auto auto;
+  gap: 8px;
+  padding: 12px;
+}
+
+.sound-blend-result > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sound-blend-result h2 {
+  font-size: 1.15rem;
+}
+
+#soundBlendCount {
+  color: #fff;
+  font-size: .58rem;
+  white-space: nowrap;
+}
+
+.sound-blend-result textarea {
+  min-height: 180px;
+  resize: vertical;
+  padding: 11px;
+  font-size: .82rem;
+  line-height: 1.45;
+}
+
+.sound-blend-message {
+  min-height: 2.4em;
+  margin: 0;
+  color: #fff;
+  font-size: .6rem;
+  line-height: 1.3;
+}
+
+.sound-blend-message[data-state="error"],
+.sound-reference-status[data-state="error"],
+#customSoundStatus[data-state="error"] {
+  color: #ffcab0;
+}
+
+.sound-blend-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.custom-sound-details {
+  grid-area: custom;
+  align-self: start;
+  padding: 10px 12px;
+}
+
+.custom-sound-details > summary {
+  min-height: 32px;
+  cursor: pointer;
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 800;
+}
+
+.custom-sound-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, .45fr);
+  gap: 6px 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.custom-sound-form > p,
+.custom-sound-form label[for="customSoundDescription"],
+.custom-sound-form textarea,
+.custom-sound-form button,
+#customSoundStatus {
+  grid-column: 1 / -1;
+}
+
+.custom-sound-form > p,
+#customSoundStatus {
+  margin: 0;
+  color: #fff;
+  font-size: .6rem;
+  line-height: 1.3;
+}
+
+.custom-sound-form textarea {
+  min-height: 92px;
+  resize: vertical;
+  padding: 9px;
+  font-size: .7rem;
+  line-height: 1.4;
+}
+
+.page-switcher {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+@media (max-width: 980px) {
+  .sound-blender-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "heading"
+      "form"
+      "result"
+      "custom";
+  }
+
+  .sound-blend-result {
+    grid-template-rows: auto minmax(150px, auto) auto auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .header-actions {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .page-switcher {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .sound-blender-page {
+    width: 100% !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .sound-blender-shell {
+    display: grid;
+    width: 100%;
+    min-height: 0;
+    padding: 10px;
+    border-radius: 16px;
+  }
+
+  .sound-blender-heading {
+    display: grid;
+    gap: 8px;
+  }
+
+  .sound-blender-heading h1 {
+    font-size: 1.55rem;
+  }
+
+  .sound-blender-heading p:last-child {
+    font-size: .76rem;
+  }
+
+  #soundProfileCount {
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .sound-reference-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sound-reference-card {
+    grid-template-columns: minmax(0, 1fr) minmax(98px, .42fr);
+  }
+
+  .sound-reference-card input,
+  .sound-reference-card select {
+    min-height: 48px;
+    font-size: .88rem;
+  }
+
+  .sound-match-button {
+    min-height: 38px;
+    font-size: .7rem;
+  }
+
+  .build-sound-button,
+  .sound-blend-actions button,
+  .custom-sound-form button {
+    min-height: 48px;
+    font-size: .86rem;
+  }
+
+  .sound-blend-result textarea {
+    min-height: 190px;
+    font-size: .94rem;
+  }
+}
+
+@media (max-width: 390px) {
+  .page-switch-button {
+    padding: 7px 3px !important;
+    font-size: .76rem !important;
+  }
+
+  .sound-reference-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sound-reference-card label,
+  .sound-reference-card input,
+  .sound-reference-card select {
+    grid-column: 1 !important;
+  }
+
+  .sound-blend-actions,
+  .custom-sound-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .custom-sound-form > * {
+    grid-column: 1 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-blender-page *,
+  .sound-blender-page *::before,
+  .sound-blender-page *::after {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
