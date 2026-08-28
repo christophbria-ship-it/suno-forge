@@ -85,7 +85,7 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v23-20260828-1990s-sounds")) fail("Service worker cache was not refreshed for the 1990s sound release.");
+if (!worker.includes("simplist-v24-20260828-1990s-blend-copy")) fail("Service worker cache was not refreshed for the final 1990s sound release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
 if (!html.includes('/prompt-app.js?v=11.6.0')) fail("The Sound Blender prompt bridge is not loaded.");
@@ -96,7 +96,7 @@ if (!worker.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout i
 if (!html.includes('/sound-blender.css?v=1.1.0') || !worker.includes('/sound-blender.css?v=1.1.0')) fail("The Sound Blender styling is not loaded and cached.");
 if (!html.includes('/sound-profiles.js?v=1.0.0') || !worker.includes('/sound-profiles.js?v=1.0.0')) fail("The named sound profiles are not loaded and cached.");
 if (!html.includes('/sound-profiles-1990s.js?v=1.0.0') || !worker.includes('/sound-profiles-1990s.js?v=1.0.0')) fail("The 1990s sound profiles are not loaded and cached.");
-if (!html.includes('/sound-blender.js?v=1.1.0') || !worker.includes('/sound-blender.js?v=1.1.0')) fail("The Sound Blender behavior is not loaded and cached.");
+if (!html.includes('/sound-blender.js?v=1.1.1') || !worker.includes('/sound-blender.js?v=1.1.1')) fail("The Sound Blender behavior is not loaded and cached.");
 if (!html.includes('/structure-app.js?v=5.3.0')) fail("The three-page navigation is not loaded.");
 if (html.indexOf('/sound-blender.css?v=1.1.0') < html.indexOf('/mobile-v12.css?v=12.2.0')) fail("The Sound Blender mobile overrides must load last.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");

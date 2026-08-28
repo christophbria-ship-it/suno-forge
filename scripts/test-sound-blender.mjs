@@ -161,6 +161,8 @@ build();
 result = document.getElementById("soundBlendResult").value;
 assert.match(result, /precision pop-funk/i);
 assert.match(result, /massive heavy metal/i);
+assert.match(result, /^Overall sound blends /);
+assert.doesNotMatch(result, /sound sound/i);
 assert.doesNotMatch(result, /Michael|Jackson|Metallica/i, "New 1990s references must also stay out of Suno wording.");
 
 document.getElementById("customSoundDetails").open = true;

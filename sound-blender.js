@@ -337,7 +337,9 @@
     if (!second) return `${resultLabel(first.focus)}: ${sentence(first.trait)}.`.slice(0, 1000);
     let result;
     if (first.focus === second.focus) {
-      const subject = first.focus === "Vocals" ? "Vocal sound" : `${resultLabel(first.focus)} sound`;
+      const subject = first.focus === "Vocals"
+        ? "Vocal sound"
+        : (first.focus === "Full Sound" ? "Overall sound" : `${resultLabel(first.focus)} sound`);
       result = `${subject} blends ${first.trait.charAt(0).toLowerCase()}${first.trait.slice(1)} with ${second.trait.charAt(0).toLowerCase()}${second.trait.slice(1)}.`;
     } else {
       result = `${resultLabel(first.focus)}: ${sentence(first.trait)}. ${resultLabel(second.focus)}: ${sentence(second.trait)}.`;

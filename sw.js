@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplist-v23-20260828-1990s-sounds";
+const CACHE_NAME = "simplist-v24-20260828-1990s-blend-copy";
 
 const APP_SHELL = [
   "/",
@@ -23,7 +23,7 @@ const APP_SHELL = [
   "/sound-profiles.js?v=1.0.0",
   "/sound-profiles-1990s.js?v=1.0.0",
   "/structure-app.js?v=5.3.0",
-  "/sound-blender.js?v=1.1.0",
+  "/sound-blender.js?v=1.1.1",
   "/manifest.webmanifest",
   "/icon.svg?v=12.0.0",
   "/simplist-logo-approved-reference.jpg?v=12.0.0"
