@@ -119,12 +119,66 @@
       ? [...globalThis.SIMPLIST_SOUND_PROFILES]
       : [];
     const library = libraryProfiles();
-    searchableProfiles = [...customProfiles, ...builtIns, ...library].map((item, index) => ({
-      ...item,
-      _index: index,
-      _names: [item.name, ...(item.aliases || [])].map(normalize).filter(Boolean)
-    }));
+    searchableProfiles = [...customProfiles, ...builtIns, ...library].map((item, index) => {
+      const genres = Array.isArray(item.genres) ? item.genres : [];
+      return {
+        ...item,
+        _index: index,
+        _names: [
+          item.name,
+          ...(item.aliases || []),
+          item.era,
+          ...genres,
+          item.era && genres.length ? `${item.era} ${genres.join(" ")}` : ""
+        ].map(normalize).filter(Boolean)
+      };
+    });
     nodes.soundProfileCount.textContent = `${builtIns.length + customProfiles.length} named profiles · ${library.length.toLocaleString()} library sounds`;
+    renderNinetiesBrowser();
+  }
+
+  function renderNinetiesBrowser() {
+    if (!nodes.ninetiesGenreFilter || !nodes.ninetiesSoundGrid) return;
+    const profiles = searchableProfiles
+      .filter(profile => profile.era === "1990s" && !profile.custom && !profile.library);
+    const genres = [...new Set(profiles.flatMap(profile => profile.genres || []))]
+      .sort((a, b) => a.localeCompare(b));
+    const previousGenre = nodes.ninetiesGenreFilter.value;
+    nodes.ninetiesGenreFilter.replaceChildren();
+    ["All 1990s", ...genres].forEach(genre => {
+      const option = document.createElement("option");
+      option.value = genre;
+      option.textContent = genre;
+      nodes.ninetiesGenreFilter.appendChild(option);
+    });
+    nodes.ninetiesGenreFilter.value = genres.includes(previousGenre) ? previousGenre : "All 1990s";
+
+    const activeGenre = nodes.ninetiesGenreFilter.value;
+    const filtered = profiles
+      .filter(profile => activeGenre === "All 1990s" || profile.genres?.includes(activeGenre))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    nodes.ninetiesSoundCount.textContent = `${filtered.length} sounds`;
+    nodes.ninetiesSoundGrid.replaceChildren();
+    filtered.forEach(profile => {
+      const button = document.createElement("button");
+      const name = document.createElement("strong");
+      const details = document.createElement("small");
+      button.type = "button";
+      button.className = "nineties-sound-button";
+      name.textContent = profile.name;
+      details.textContent = `${profile.type} · ${(profile.genres || []).join(" / ")}`;
+      button.append(name, details);
+      button.addEventListener("click", () => {
+        const slot = inputFor(1).value.trim() ? 2 : 1;
+        selected[slot] = profile;
+        inputFor(slot).value = profile.name;
+        focusFor(slot).value = "Auto";
+        renderMatches(slot);
+        updateReferenceStatus(slot, profile, "1990s pick");
+        showMessage(`${profile.name} was placed in Sound ${slot}. Choose another sound or build the description.`);
+      });
+      nodes.ninetiesSoundGrid.appendChild(button);
+    });
   }
 
   function scoreProfile(profile, query) {
@@ -393,6 +447,7 @@
       "soundReference2", "soundFocus2", "soundMatches2", "soundReferenceStatus2", "soundBlendResult", "soundBlendCount",
       "soundBlendMessage", "addBlendToPromptBtn", "replacePromptWithBlendBtn", "copySoundBlendBtn", "customSoundDetails",
       "customSoundForm", "customSoundName", "customSoundType", "customSoundFocus", "customSoundDescription", "customSoundStatus",
+      "ninetiesSoundDetails", "ninetiesGenreFilter", "ninetiesSoundCount", "ninetiesSoundGrid",
       "styleOutput", "stylePanel", "soundPageBtn"
     ].forEach(id => { nodes[id] = document.getElementById(id); });
   }
@@ -421,6 +476,7 @@
     nodes.replacePromptWithBlendBtn.addEventListener("click", () => applyToPrompt("replace"));
     nodes.copySoundBlendBtn.addEventListener("click", copyResult);
     nodes.customSoundForm.addEventListener("submit", saveCustomSound);
+    nodes.ninetiesGenreFilter.addEventListener("change", renderNinetiesBrowser);
     updateResultControls();
   }
 

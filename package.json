@@ -5,7 +5,7 @@
   "description": "A no-scroll, all-at-once Suno style tag wall.",
   "type": "module",
   "scripts": {
-    "test": "node --check data.js && node --check data-additions.js && node --check prompt-app.js && node --check tag-descriptions.js && node --check v10-features.js && node --check structure-app.js && node --check sound-profiles.js && node --check sound-blender.js && node --check sw.js && node scripts/check-project.mjs && node scripts/test-descriptions.mjs && node scripts/test-description-ui.mjs && node scripts/test-ui.mjs && node scripts/test-sound-blender.mjs"
+    "test": "node --check data.js && node --check data-additions.js && node --check prompt-app.js && node --check tag-descriptions.js && node --check v10-features.js && node --check structure-app.js && node --check sound-profiles.js && node --check sound-profiles-1990s.js && node --check sound-blender.js && node --check sw.js && node scripts/check-project.mjs && node scripts/test-descriptions.mjs && node scripts/test-description-ui.mjs && node scripts/test-ui.mjs && node scripts/test-sound-blender.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -17,6 +17,7 @@ const mobileLayout = read("mobile-v12.css");
 const blenderCss = read("sound-blender.css");
 const blenderApp = read("sound-blender.js");
 const soundProfiles = read("sound-profiles.js");
+const ninetiesProfiles = read("sound-profiles-1990s.js");
 const worker = read("sw.js");
 const manifest = JSON.parse(read("manifest.webmanifest"));
 const dataSource = read("data.js");
@@ -32,7 +33,8 @@ const requiredIds = [
   "optionsDialog", "optionalCategoryGrid", "toast", "blendPage", "blendPageBtn",
   "soundReference1", "soundFocus1", "soundReference2", "soundFocus2",
   "soundBlendResult", "addBlendToPromptBtn", "replacePromptWithBlendBtn",
-  "customSoundForm", "customSoundDescription"
+  "customSoundForm", "customSoundDescription", "ninetiesSoundDetails",
+  "ninetiesGenreFilter", "ninetiesSoundCount", "ninetiesSoundGrid"
 ];
 const missingIds = requiredIds.filter(id => !ids.includes(id));
 if (missingIds.length) fail(`Missing required UI ids: ${missingIds.join(", ")}`);
@@ -83,7 +85,7 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v22-20260827-sound-blender")) fail("Service worker cache was not refreshed for the Sound Blender release.");
+if (!worker.includes("simplist-v23-20260828-1990s-sounds")) fail("Service worker cache was not refreshed for the 1990s sound release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
 if (!html.includes('/prompt-app.js?v=11.6.0')) fail("The Sound Blender prompt bridge is not loaded.");
@@ -91,11 +93,12 @@ if (!html.includes('/v10-features.js?v=11.5.0')) fail("The matching custom-tag h
 if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout stylesheet is missing.");
 if (!html.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout stylesheet is not loaded last.");
 if (!worker.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout is missing from the offline app shell.");
-if (!html.includes('/sound-blender.css?v=1.0.0') || !worker.includes('/sound-blender.css?v=1.0.0')) fail("The Sound Blender styling is not loaded and cached.");
+if (!html.includes('/sound-blender.css?v=1.1.0') || !worker.includes('/sound-blender.css?v=1.1.0')) fail("The Sound Blender styling is not loaded and cached.");
 if (!html.includes('/sound-profiles.js?v=1.0.0') || !worker.includes('/sound-profiles.js?v=1.0.0')) fail("The named sound profiles are not loaded and cached.");
-if (!html.includes('/sound-blender.js?v=1.0.0') || !worker.includes('/sound-blender.js?v=1.0.0')) fail("The Sound Blender behavior is not loaded and cached.");
+if (!html.includes('/sound-profiles-1990s.js?v=1.0.0') || !worker.includes('/sound-profiles-1990s.js?v=1.0.0')) fail("The 1990s sound profiles are not loaded and cached.");
+if (!html.includes('/sound-blender.js?v=1.1.0') || !worker.includes('/sound-blender.js?v=1.1.0')) fail("The Sound Blender behavior is not loaded and cached.");
 if (!html.includes('/structure-app.js?v=5.3.0')) fail("The three-page navigation is not loaded.");
-if (html.indexOf('/sound-blender.css?v=1.0.0') < html.indexOf('/mobile-v12.css?v=12.2.0')) fail("The Sound Blender mobile overrides must load last.");
+if (html.indexOf('/sound-blender.css?v=1.1.0') < html.indexOf('/mobile-v12.css?v=12.2.0')) fail("The Sound Blender mobile overrides must load last.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");
 if (!latestLayout.includes("--interface-text: #ffffff")) fail("The interface text is not plain white.");
@@ -124,14 +127,33 @@ if (logoHash !== "8d0efc881013c22f714e0fda823027a1ba8ce0df36d784da2f286d94f864b3
 const profileContext = {};
 vm.createContext(profileContext);
 vm.runInContext(soundProfiles, profileContext, { filename: "sound-profiles.js", timeout: 2000 });
+vm.runInContext(ninetiesProfiles, profileContext, { filename: "sound-profiles-1990s.js", timeout: 2000 });
 const namedProfiles = profileContext.SIMPLIST_SOUND_PROFILES;
-if (!Array.isArray(namedProfiles) || namedProfiles.length < 60) fail("The named Sound Blender library is too small for its starter release.");
-for (const requiredName of ["John Frusciante", "Chris Cornell", "Beck", "Soundgarden", "Rick Rubin"]) {
+if (!Array.isArray(namedProfiles) || namedProfiles.length < 250) fail("The named Sound Blender library is missing its full 1990s expansion.");
+for (const requiredName of [
+  "John Frusciante", "Chris Cornell", "Beck", "Soundgarden", "Rick Rubin",
+  "Michael Jackson", "Pearl Jam", "Metallica", "2Pac", "Mariah Carey",
+  "Garth Brooks", "Daft Punk", "Green Day", "Selena", "Sade", "Kirk Franklin"
+]) {
   if (!namedProfiles.some(profile => profile.name === requiredName)) fail(`Missing required sound profile: ${requiredName}`);
 }
+const ninetiesNamed = namedProfiles.filter(profile => profile.era === "1990s");
+if (ninetiesNamed.length < 220) fail(`Expected at least 220 popular 1990s sounds, found ${ninetiesNamed.length}.`);
+const ninetiesGenres = [...new Set(ninetiesNamed.flatMap(profile => profile.genres || []))];
+if (ninetiesGenres.length !== 14) fail(`Expected 14 broad 1990s genre groups, found ${ninetiesGenres.length}.`);
+for (const profile of ninetiesNamed) {
+  if (!profile.genres?.length) fail(`1990s profile is missing a genre: ${profile.name}`);
+  const descriptions = Object.values(profile.parts || {});
+  if (!descriptions.length || descriptions.some(value => String(value).trim().length < 45)) {
+    fail(`1990s profile lacks a substantial audible description: ${profile.name}`);
+  }
+}
+const normalizedNames = namedProfiles.map(profile => String(profile.name).toLowerCase());
+if (new Set(normalizedNames).size !== normalizedNames.length) fail("Named sound profiles contain duplicate names.");
 if (!blenderApp.includes("simplist:apply-sound-blend")) fail("Sound Blender cannot send its result to the existing prompt.");
 if (!blenderApp.includes("simplistSoundBlenderProfilesV1")) fail("Custom sound profiles are not persisted.");
 if (!blenderApp.includes("withoutNames")) fail("Reference names are not removed from generated wording.");
+if (!blenderApp.includes("renderNinetiesBrowser")) fail("The browsable 1990s sound library is not connected to the Blender.");
 
 const context = {};
 vm.createContext(context);

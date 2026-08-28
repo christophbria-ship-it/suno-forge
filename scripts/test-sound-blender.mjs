@@ -11,6 +11,7 @@ const sources = {
   prompt: read("prompt-app.js"),
   structureData: read("structure-data.js"),
   profiles: read("sound-profiles.js"),
+  ninetiesProfiles: read("sound-profiles-1990s.js"),
   structure: read("structure-app.js"),
   blender: read("sound-blender.js")
 };
@@ -64,6 +65,7 @@ window.eval(sources.descriptions);
 window.eval(sources.prompt);
 window.eval(sources.structureData);
 window.eval(sources.profiles);
+window.eval(sources.ninetiesProfiles);
 window.eval(sources.structure);
 window.eval(sources.blender);
 document.dispatchEvent(new window.Event("DOMContentLoaded", { bubbles: true }));
@@ -101,6 +103,24 @@ assert.equal(document.getElementById("blendPage").hidden, false, "Blend page sho
 assert.equal(document.getElementById("workspace").hidden, true);
 assert.equal(document.getElementById("clearAllBtn").hidden, true, "Sound-only Clear should not confuse the Blend page.");
 assert.match(document.getElementById("soundProfileCount").textContent, /named profiles/);
+assert.ok(parseInt(document.getElementById("soundProfileCount").textContent, 10) >= 250, "The expanded named library should be loaded.");
+
+document.getElementById("ninetiesSoundDetails").open = true;
+assert.equal(document.getElementById("ninetiesGenreFilter").options.length, 15, "All 14 genre groups plus the complete 1990s view should be available.");
+assert.equal(document.querySelectorAll(".nineties-sound-button").length, 222, "The complete 1990s browser should show every profile.");
+choose("ninetiesGenreFilter", "Hip-Hop");
+assert.equal(document.querySelectorAll(".nineties-sound-button").length, 26, "Hip-Hop should expose its complete 1990s selection.");
+assert.equal(document.getElementById("ninetiesSoundCount").textContent, "26 sounds");
+const tupacButton = [...document.querySelectorAll(".nineties-sound-button")]
+  .find(button => button.querySelector("strong")?.textContent === "2Pac");
+assert.ok(tupacButton, "2Pac should be browsable under 1990s Hip-Hop.");
+click(tupacButton);
+assert.equal(document.getElementById("soundReference1").value, "2Pac", "Tapping a 1990s sound should fill Sound 1.");
+assert.match(document.getElementById("soundReferenceStatus1").textContent, /1990s pick/i);
+input("soundReference1", "");
+input("soundReference2", "");
+choose("ninetiesGenreFilter", "Country");
+assert.ok([...document.querySelectorAll(".nineties-sound-button strong")].some(node => node.textContent === "Garth Brooks"));
 
 setReference(1, "John Frusciante", "Guitar");
 setReference(2, "Chris Cornell", "Vocals");
@@ -134,6 +154,14 @@ build();
 result = document.getElementById("soundBlendResult").value;
 assert.ok(result.length > 70, "Any existing sound-library tag should produce its real audible description.");
 assert.match(result, /^Guitar:/);
+
+setReference(1, "Michael Jackson", "Full Sound");
+setReference(2, "Metallica", "Full Sound");
+build();
+result = document.getElementById("soundBlendResult").value;
+assert.match(result, /precision pop-funk/i);
+assert.match(result, /massive heavy metal/i);
+assert.doesNotMatch(result, /Michael|Jackson|Metallica/i, "New 1990s references must also stay out of Suno wording.");
 
 document.getElementById("customSoundDetails").open = true;
 input("customSoundName", "Moon Glass Harp");

@@ -16,6 +16,7 @@
   grid-template-areas:
     "heading heading"
     "form result"
+    "nineties result"
     "custom result";
   align-content: start;
   gap: 10px;
@@ -71,6 +72,7 @@
 
 .sound-reference-card,
 .sound-blend-result,
+.nineties-sound-details,
 .custom-sound-details {
   min-width: 0;
   border: 1px solid var(--line);
@@ -128,6 +130,7 @@
 .sound-reference-card input,
 .sound-reference-card select,
 .sound-blend-result textarea,
+.nineties-sound-toolbar select,
 .custom-sound-form input,
 .custom-sound-form select,
 .custom-sound-form textarea {
@@ -141,6 +144,7 @@
 
 .sound-reference-card input,
 .sound-reference-card select,
+.nineties-sound-toolbar select,
 .custom-sound-form input,
 .custom-sound-form select {
   min-height: 42px;
@@ -263,18 +267,107 @@
   gap: 6px;
 }
 
-.custom-sound-details {
-  grid-area: custom;
+.nineties-sound-details {
+  grid-area: nineties;
   align-self: start;
   padding: 10px 12px;
 }
 
+.nineties-sound-details > summary,
 .custom-sound-details > summary {
   min-height: 32px;
   cursor: pointer;
   color: #fff;
   font-size: .68rem;
   font-weight: 800;
+}
+
+.nineties-sound-details[open] > summary {
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.nineties-sound-toolbar {
+  display: grid;
+  grid-template-columns: auto minmax(150px, .55fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+}
+
+.nineties-sound-toolbar label,
+.nineties-sound-toolbar output,
+.nineties-sound-details > p {
+  color: #fff;
+  font-size: .61rem;
+  line-height: 1.3;
+}
+
+.nineties-sound-toolbar label {
+  font-weight: 800;
+}
+
+.nineties-sound-toolbar select {
+  min-height: 38px;
+  padding: 7px 9px;
+  font-size: .7rem;
+}
+
+.nineties-sound-toolbar output {
+  justify-self: end;
+}
+
+.nineties-sound-details > p {
+  margin: 7px 0;
+}
+
+.nineties-sound-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 3px 2px 0;
+}
+
+.nineties-sound-button {
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 6px 7px;
+  border: 1px solid var(--line) !important;
+  border-radius: 9px;
+  background: #21130d !important;
+  color: #fff !important;
+  font-family: Georgia, "Times New Roman", serif !important;
+  text-align: left;
+}
+
+.nineties-sound-button:hover,
+.nineties-sound-button:focus-visible {
+  border-color: var(--line-strong) !important;
+  background: #3c2115 !important;
+}
+
+.nineties-sound-button strong {
+  color: #fff;
+  font-size: .61rem;
+  line-height: 1.08;
+}
+
+.nineties-sound-button small {
+  color: #fff;
+  font-size: .49rem;
+  line-height: 1.08;
+  opacity: .78;
+}
+
+.custom-sound-details {
+  grid-area: custom;
+  align-self: start;
+  padding: 10px 12px;
 }
 
 .custom-sound-form {
@@ -320,6 +413,7 @@
     grid-template-areas:
       "heading"
       "form"
+      "nineties"
       "result"
       "custom";
   }
@@ -389,6 +483,15 @@
     font-size: .7rem;
   }
 
+  .nineties-sound-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    max-height: 340px;
+  }
+
+  .nineties-sound-button {
+    min-height: 48px;
+  }
+
   .build-sound-button,
   .sound-blend-actions button,
   .custom-sound-form button {
@@ -425,6 +528,14 @@
 
   .custom-sound-form > * {
     grid-column: 1 !important;
+  }
+
+  .nineties-sound-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .nineties-sound-toolbar output {
+    justify-self: start;
   }
 }
 
