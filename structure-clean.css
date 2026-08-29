@@ -128,7 +128,7 @@
   content: "−" !important;
 }
 
-.tag-drawer > summary {
+.structure-page .structure-tool-drawer.tag-drawer > summary {
   min-height: 56px !important;
   border-color: var(--structure-accent-strong) !important;
   background: linear-gradient(135deg, #d7ad76, #bb844f) !important;
@@ -140,7 +140,7 @@
   box-shadow: inset 0 1px 0 rgba(255, 244, 220, .52) !important;
 }
 
-.tag-drawer > summary::after {
+.structure-page .structure-tool-drawer.tag-drawer > summary::after {
   color: var(--structure-accent-text) !important;
 }
 
@@ -647,6 +647,54 @@
 }
 
 @media (max-width: 720px) {
+  .app-shell:has(#structurePage:not([hidden])) .topbar {
+    display: grid !important;
+    grid-template-columns: minmax(105px, 128px) minmax(0, 1fr) !important;
+    grid-template-rows: auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .app-shell:has(#structurePage:not([hidden])) .brand {
+    display: block !important;
+    grid-column: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell:has(#structurePage:not([hidden])) .brand-logo-frame,
+  .app-shell:has(#structurePage:not([hidden])) .brand-logo {
+    display: block !important;
+    width: 100% !important;
+    max-width: 128px !important;
+    height: auto !important;
+  }
+
+  .app-shell:has(#structurePage:not([hidden])) .header-actions {
+    display: block !important;
+    grid-column: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell:has(#structurePage:not([hidden])) .page-switcher {
+    display: grid !important;
+    width: 100% !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 3px !important;
+    padding: 3px !important;
+  }
+
+  .app-shell:has(#structurePage:not([hidden])) .page-switch-button {
+    min-width: 0 !important;
+    min-height: 42px !important;
+    padding: 5px 2px !important;
+    overflow-wrap: anywhere !important;
+    font-size: .56rem !important;
+    line-height: 1.05 !important;
+  }
+
   .structure-page {
     gap: 8px !important;
   }
@@ -658,7 +706,7 @@
     font-size: .78rem !important;
   }
 
-  .tag-drawer > summary {
+  .structure-page .structure-tool-drawer.tag-drawer > summary {
     min-height: 56px !important;
     font-size: .76rem !important;
   }
@@ -795,7 +843,7 @@
     font-size: .7rem !important;
   }
 
-  .tag-drawer > summary {
+  .structure-page .structure-tool-drawer.tag-drawer > summary {
     padding-inline: 30px !important;
     font-size: .66rem !important;
     letter-spacing: .02em !important;

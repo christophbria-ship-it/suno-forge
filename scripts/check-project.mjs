@@ -89,7 +89,7 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v26-20260829-bracket-layout")) fail("Service worker cache was not refreshed for the restored bracket-tag Structure release.");
+if (!worker.includes("simplist-v27-20260829-reference-structure")) fail("Service worker cache was not refreshed for the reference Structure release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
 if (!html.includes('/prompt-app.js?v=11.6.0')) fail("The Sound Blender prompt bridge is not loaded.");
@@ -98,13 +98,13 @@ if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout styl
 if (!html.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout stylesheet is not loaded last.");
 if (!worker.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout is missing from the offline app shell.");
 if (!html.includes('/sound-blender.css?v=1.1.0') || !worker.includes('/sound-blender.css?v=1.1.0')) fail("The Sound Blender styling is not loaded and cached.");
-if (!html.includes('/structure-clean.css?v=6.1.0') || !worker.includes('/structure-clean.css?v=6.1.0')) fail("The restored bracket-tag Structure styling is not loaded and cached.");
+if (!html.includes('/structure-clean.css?v=6.2.0') || !worker.includes('/structure-clean.css?v=6.2.0')) fail("The reference Structure styling is not loaded and cached.");
 if (!html.includes('/sound-profiles.js?v=1.0.0') || !worker.includes('/sound-profiles.js?v=1.0.0')) fail("The named sound profiles are not loaded and cached.");
 if (!html.includes('/sound-profiles-1990s.js?v=1.0.0') || !worker.includes('/sound-profiles-1990s.js?v=1.0.0')) fail("The 1990s sound profiles are not loaded and cached.");
 if (!html.includes('/sound-blender.js?v=1.1.1') || !worker.includes('/sound-blender.js?v=1.1.1')) fail("The Sound Blender behavior is not loaded and cached.");
 if (!html.includes('/structure-app.js?v=5.5.0') || !worker.includes('/structure-app.js?v=5.5.0')) fail("The restored bracket-tag Structure behavior is not loaded and cached.");
 if (html.indexOf('/sound-blender.css?v=1.1.0') < html.indexOf('/mobile-v12.css?v=12.2.0')) fail("The Sound Blender mobile overrides must load last.");
-if (html.indexOf('/structure-clean.css?v=6.1.0') < html.indexOf('/sound-blender.css?v=1.1.0')) fail("The restored Structure stylesheet must be the final visual override.");
+if (html.indexOf('/structure-clean.css?v=6.2.0') < html.indexOf('/sound-blender.css?v=1.1.0')) fail("The reference Structure stylesheet must be the final visual override.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");
 if (!latestLayout.includes("--interface-text: #ffffff")) fail("The interface text is not plain white.");
