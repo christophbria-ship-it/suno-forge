@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplist-v25-20260829-clean-structure";
+const CACHE_NAME = "simplist-v26-20260829-bracket-layout";
 
 const APP_SHELL = [
   "/",
@@ -13,7 +13,7 @@ const APP_SHELL = [
   "/v11-layout.css?v=11.4.0",
   "/mobile-v12.css?v=12.2.0",
   "/sound-blender.css?v=1.1.0",
-  "/structure-clean.css?v=6.0.0",
+  "/structure-clean.css?v=6.1.0",
   "/tag-descriptions.js?v=11.2.0",
   "/prompt-app.js?v=11.6.0",
   "/v10-features.js?v=11.5.0",
@@ -23,7 +23,7 @@ const APP_SHELL = [
   "/data-global.js?v=5.2.0",
   "/sound-profiles.js?v=1.0.0",
   "/sound-profiles-1990s.js?v=1.0.0",
-  "/structure-app.js?v=5.4.0",
+  "/structure-app.js?v=5.5.0",
   "/sound-blender.js?v=1.1.1",
   "/manifest.webmanifest",
   "/icon.svg?v=12.0.0",

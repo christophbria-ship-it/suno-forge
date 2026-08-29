@@ -28,6 +28,13 @@
     });
   }
 
+  function openBracketDrawer() {
+    const tagDrawer = nodes.structurePage.querySelector(".tag-drawer");
+    if (!tagDrawer) return;
+    closeStructureDrawers(tagDrawer);
+    tagDrawer.open = true;
+  }
+
   function bindStructureDrawers() {
     structureDrawers().forEach(drawer => {
       drawer.addEventListener("toggle", () => {
@@ -145,7 +152,7 @@
     saveState();
 
     if (isPhoneLayout()) {
-      closeStructureDrawers();
+      openBracketDrawer();
       revealSection(section.id);
     }
     else focusSection(section.id);
@@ -347,7 +354,7 @@
       textarea.className = "section-lyrics";
       textarea.dataset.sectionId = section.id;
       textarea.value = section.lyrics;
-      textarea.placeholder = "Write lyrics or directions…";
+      textarea.placeholder = "Lyrics, directions, or bracket tags…";
       textarea.spellcheck = true;
       textarea.addEventListener("focus", () => activateSection(section.id));
       textarea.addEventListener("pointerdown", () => activateSection(section.id));
@@ -553,10 +560,7 @@
     renderStatus();
     saveState();
 
-    if (isPhoneLayout()) {
-      closeStructureDrawers();
-      revealSection(id);
-    }
+    if (isPhoneLayout()) openBracketDrawer();
     else textarea.focus();
   }
 
@@ -631,9 +635,8 @@
     saveState();
 
     if (structureActive) {
-      if (isPhoneLayout()) closeStructureDrawers();
       window.requestAnimationFrame(() => {
-        if (isPhoneLayout()) revealSection(state.activeId);
+        if (isPhoneLayout()) openBracketDrawer();
         else focusSection(state.activeId, false);
       });
     }
