@@ -18,6 +18,24 @@
     return window.matchMedia("(max-width: 720px)").matches;
   }
 
+  function structureDrawers() {
+    return [...nodes.structurePage.querySelectorAll(".structure-tool-drawer")];
+  }
+
+  function closeStructureDrawers(except = null) {
+    structureDrawers().forEach(drawer => {
+      if (drawer !== except) drawer.open = false;
+    });
+  }
+
+  function bindStructureDrawers() {
+    structureDrawers().forEach(drawer => {
+      drawer.addEventListener("toggle", () => {
+        if (drawer.open) closeStructureDrawers(drawer);
+      });
+    });
+  }
+
   function uid() {
     if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
     return `section-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -126,7 +144,10 @@
     renderSections();
     saveState();
 
-    if (isPhoneLayout()) revealSection(section.id);
+    if (isPhoneLayout()) {
+      closeStructureDrawers();
+      revealSection(section.id);
+    }
     else focusSection(section.id);
   }
 
@@ -169,7 +190,9 @@
   function activateSection(id) {
     state.activeId = id;
     nodes.structureSections.querySelectorAll(".song-section").forEach(card => {
-      card.classList.toggle("active", card.dataset.sectionId === id);
+      const active = card.dataset.sectionId === id;
+      card.classList.toggle("active", active);
+      card.setAttribute("aria-expanded", String(active));
     });
     saveState();
   }
@@ -273,6 +296,7 @@
       const card = document.createElement("section");
       card.className = `song-section${section.id === state.activeId ? " active" : ""}`;
       card.dataset.sectionId = section.id;
+      card.setAttribute("aria-expanded", String(section.id === state.activeId));
 
       const header = document.createElement("header");
       header.className = "song-section-header";
@@ -287,6 +311,14 @@
       const label = document.createElement("div");
       label.className = "section-label";
       label.textContent = `[${section.label}]`;
+      label.setAttribute("role", "button");
+      label.tabIndex = 0;
+      label.setAttribute("aria-label", `Open ${section.label}`);
+      label.addEventListener("keydown", event => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activateSection(section.id);
+      });
 
       const up = document.createElement("button");
       up.type = "button";
@@ -315,7 +347,7 @@
       textarea.className = "section-lyrics";
       textarea.dataset.sectionId = section.id;
       textarea.value = section.lyrics;
-      textarea.placeholder = "Lyrics, directions, or bracket tags…";
+      textarea.placeholder = "Write lyrics or directions…";
       textarea.spellcheck = true;
       textarea.addEventListener("focus", () => activateSection(section.id));
       textarea.addEventListener("pointerdown", () => activateSection(section.id));
@@ -521,7 +553,10 @@
     renderStatus();
     saveState();
 
-    if (isPhoneLayout()) revealSection(id);
+    if (isPhoneLayout()) {
+      closeStructureDrawers();
+      revealSection(id);
+    }
     else textarea.focus();
   }
 
@@ -596,6 +631,7 @@
     saveState();
 
     if (structureActive) {
+      if (isPhoneLayout()) closeStructureDrawers();
       window.requestAnimationFrame(() => {
         if (isPhoneLayout()) revealSection(state.activeId);
         else focusSection(state.activeId, false);
@@ -661,6 +697,7 @@
     renderTagFamilies();
     renderSections();
     bindDropZone();
+    bindStructureDrawers();
     nodes.customSectionBtn.addEventListener("click", addCustomSection);
     nodes.resetStructureBtn.addEventListener("click", resetStructure);
     nodes.copyForSunoBtn.addEventListener("click", copyForSuno);

@@ -16,6 +16,7 @@ const latestLayout = read("v11-layout.css");
 const mobileLayout = read("mobile-v12.css");
 const blenderCss = read("sound-blender.css");
 const blenderApp = read("sound-blender.js");
+const structureClean = read("structure-clean.css");
 const soundProfiles = read("sound-profiles.js");
 const ninetiesProfiles = read("sound-profiles-1990s.js");
 const worker = read("sw.js");
@@ -34,7 +35,9 @@ const requiredIds = [
   "soundReference1", "soundFocus1", "soundReference2", "soundFocus2",
   "soundBlendResult", "addBlendToPromptBtn", "replacePromptWithBlendBtn",
   "customSoundForm", "customSoundDescription", "ninetiesSoundDetails",
-  "ninetiesGenreFilter", "ninetiesSoundCount", "ninetiesSoundGrid"
+  "ninetiesGenreFilter", "ninetiesSoundCount", "ninetiesSoundGrid",
+  "structurePage", "structureBuilderTitle", "structureSections", "structureStatus",
+  "basicSectionList", "structureTagBoxes", "resetStructureBtn", "copyForSunoBtn"
 ];
 const missingIds = requiredIds.filter(id => !ids.includes(id));
 if (missingIds.length) fail(`Missing required UI ids: ${missingIds.join(", ")}`);
@@ -85,7 +88,7 @@ for (const asset of shellAssets) {
   const local = asset.replace(/^\//, "").split("?")[0];
   if (!fs.existsSync(path.join(root, local))) fail(`Service worker caches missing asset: ${asset}`);
 }
-if (!worker.includes("simplist-v24-20260828-1990s-blend-copy")) fail("Service worker cache was not refreshed for the final 1990s sound release.");
+if (!worker.includes("simplist-v25-20260829-clean-structure")) fail("Service worker cache was not refreshed for the clean Structure release.");
 if (!html.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is not loaded.");
 if (!worker.includes('/tag-descriptions.js?v=11.2.0')) fail("The sound-description engine is missing from the offline app shell.");
 if (!html.includes('/prompt-app.js?v=11.6.0')) fail("The Sound Blender prompt bridge is not loaded.");
@@ -94,11 +97,13 @@ if (!html.includes('/v11-layout.css?v=11.4.0')) fail("The latest v11 layout styl
 if (!html.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout stylesheet is not loaded last.");
 if (!worker.includes('/mobile-v12.css?v=12.2.0')) fail("The true mobile layout is missing from the offline app shell.");
 if (!html.includes('/sound-blender.css?v=1.1.0') || !worker.includes('/sound-blender.css?v=1.1.0')) fail("The Sound Blender styling is not loaded and cached.");
+if (!html.includes('/structure-clean.css?v=6.0.0') || !worker.includes('/structure-clean.css?v=6.0.0')) fail("The clean Structure styling is not loaded and cached.");
 if (!html.includes('/sound-profiles.js?v=1.0.0') || !worker.includes('/sound-profiles.js?v=1.0.0')) fail("The named sound profiles are not loaded and cached.");
 if (!html.includes('/sound-profiles-1990s.js?v=1.0.0') || !worker.includes('/sound-profiles-1990s.js?v=1.0.0')) fail("The 1990s sound profiles are not loaded and cached.");
 if (!html.includes('/sound-blender.js?v=1.1.1') || !worker.includes('/sound-blender.js?v=1.1.1')) fail("The Sound Blender behavior is not loaded and cached.");
-if (!html.includes('/structure-app.js?v=5.3.0')) fail("The three-page navigation is not loaded.");
+if (!html.includes('/structure-app.js?v=5.4.0') || !worker.includes('/structure-app.js?v=5.4.0')) fail("The clean Structure behavior is not loaded and cached.");
 if (html.indexOf('/sound-blender.css?v=1.1.0') < html.indexOf('/mobile-v12.css?v=12.2.0')) fail("The Sound Blender mobile overrides must load last.");
+if (html.indexOf('/structure-clean.css?v=6.0.0') < html.indexOf('/sound-blender.css?v=1.1.0')) fail("The clean Structure stylesheet must be the final visual override.");
 if (!latestLayout.includes("grid-row: 2 !important")) fail("The prompt panel is not assigned to the bottom row.");
 if (!latestLayout.includes("--canvas: #21130d")) fail("The app canvas does not match the prompt-box brown.");
 if (!latestLayout.includes("--interface-text: #ffffff")) fail("The interface text is not plain white.");
@@ -112,6 +117,11 @@ if (!mobileLayout.includes(".category-tabs .category-tab:last-child")) fail("The
 if (!blenderCss.includes("repeat(3, minmax(0, 1fr))")) fail("The three builder pages do not fit the page switcher.");
 if (!blenderCss.includes("@media (max-width: 390px)")) fail("The Sound Blender lacks its narrow-phone fallback.");
 if (!blenderCss.includes("overflow: visible !important")) fail("The Sound Blender cannot join normal phone scrolling.");
+if (!structureClean.includes(".song-section:not(.active) > .section-lyrics")) fail("Inactive Structure sections are not collapsed.");
+if (!structureClean.includes("--structure-accent: #a7b9a4")) fail("The calmer Structure color theme is missing.");
+if (!structureClean.includes('font-family: system-ui')) fail("The Structure page does not use its simpler interface type.");
+if (!html.includes('class="structure-quick-tools"')) fail("The two optional Structure tools are not grouped cleanly.");
+if (!html.includes("Open the tools only when you need them.")) fail("The simplified Structure guidance is missing.");
 if (!mobileLayout.includes(".options-button") || !mobileLayout.includes("display: grid !important")) fail("Extra / Optional is not restored as one control.");
 if (!mobileLayout.includes("#optionsDialog[open]")) fail("The Extra / Optional dialog cannot become visible.");
 if (!html.includes("simplist-logo-approved-reference.jpg?v=12.0.0")) fail("The approved logo reference is not displayed.");
