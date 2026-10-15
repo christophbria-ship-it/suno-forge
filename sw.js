@@ -1,4 +1,4 @@
-const CACHE_NAME = "simplist-v27-20260829-reference-structure";
+const CACHE_NAME = "simplist-v28-20261015-four-step";
 
 const APP_SHELL = [
   "/",
@@ -9,21 +9,21 @@ const APP_SHELL = [
   "/structure-mobile.css?v=5.1.1",
   "/instrument-saver.css?v=5.2.0",
   "/forest-theme.css?v=10.0.0",
-  "/v10-features.css?v=10.0.0",
-  "/v11-layout.css?v=11.4.0",
-  "/mobile-v12.css?v=12.2.0",
-  "/sound-blender.css?v=1.1.0",
+  "/v10-features.css?v=10.1.0",
+  "/v11-layout.css?v=11.5.0",
+  "/mobile-v12.css?v=12.3.0",
+  "/sound-blender.css?v=1.2.0",
   "/structure-clean.css?v=6.2.0",
   "/tag-descriptions.js?v=11.2.0",
-  "/prompt-app.js?v=11.6.0",
-  "/v10-features.js?v=11.5.0",
+  "/prompt-app.js?v=11.7.0",
+  "/v10-features.js?v=11.6.0",
   "/data.js?v=4.1.0",
   "/data-additions.js?v=4.3.0",
   "/structure-data.js?v=5.0.0",
   "/data-global.js?v=5.2.0",
   "/sound-profiles.js?v=1.0.0",
   "/sound-profiles-1990s.js?v=1.0.0",
-  "/structure-app.js?v=5.5.0",
+  "/structure-app.js?v=5.6.0",
   "/sound-blender.js?v=1.1.1",
   "/manifest.webmanifest",
   "/icon.svg?v=12.0.0",
@@ -64,14 +64,14 @@ self.addEventListener("fetch", event => {
   }
 
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const network = fetch(event.request)
-        .then(response => {
-          if (response.ok) caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone()));
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then(response => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

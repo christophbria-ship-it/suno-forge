@@ -236,7 +236,10 @@
     activeCategory: "Genre",
     mode: "focused",
     selected: Object.create(null),
-    custom: []
+    custom: [],
+    note: "",
+    tempo: 120,
+    tempoTouched: false
   };
 
   function categories() {
@@ -326,6 +329,9 @@
     state.custom = unique((Array.isArray(saved?.custom) ? saved.custom : [])
       .map(value => String(value || "").replace(/\s+/g, " ").trim())
       .filter(Boolean));
+    state.note = String(saved?.note || "").replace(/\s+/g, " ").trim();
+    state.tempo = clampTempo(saved?.tempo ?? DATA?.defaults?.bpm ?? 120);
+    state.tempoTouched = saved?.tempoTouched === true;
 
     OUTPUT_ORDER.forEach(category => {
       const allowed = categorySets.get(category) || new Set();
@@ -344,7 +350,10 @@
         activeCategory: state.activeCategory,
         mode: state.mode,
         selected: state.selected,
-        custom: state.custom
+        custom: state.custom,
+        note: state.note,
+        tempo: state.tempo,
+        tempoTouched: state.tempoTouched
       }));
     } catch {
       // The tag studio still works if browser storage is unavailable.
@@ -462,6 +471,84 @@
 
   function styleText(selected = state.selected, custom = state.custom) {
     return [...OUTPUT_ORDER.flatMap(category => selected[category] || []), ...custom].join(", ");
+  }
+
+  function clampTempo(value) {
+    const number = Math.round(Number(value));
+    if (!Number.isFinite(number)) return 120;
+    return Math.min(220, Math.max(40, number));
+  }
+
+  function promptParts(selected = state.selected, custom = state.custom, note = state.note) {
+    const tags = [...OUTPUT_ORDER.flatMap(category => selected[category] || []), ...custom];
+    const noteParts = String(note || "").split(",").map(value => value.replace(/\s+/g, " ").trim()).filter(Boolean);
+    const parts = [];
+    const seen = new Set();
+    const push = value => {
+      const clean = String(value || "").replace(/\s+/g, " ").trim();
+      if (!clean) return false;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      parts.push(clean);
+      return true;
+    };
+    noteParts.forEach(push);
+    tags.forEach(push);
+    if (state.tempoTouched) push(`${clampTempo(state.tempo)} BPM`);
+    return parts;
+  }
+
+  function composePrompt(selected = state.selected, custom = state.custom, note = state.note) {
+    let text = "";
+    promptParts(selected, custom, note).forEach(part => {
+      const next = text ? `${text}, ${part}` : part;
+      if (next.length > EXTENDED_CHARACTER_LIMIT) return;
+      text = next;
+    });
+    return text;
+  }
+
+  function syncTempoControls() {
+    const tempo = clampTempo(state.tempo);
+    state.tempo = tempo;
+    if (nodes.tempoRange) {
+      nodes.tempoRange.value = String(tempo);
+      nodes.tempoRange.setAttribute("aria-valuenow", String(tempo));
+      nodes.tempoRange.setAttribute("aria-valuetext", `${tempo} BPM`);
+    }
+    if (nodes.tempoValue) nodes.tempoValue.textContent = `${tempo} BPM`;
+  }
+
+  function absorbOutputText() {
+    const pieces = nodes.styleOutput.value.split(",")
+      .map(value => value.replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+    const selectedSet = new Set(allSelectedTags().map(tag => tag.toLowerCase()));
+    const kept = new Set();
+    const note = [];
+    let sawTempo = false;
+    pieces.forEach(piece => {
+      const tempoMatch = piece.match(/^(\d+)\s*bpm$/i);
+      if (tempoMatch) {
+        state.tempo = clampTempo(tempoMatch[1]);
+        state.tempoTouched = true;
+        sawTempo = true;
+        return;
+      }
+      if (selectedSet.has(piece.toLowerCase())) {
+        kept.add(piece.toLowerCase());
+        return;
+      }
+      note.push(piece);
+    });
+    if (state.tempoTouched && !sawTempo) state.tempoTouched = false;
+    OUTPUT_ORDER.forEach(category => {
+      state.selected[category] = (state.selected[category] || []).filter(tag => kept.has(tag.toLowerCase()));
+    });
+    state.custom = state.custom.filter(tag => kept.has(tag.toLowerCase()));
+    state.note = note.join(", ");
+    syncTempoControls();
   }
 
   function trimExtendedToLimit() {
@@ -698,8 +785,9 @@
   }
 
   function renderStyle() {
-    const text = styleText();
+    const text = composePrompt();
     nodes.styleOutput.value = text;
+    syncTempoControls();
     nodes.characterCount.textContent = state.mode === "extended"
       ? `${text.length} / ${EXTENDED_CHARACTER_LIMIT}`
       : `${text.length} characters`;
@@ -744,7 +832,8 @@
       selected.push(tag);
     } else {
       const candidate = { ...state.selected, [sourceCategory]: [...selected, tag] };
-      if (styleText(candidate).length > EXTENDED_CHARACTER_LIMIT) {
+      const nextPrompt = composePrompt(candidate, state.custom, state.note);
+      if (!nextPrompt.toLowerCase().includes(tag.toLowerCase())) {
         toast("That choice would exceed the 1,000-character limit.");
         return;
       }
@@ -769,6 +858,13 @@
             chooseCategory(MAIN_CATEGORIES[currentPosition + 1]);
           }
         }, 650);
+      } else if (currentPosition === MAIN_CATEGORIES.length - 1) {
+        toast(`${category} set. Opening Shape.`);
+        advanceTimer = window.setTimeout(() => {
+          if (state.activeCategory === category && state.mode === "focused" && selectedCountFor(category) === FOCUSED_LIMIT) {
+            document.dispatchEvent(new CustomEvent("simplist:advance-step", { detail: { step: "shape" } }));
+          }
+        }, 650);
       }
     }
   }
@@ -781,7 +877,7 @@
       return;
     }
     const candidate = [...state.custom, name];
-    if (styleText(state.selected, candidate).length > EXTENDED_CHARACTER_LIMIT) {
+    if (!composePrompt(state.selected, candidate, state.note).toLowerCase().includes(name.toLowerCase())) {
       toast("That custom tag would exceed the 1,000-character limit.");
       return;
     }
@@ -827,15 +923,18 @@
       toast("Prompt selected. Use your device’s Copy command.");
     }
     window.setTimeout(() => {
-      nodes.copyPromptBtn.textContent = "Copy prompt";
+      nodes.copyPromptBtn.textContent = "Copy for Suno";
     }, 1400);
   }
 
   function clearAll() {
-    if (!allSelectedTags().length) return;
+    if (!allSelectedTags().length && !state.note && !state.tempoTouched) return;
     if (!window.confirm("Clear every selected tag?")) return;
     state.selected = emptySelections();
     state.custom = [];
+    state.note = "";
+    state.tempo = clampTempo(DATA?.defaults?.bpm ?? 120);
+    state.tempoTouched = false;
     chooseCategory("Genre");
     toast("All selections cleared.");
   }
@@ -853,7 +952,8 @@
       "categorySelectionStatus", "familyHeading", "familySummary", "familyViewport",
       "familyBoard", "stylePanel", "styleOutput", "characterCount", "styleHint",
       "copyPromptBtn", "familyDialog", "expandedFamilyTitle", "expandedFamilyCount",
-      "expandedTagGrid", "optionsDialog", "optionalCategoryGrid", "toast"
+      "expandedTagGrid", "optionsDialog", "optionalCategoryGrid", "toast",
+      "tempoRange", "tempoValue"
     ].forEach(id => {
       nodes[id] = document.getElementById(id);
     });
@@ -876,7 +976,7 @@
         state.custom = [text];
       } else {
         const candidate = unique([...state.custom, text]);
-        if (styleText(state.selected, candidate).length > EXTENDED_CHARACTER_LIMIT) {
+        if (!composePrompt(state.selected, candidate, state.note).toLowerCase().includes(text.toLowerCase())) {
           toast("That sound blend would exceed the 1,000-character limit.");
           return;
         }
@@ -891,12 +991,47 @@
     });
     nodes.copyPromptBtn.addEventListener("click", copyPrompt);
     nodes.clearAllBtn.addEventListener("click", clearAll);
+    nodes.styleOutput.addEventListener("input", () => {
+      absorbOutputText();
+      const text = nodes.styleOutput.value;
+      nodes.characterCount.textContent = state.mode === "extended"
+        ? `${Math.min(text.length, EXTENDED_CHARACTER_LIMIT)} / ${EXTENDED_CHARACTER_LIMIT}`
+        : `${text.length} characters`;
+      saveState();
+    });
+    nodes.styleOutput.addEventListener("blur", event => {
+      const before = JSON.stringify(state.selected) + "\n" + state.note + "\n" + state.custom.join("|") + "\n" + state.tempoTouched + "\n" + state.tempo;
+      absorbOutputText();
+      const after = JSON.stringify(state.selected) + "\n" + state.note + "\n" + state.custom.join("|") + "\n" + state.tempoTouched + "\n" + state.tempo;
+      const nextControl = event.relatedTarget;
+      const clickingTag = nextControl?.closest?.(".wall-tag-button,.expanded-tag-button,.category-tab,.optional-category-button");
+      if (!clickingTag && before !== after) {
+        renderMainTabs();
+        renderOptionalCategories();
+        renderCategoryHeader();
+        renderFamilyWall();
+      }
+      if (!clickingTag) renderStyle();
+      saveState();
+    });
+    nodes.tempoRange?.addEventListener("input", () => {
+      state.tempo = clampTempo(nodes.tempoRange.value);
+      state.tempoTouched = true;
+      syncTempoControls();
+      renderStyle();
+      saveState();
+    });
     nodes.familyDialog.addEventListener("close", () => {
       expandedFamilyIndex = -1;
+      const addForm = nodes.familyDialog.querySelector(".dialog-family-add");
+      if (addForm) addForm.open = false;
     });
     window.addEventListener("resize", () => {
       scheduleFitFamilyWall();
-      if (nodes.familyDialog.open) renderExpandedFamily();
+      if (!nodes.familyDialog.open) return;
+      const addForm = nodes.familyDialog.querySelector(".dialog-family-add");
+      if (addForm?.open || addForm?.contains(document.activeElement)) return;
+      renderExpandedFamily();
     });
   }
 
@@ -940,6 +1075,7 @@
     loadState();
     nodes.focusedModeInput.checked = state.mode === "focused";
     nodes.extendedModeInput.checked = state.mode === "extended";
+    syncTempoControls();
     bindEvents();
     renderLibraryStats();
     renderAll();

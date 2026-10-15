@@ -92,16 +92,19 @@ const setReference = (slot, name, focus) => {
 };
 const build = () => click("buildSoundBlendBtn");
 
-assert.equal(document.querySelectorAll(".page-switch-button").length, 3, "Sound, Blend, and Structure should be the only three pages.");
+assert.equal(document.querySelectorAll(".page-switch-button").length, 4, "Brief, Sound, Shape, and Export should be the four steps.");
 assert.deepEqual(
   [...document.querySelectorAll(".page-switch-button")].map(button => button.textContent.trim()),
-  ["1 · Sound", "2 · Blend", "3 · Structure"]
+  ["1 · Brief", "2 · Sound", "3 · Shape", "4 · Export"]
 );
+assert.equal(document.getElementById("briefPage").hidden, false, "A fresh visit should open on Brief.");
+click("soundPageBtn");
 assert.equal(document.getElementById("workspace").hidden, false);
 click("blendPageBtn");
-assert.equal(document.getElementById("blendPage").hidden, false, "Blend page should open from the top switcher.");
+assert.equal(document.getElementById("blendPage").hidden, false, "Blend should open from the Sound step.");
 assert.equal(document.getElementById("workspace").hidden, true);
-assert.equal(document.getElementById("clearAllBtn").hidden, true, "Sound-only Clear should not confuse the Blend page.");
+assert.equal(document.getElementById("soundPageBtn").getAttribute("aria-selected"), "true", "Blend stays inside the Sound step.");
+assert.equal(document.getElementById("clearAllBtn").hidden, false, "Clear must stay reachable on every step.");
 assert.match(document.getElementById("soundProfileCount").textContent, /named profiles/);
 assert.ok(parseInt(document.getElementById("soundProfileCount").textContent, 10) >= 250, "The expanded named library should be loaded.");
 
@@ -195,7 +198,7 @@ assert.equal(copied.at(-1), document.getElementById("soundBlendResult").value);
 click("structurePageBtn");
 assert.equal(document.getElementById("structurePage").hidden, false);
 assert.equal(document.getElementById("blendPage").hidden, true);
-assert.match(document.getElementById("libraryStats").textContent, /Page 3/);
+assert.match(document.getElementById("libraryStats").textContent, /Shape/);
 
 assert.equal(reportedErrors.length, 0, `Runtime errors: ${reportedErrors.map(error => error.message).join(" | ")}`);
-console.log("Sound Blender checks passed: named lookup, part focus, two-way blending, name removal, prompt add/replace, library tags, custom sounds, copy, and three-page navigation.");
+console.log("Sound Blender checks passed: named lookup, part focus, two-way blending, name removal, prompt add/replace, library tags, custom sounds, copy, and four-step navigation.");
