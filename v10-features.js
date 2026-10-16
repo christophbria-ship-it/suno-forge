@@ -82,6 +82,7 @@
 
   function addForm(host, activeCategory, family) {
     const existing = host.querySelector(".dialog-family-add");
+    if (existing && (existing.open || existing.contains(document.activeElement))) return;
     if (existing?.dataset.category === activeCategory && existing.dataset.family === family) return;
     existing?.remove();
     const box = document.createElement("details");
@@ -200,19 +201,13 @@
 })();
 
 (() => {
-  const clean = value => String(value || "").replace(/\s+/g, " ").trim();
-  let manualText = "";
-  let manualDirty = false;
-  let lastAuto = "";
-  let suppress = false;
-
   const prompt = () => document.getElementById("styleOutput");
   const focused = () => document.querySelector('input[name="promptSize"][value="focused"]')?.checked;
 
   function count() {
     const output = prompt();
     const counter = document.getElementById("characterCount");
-    if (output && counter) {
+    if (output && counter && document.activeElement !== output) {
       counter.textContent = focused() ? `${output.value.length} characters` : `${output.value.length} / 1000`;
     }
   }
@@ -228,88 +223,19 @@
     }
   }
 
-  function mergeNewAuto(newAuto) {
-    if (!manualDirty) {
-      lastAuto = newAuto;
-      return;
-    }
-
-    const before = new Set(lastAuto.split(",").map(clean).filter(Boolean).map(value => value.toLowerCase()));
-    const added = newAuto.split(",").map(clean).filter(Boolean)
-      .filter(value => !before.has(value.toLowerCase()));
-    let outputText = manualText;
-    for (const item of added) {
-      if (!outputText.toLowerCase().includes(item.toLowerCase())) {
-        outputText = clean(outputText ? `${outputText}, ${item}` : item);
-      }
-    }
-    manualText = outputText.slice(0, 1000);
-    const output = prompt();
-    if (output) {
-      suppress = true;
-      output.value = manualText;
-      suppress = false;
-      count();
-    }
-    lastAuto = newAuto;
-  }
-
-  function restoreExact() {
-    const output = prompt();
-    if (!output) return;
-    const auto = output.value;
-    if (!manualDirty) {
-      lastAuto = auto;
-      count();
-      return;
-    }
-    suppress = true;
-    output.value = manualText.slice(0, 1000);
-    suppress = false;
-    lastAuto = auto;
-    count();
-  }
-
-  function afterClick(target) {
-    setTimeout(() => {
-      extraRail();
-      const output = prompt();
-      if (!output) return;
-      if (target.closest('[data-v10-custom="1"]')) {
-        count();
-        return;
-      }
-      const isTag = Boolean(target.closest(".wall-tag-button,.expanded-tag-button"));
-      if (isTag) mergeNewAuto(output.value);
-      else restoreExact();
-
-      const title = document.getElementById("activeCategoryTitle")?.textContent?.trim();
-      const status = document.getElementById("categorySelectionStatus")?.textContent || "";
-      if (focused() && title === "Production/Sound Quality" && /^2\s*\/\s*2/.test(status)) {
-        setTimeout(() => prompt()?.focus(), 680);
-      }
-    }, 45);
-  }
-
   document.addEventListener("DOMContentLoaded", () => {
-    const output = prompt();
-    if (output) {
-      lastAuto = output.value;
-      output.addEventListener("input", event => {
-        if (suppress || !event.isTrusted) return;
-        manualText = output.value.slice(0, 1000);
-        manualDirty = true;
-        count();
-      });
-    }
     extraRail();
+    count();
     new MutationObserver(extraRail).observe(document.body, { subtree: true, childList: true });
     document.addEventListener("click", event => {
       if (
         event.target.closest(".wall-tag-button,.expanded-tag-button,.category-tab,.optional-category-button")
         || event.target.closest('input[name="promptSize"]')
       ) {
-        afterClick(event.target);
+        setTimeout(() => {
+          extraRail();
+          count();
+        }, 45);
       }
     });
   });

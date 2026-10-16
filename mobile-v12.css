@@ -220,7 +220,7 @@
   }
 
   .tag-workspace {
-    order: 2;
+    order: 3;
     display: grid !important;
     grid-template-rows: auto auto !important;
     gap: 8px !important;
@@ -335,10 +335,10 @@
   }
 
   .style-panel {
-    order: 3;
+    order: 2;
     display: grid !important;
     grid-template-columns: minmax(0, 1fr) auto !important;
-    grid-template-rows: auto auto auto auto !important;
+    grid-template-rows: auto auto auto auto auto !important;
     gap: 9px !important;
     padding: 11px !important;
   }
@@ -381,9 +381,18 @@
     font-size: .88rem !important;
   }
 
-  .style-output-group {
+  .tempo-control {
     grid-column: 1 / -1 !important;
     grid-row: 2 !important;
+  }
+
+  .tempo-control output {
+    font-size: 1rem !important;
+  }
+
+  .style-output-group {
+    grid-column: 1 / -1 !important;
+    grid-row: 3 !important;
     display: grid !important;
     grid-template-rows: auto auto auto !important;
     min-height: 0 !important;
@@ -415,13 +424,13 @@
 
   .style-hint {
     grid-column: 1 / -1 !important;
-    grid-row: 3 !important;
+    grid-row: 4 !important;
     display: none !important;
   }
 
   .copy-button {
     grid-column: 1 / -1 !important;
-    grid-row: 4 !important;
+    grid-row: 5 !important;
     width: 100% !important;
     min-height: 50px !important;
     font-size: .94rem !important;
@@ -663,11 +672,15 @@
     grid-row: 2 !important;
   }
 
-  .style-output-group {
+  .tempo-control {
     grid-row: 3 !important;
   }
 
-  .copy-button {
+  .style-output-group {
     grid-row: 4 !important;
+  }
+
+  .copy-button {
+    grid-row: 5 !important;
   }
 }

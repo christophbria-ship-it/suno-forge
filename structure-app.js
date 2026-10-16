@@ -85,7 +85,7 @@
             .map(name => [instrumentKey(name), name])).values()]
         : [];
       const savedPage = localStorage.getItem(PAGE_KEY);
-      state.page = ["sound", "blend", "structure"].includes(savedPage) ? savedPage : "sound";
+      state.page = normalizePage(savedPage);
     } catch {
       state.sections = [];
       state.customInstruments = [];
@@ -577,11 +577,13 @@
     nodes.structureCopyStatus.textContent = `${text.length.toLocaleString()} characters · bracket structure preserved`;
   }
 
-  async function copyForSuno() {
+  async function copyForSuno(event) {
     const text = assembledLyrics();
+    const button = event?.currentTarget || nodes.copyForSunoBtn;
+    const restore = button?.id === "copyExportLyricsBtn" ? "Copy lyrics" : "Copy for Suno";
     try {
       await navigator.clipboard.writeText(text);
-      nodes.copyForSunoBtn.textContent = "Copied";
+      if (button) button.textContent = "Copied";
       nodes.structureCopyStatus.textContent = "Copied for Suno";
     } catch {
       const helper = document.createElement("textarea");
@@ -592,10 +594,10 @@
       helper.select();
       document.execCommand("copy");
       helper.remove();
-      nodes.copyForSunoBtn.textContent = "Copied";
+      if (button) button.textContent = "Copied";
     }
     window.setTimeout(() => {
-      nodes.copyForSunoBtn.textContent = "Copy for Suno";
+      if (button) button.textContent = restore;
       renderStatus();
     }, 1400);
   }
@@ -615,26 +617,58 @@
     if (clean) insertSection(clean);
   }
 
+  function normalizePage(page) {
+    const aliases = { structure: "shape" };
+    const value = aliases[page] || page;
+    return ["brief", "sound", "blend", "shape", "export"].includes(value) ? value : "brief";
+  }
+
+  function mountPrompt(page) {
+    const panel = document.getElementById("stylePanel");
+    if (!panel) return;
+    const briefDock = document.getElementById("briefDock");
+    const exportDock = document.getElementById("exportDock");
+    if (page === "brief" && briefDock) briefDock.appendChild(panel);
+    else if (page === "export" && exportDock) exportDock.appendChild(panel);
+    else nodes.workspace?.appendChild(panel);
+  }
+
+  function fillExport() {
+    const lyrics = document.getElementById("exportLyrics");
+    if (lyrics) lyrics.value = assembledLyrics();
+  }
+
   function setPage(page) {
-    state.page = ["sound", "blend", "structure"].includes(page) ? page : "sound";
+    state.page = normalizePage(page);
+    const briefActive = state.page === "brief";
     const soundActive = state.page === "sound";
     const blendActive = state.page === "blend";
-    const structureActive = state.page === "structure";
+    const shapeActive = state.page === "shape";
+    const exportActive = state.page === "export";
+    if (nodes.briefPage) nodes.briefPage.hidden = !briefActive;
     nodes.workspace.hidden = !soundActive;
     nodes.blendPage.hidden = !blendActive;
-    nodes.structurePage.hidden = !structureActive;
-    nodes.soundPageBtn.setAttribute("aria-selected", String(soundActive));
-    nodes.blendPageBtn.setAttribute("aria-selected", String(blendActive));
-    nodes.structurePageBtn.setAttribute("aria-selected", String(structureActive));
-    nodes.clearAllBtn.hidden = !soundActive;
-    nodes.libraryStats.textContent = structureActive
-      ? "Page 3 · build lyrics and square-bracket structure for Suno"
+    nodes.structurePage.hidden = !shapeActive;
+    if (nodes.exportPage) nodes.exportPage.hidden = !exportActive;
+    nodes.briefPageBtn?.setAttribute("aria-selected", String(briefActive));
+    nodes.soundPageBtn.setAttribute("aria-selected", String(soundActive || blendActive));
+    nodes.structurePageBtn.setAttribute("aria-selected", String(shapeActive));
+    nodes.exportPageBtn?.setAttribute("aria-selected", String(exportActive));
+    nodes.clearAllBtn.hidden = false;
+    mountPrompt(state.page);
+    if (exportActive) fillExport();
+    nodes.libraryStats.textContent = shapeActive
+      ? "Step 3 · Shape the lyric sections and bracket tags"
       : blendActive
-        ? "Page 2 · translate named music references into name-free sound descriptions"
-        : soundStats;
+        ? "Step 2 · translate named music references into name-free sound descriptions"
+        : exportActive
+          ? "Step 4 · copy the style prompt and lyrics into Suno"
+          : briefActive
+            ? "Step 1 · describe the song in your own words"
+            : soundStats;
     saveState();
 
-    if (structureActive) {
+    if (shapeActive) {
       window.requestAnimationFrame(() => {
         if (isPhoneLayout()) openBracketDrawer();
         else focusSection(state.activeId, false);
@@ -683,7 +717,8 @@
 
   function cacheNodes() {
     [
-      "workspace", "blendPage", "structurePage", "soundPageBtn", "blendPageBtn", "structurePageBtn", "clearAllBtn", "libraryStats",
+      "workspace", "briefPage", "blendPage", "structurePage", "exportPage",
+      "briefPageBtn", "soundPageBtn", "blendPageBtn", "structurePageBtn", "exportPageBtn", "clearAllBtn", "libraryStats",
       "basicSectionList", "customSectionBtn", "structureSections", "structureStatus",
       "structureCopyStatus", "resetStructureBtn", "copyForSunoBtn", "structureTagBoxes"
     ].forEach(id => {
@@ -704,9 +739,15 @@
     nodes.customSectionBtn.addEventListener("click", addCustomSection);
     nodes.resetStructureBtn.addEventListener("click", resetStructure);
     nodes.copyForSunoBtn.addEventListener("click", copyForSuno);
+    nodes.briefPageBtn?.addEventListener("click", () => setPage("brief"));
     nodes.soundPageBtn.addEventListener("click", () => setPage("sound"));
     nodes.blendPageBtn.addEventListener("click", () => setPage("blend"));
-    nodes.structurePageBtn.addEventListener("click", () => setPage("structure"));
+    nodes.structurePageBtn.addEventListener("click", () => setPage("shape"));
+    nodes.exportPageBtn?.addEventListener("click", () => setPage("export"));
+    document.getElementById("copyExportLyricsBtn")?.addEventListener("click", copyForSuno);
+    document.addEventListener("simplist:advance-step", event => {
+      if (event.detail?.step) setPage(event.detail.step);
+    });
     setPage(state.page);
   }
 
